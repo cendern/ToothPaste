@@ -36,14 +36,19 @@ import { useBLEContext } from "../../context/BLEContext";
 
 
 // Status icon for a given device
-function ConnectionIcon({connected }) {
-  const { connectToDevice, status } = useBLEContext();
+function ConnectionButton({connected }) {
+  const { connectToDevice, status, device } = useBLEContext();
 
   return (
-    <div className="flex items-center justify-center w-6 h-6 ">
+    <div className="flex justify-left w-full">
       {/* <Badge color={status ? "primary" : "secondary"} onClick={connectToDevice}>
       </Badge> */}
-      <ArrowPathIcon className="text-text" onClick={connectToDevice} />
+      <Button className={`flex items-center justify-between w-full p-4 border-2 ${status ? 'border-primary' : 'border-secondary'} bg-transparent hover:border-text `} onClick={connectToDevice}>
+          <Typography variant="h6" color="text" className="text-lg font-normal font-inter normal-case ">
+              {device ? device.name : "Connect to Device"}
+          </Typography>
+          <ArrowPathIcon className="text-text h-6 w-6" />
+      </Button>
     </div>
   );
 }
@@ -58,7 +63,7 @@ export function SidebarWithLogo() {
   };
  
   return (
-    <Card className={'h-[calc(100vh)] w-full max-w-[20rem] p-4 shadow-xl bg-shelf text-text '}>
+    <Card className={'h-[calc(100vh)] w-full max-w-[20rem] p-3 shadow-xl bg-shelf text-text '}>
       
       <div className="mb-2 flex items-center gap-4 p-4">
         <img src="https://docs.material-tailwind.com/img/logo-ct-dark.png" alt="brand" className="h-8 w-8" />
@@ -68,7 +73,8 @@ export function SidebarWithLogo() {
       </div>
 
       <List className="text-text gap-4">
-        <Accordion
+          <ConnectionButton connected={status} />
+        {/* <Accordion
           open={open === 1}
           icon={
             <ConnectionIcon/>
@@ -76,9 +82,7 @@ export function SidebarWithLogo() {
         >
           <ListItem className={`p-0 border-2 ${status ? 'border-primary' : 'border-secondary'} hover:border-white focus:border-transparent`} selected={open === 1}>
             <AccordionHeader onClick={() => handleOpen(1)} className="border-b-0 border-hover p-3">
-              <Typography color="text" className="mr-auto font-normal">
-                {device ? device.name : "Connect to Device"}
-              </Typography>
+              
             </AccordionHeader>
           </ListItem>
           <AccordionBody className="py-1 m-4">
@@ -91,12 +95,12 @@ export function SidebarWithLogo() {
               </ListItem>
             </List>
           </AccordionBody>
-        </Accordion>
-        <hr className="my-1 border-none" />
-        <Typography variant="h4" className="mb-0 px-3 text-text">
+        </Accordion> */}
+        <hr className="my-0 border-none" />
+        <Typography variant="h4" className="mb-0 px-1 text-text">
           Actions
         </Typography>
-        <ListItem className="ml-2">
+        <ListItem className="ml-1">
           <ListItemPrefix>
             <ClipboardIcon className="h-5 w-5" />
           </ListItemPrefix>
@@ -104,7 +108,7 @@ export function SidebarWithLogo() {
           <ListItemSuffix>
           </ListItemSuffix>
         </ListItem>
-        <ListItem className="ml-2">
+        <ListItem className="ml-1">
           <ListItemPrefix>
             <PlayIcon className="h-5 w-5" />
           </ListItemPrefix>

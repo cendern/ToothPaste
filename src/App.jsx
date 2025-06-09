@@ -8,7 +8,7 @@ import { BLEProvider } from './context/BLEContext';
 function App() {
   return (
       <BLEProvider>
-        <div className="flex flex-1 min-h-screen">
+        <div className="flex flex-1 min-h-screen max-h-screen">
           <SidebarWithLogo />
           <BulkSend />
         </div>

@@ -4,6 +4,7 @@ module.exports = withMT({
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.css",               // CSS files in components
   ],
   theme: {
     extend: {

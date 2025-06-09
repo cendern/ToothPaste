@@ -1,4 +1,4 @@
-import { accordion } from "@material-tailwind/react";
+import { accordion, button } from "@material-tailwind/react";
 
 export const theme = {
     badge: {

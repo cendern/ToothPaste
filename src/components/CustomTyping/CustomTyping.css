@@ -1,0 +1,63 @@
+.typing-container {
+  height: calc(100vh - 14rem); /* Dynamic height like your textarea */
+  width: 100%;
+  padding: 15px;
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
+  border: 1px solid var(--color-hover);
+  border-radius: 8px;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  overflow-y: auto;
+  position: relative;
+  cursor: text;
+  box-sizing: border-box;
+  white-space: pre-wrap; /* Preserve whitespace and newlines */
+  word-break: break-word;
+}
+
+.text-display {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.typed-char {
+  animation: fadeIn 0.05s ease-in;
+}
+
+.custom-caret {
+  width: 2px;
+  height: 1em;
+  background-color: currentColor;
+  display: inline-block;
+  animation: blink 1.5s ease-in infinite;
+}
+
+.hidden-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0; /* Invisible but still usable */
+  width: 100%;
+  height: calc(100vh - 14rem);
+  resize: none;
+  overflow: hidden;
+  font-size: 1rem;
+  font-family: monospace;
+  line-height: 1.25;
+  border: none;
+  background: transparent;
+  caret-color: transparent; /* optional: hide blinking caret */
+  z-index: 1;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
