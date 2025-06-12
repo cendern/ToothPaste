@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <bluefruit.h>
 #include <Adafruit_nRFCrypto.h>
-#include <cstdint>
 #include <hid.h>
 #include <main.h>
 
@@ -99,7 +98,13 @@ void setup() {
 }
 
 void loop() {
-
+  #ifdef TINYUSB_NEED_POLLING_TASK
+  // Manual call tud_task since it isn't called by Core's background
+  TinyUSBDevice.task();
+  #endif
+  sendString("SpamthisstringwithoutSpecialCharacters");
+  sendString("Spamthisstringw!thSpecialCh@racters");
+  delay(5000);
 }
 
 
