@@ -1,66 +1,71 @@
 #include <Arduino.h>
+#include <security.h>
 #include <hid.h>
 #include <main.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#include <mbedtls/ecdh.h> // Test import to confirm library compatibility
+
 
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
-const int ledPin = 2; // Use the appropriate GPIO pin for your setup
+const int ledPin = 48; // Use the appropriate GPIO pin for your setup
 
-uint32_t value = 0;
+BLEServer* bluServer = NULL; // Pointer to the BLE Server instance
+BLECharacteristic* inputCharacteristic = NULL; // Characteristic for sensor data
+BLECharacteristic* slowModeCharacteristic = NULL; // Characteristic for LED control
 
+SecureSession sec;
 
-
-BLEServer* pServer = NULL; // Pointer to the BLE Server instance
-BLECharacteristic* pSensorCharacteristic = NULL; // Characteristic for sensor data
-BLECharacteristic* pLedCharacteristic = NULL; // Characteristic for LED control
-
-
-
+void blink(uint8_t interval, uint8_t repeats){
+  for(int i; i<=repeats; i++){
+    digitalWrite(ledPin, HIGH);
+    delay(interval);
+    digitalWrite(ledPin, HIGH);
+    delay(interval);
+  }
+}
 
 class MyServerCallbacks: public BLEServerCallbacks { // Callback handler for BLE Connection events
-  void onConnect(BLEServer* pServer) {
+  void onConnect(BLEServer* bluServer) {
     deviceConnected = true;
   };
 
-  void onDisconnect(BLEServer* pServer) {
+  void onDisconnect(BLEServer* bluServer) {
     deviceConnected = false;
   }
 };
 
 class MyCharacteristicCallbacks : public BLECharacteristicCallbacks { // Callback handler for BLE Characteristic events
-  void onWrite(BLECharacteristic* pSensorCharacteristic) {
-    String value = String(pSensorCharacteristic->getValue().c_str());
+  void onWrite(BLECharacteristic* inputCharacteristic) {
+    String value = String(inputCharacteristic->getValue().c_str());
     if (value.length() > 0) {
-      sendString(value.c_str());
+      sendString(value.c_str()); // send the string over HID
     }
 
-    digitalWrite(LED_BUILTIN, 1);
+    digitalWrite(LED_BUILTIN, HIGH);
     delay(2000);
-    digitalWrite(LED_BUILTIN, 0);
+    digitalWrite(LED_BUILTIN, HIGH);
   }
 };
 
 
 void bleSetup(){
-    pinMode(BUILTIN_LED, OUTPUT);
+    pinMode(ledPin, OUTPUT);
 
     // Create the BLE Device
     BLEDevice::init("ClipBoard");
 
     // Create the BLE Server
-    pServer = BLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
+    bluServer = BLEDevice::createServer();
+    bluServer->setCallbacks(new MyServerCallbacks());
 
     // Create the BLE Service
-    BLEService *pService = pServer->createService(SERVICE_UUID);
+    BLEService *pService = bluServer->createService(SERVICE_UUID);
 
     // Create a BLE Characteristic
-    pSensorCharacteristic = pService->createCharacteristic(
+    inputCharacteristic = pService->createCharacteristic(
                         INPUT_STRING_CHARACTERISTIC,
                         BLECharacteristic::PROPERTY_READ   |
                         BLECharacteristic::PROPERTY_WRITE  |
@@ -69,18 +74,18 @@ void bleSetup(){
                         );
 
     // Create the ON button Characteristic
-    pLedCharacteristic = pService->createCharacteristic(
+    slowModeCharacteristic = pService->createCharacteristic(
                         LED_CHARACTERISTIC_UUID,
                         BLECharacteristic::PROPERTY_WRITE
                         );
 
     // Register the callback for the ON button characteristic
-    pSensorCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+    inputCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
 
     // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
     // Create a BLE Descriptor
-    pSensorCharacteristic->addDescriptor(new BLE2902());
-    pLedCharacteristic->addDescriptor(new BLE2902());
+    inputCharacteristic->addDescriptor(new BLE2902());
+    slowModeCharacteristic->addDescriptor(new BLE2902());
 
     // Start the service
     pService->start();
@@ -91,31 +96,57 @@ void bleSetup(){
     pAdvertising->setScanResponse(false);
     pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
     BLEDevice::startAdvertising();
-    
-    digitalWrite(BUILTIN_LED, HIGH);
 }
 
 void setup() {
   hidSetup();
   bleSetup();
-  Serial.println("Waiting a client connection to notify...");
+
+  uint8_t pubKey[SecureSession::PUBKEY_SIZE];
+  size_t pubLen;
+
+  sec.init();
+  
+  int ret = sec.generateKeypair(pubKey, pubLen); // Generate the public key on setup
+  if (!ret) {
+    blink(200, 3);
+
+    size_t olen = 0;
+    char base64pubKey[50];
+    mbedtls_base64_encode((unsigned char *)base64pubKey, sizeof(base64pubKey), &olen, pubKey, SecureSession::PUBKEY_SIZE); // turn the 
+    base64pubKey[olen] = '\0';  // Null-terminate
+    
+    delay(5000);
+    sendString(base64pubKey);
+  }
+  
+  else{
+    char retchar[12];
+    snprintf(retchar, 12, "%d", ret);  
+
+    sendString("Something went wrong: ");
+    sendString(retchar);
+    digitalWrite(ledPin, HIGH);
+  }
+  //Serial.println("Waiting a client connection to notify...");
 }
 
 void loop() {
   // notify changed value
   if (deviceConnected) {
-    pSensorCharacteristic->setValue(String(value).c_str());
-    pSensorCharacteristic->notify();
-    value++;
+    //inputCharacteristic->setValue(String(value).c_str());
+    inputCharacteristic->notify();
     delay(300); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
   }
+
   // disconnecting
   if (!deviceConnected && oldDeviceConnected) {
     Serial.println("Device disconnected.");
-    pServer->startAdvertising(); // restart advertising
+    bluServer->startAdvertising(); // restart advertising
     Serial.println("Start advertising");
     oldDeviceConnected = deviceConnected;
   }
+
   // connecting
   if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
