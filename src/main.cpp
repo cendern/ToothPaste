@@ -8,7 +8,7 @@
 #include "SecureSession.h"
 #include "espHID.h"
 #include "main.h"
-#include "rgbRMT.h"
+#include "NeoPixelRMT.h"
 
 NeoPixelRMT led(GPIO_NUM_48);
 bool deviceConnected = false;
@@ -38,8 +38,7 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks { // Callbac
       sendString(value.c_str()); // send the string over HID
     }
 
-    led.setColor(0, 0, 255);  // blue
-    led.show();
+    
   }
 };
 
@@ -47,7 +46,7 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks { // Callbac
 void bleSetup(){
     // Create the BLE Device
     BLEDevice::init("ClipBoard");
-    
+    BLEDevice::setPower(ESP_PWR_LVL_N3); // low power for heat
     // Create the BLE Server
     bluServer = BLEDevice::createServer();
     bluServer->setCallbacks(new MyServerCallbacks());
@@ -94,6 +93,7 @@ void setup() {
   bleSetup();
 
   led.begin();
+  led.setColor(10,10,10);
   led.show();
 
 
@@ -104,8 +104,7 @@ void setup() {
   
   int ret = sec.generateKeypair(pubKey, pubLen); // Generate the public key on setup
   if (!ret) {
-    led.blink(500, 3, 30,30,30); // blink 3 times
-
+    //led.blink(5000, 3, 30,30,30); // blink 3 times
     size_t olen = 0;
     char base64pubKey[50];
     mbedtls_base64_encode((unsigned char *)base64pubKey, sizeof(base64pubKey), &olen, pubKey, SecureSession::PUBKEY_SIZE); // turn the 
@@ -114,7 +113,7 @@ void setup() {
     delay(5000);
     sendString(base64pubKey);
     
-    led.set(0, 30, 30);
+    led.set(0, 30, 50);
   }
   
   else{
@@ -130,15 +129,20 @@ void setup() {
 }
 
 void loop() {
+  led.blinkUpdate();
+
   // notify changed value
   if (deviceConnected) {
     //inputCharacteristic->setValue(String(value).c_str());
+    led.blinkStart(1000,0,10,10);
     inputCharacteristic->notify();
     delay(300); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
   }
 
-  // disconnecting
+  // disconnecting  
   if (!deviceConnected && oldDeviceConnected) {
+    led.blinkStart(1000,10,0,10);
+
     Serial.println("Device disconnected.");
     bluServer->startAdvertising(); // restart advertising
     Serial.println("Start advertising");
@@ -148,6 +152,8 @@ void loop() {
   // connecting
   if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
+    led.blinkStart(1000,0,10,0);
+
     oldDeviceConnected = deviceConnected;
     Serial.println("Device Connected");
   }
