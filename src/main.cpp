@@ -5,9 +5,9 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <rgb.h>
 
-
-
+NeoPixelRMT led(GPIO_NUM_48);
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 const int ledPin = 48; // Use the appropriate GPIO pin for your setup
@@ -20,9 +20,11 @@ SecureSession sec;
 
 void blink(uint8_t interval, uint8_t repeats){
   for(int i; i<=repeats; i++){
-    digitalWrite(ledPin, HIGH);
+    led.setColor(255,255,255);  // Red
+    led.show();    
     delay(interval);
-    digitalWrite(ledPin, HIGH);
+    led.setColor(0,0,0);  // off
+    led.show();
     delay(interval);
   }
 }
@@ -44,19 +46,16 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks { // Callbac
       sendString(value.c_str()); // send the string over HID
     }
 
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(2000);
-    digitalWrite(LED_BUILTIN, HIGH);
+    led.setColor(0, 0, 255);  // blue
+    led.show();
   }
 };
 
 
 void bleSetup(){
-    pinMode(ledPin, OUTPUT);
-
     // Create the BLE Device
     BLEDevice::init("ClipBoard");
-
+    
     // Create the BLE Server
     bluServer = BLEDevice::createServer();
     bluServer->setCallbacks(new MyServerCallbacks());
@@ -102,6 +101,10 @@ void setup() {
   hidSetup();
   bleSetup();
 
+  led.begin();
+  led.show();
+
+
   uint8_t pubKey[SecureSession::PUBKEY_SIZE];
   size_t pubLen;
 
@@ -118,6 +121,8 @@ void setup() {
     
     delay(5000);
     sendString(base64pubKey);
+    led.setColor(0,255,255);
+    led.show();
   }
   
   else{
@@ -126,7 +131,8 @@ void setup() {
 
     sendString("Something went wrong: ");
     sendString(retchar);
-    digitalWrite(ledPin, HIGH);
+    led.setColor(255, 0,0);  // Red
+    led.show();
   }
   //Serial.println("Waiting a client connection to notify...");
 }
