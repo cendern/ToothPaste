@@ -1,11 +1,14 @@
+//Framework libraries
 #include <Arduino.h>
-#include <security.h>
-#include <hid.h>
-#include <main.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
-#include <rgb.h>
+
+// ClipBoard libraries
+#include "SecureSession.h"
+#include "espHID.h"
+#include "main.h"
+#include "rgbRMT.h"
 
 NeoPixelRMT led(GPIO_NUM_48);
 bool deviceConnected = false;
@@ -17,17 +20,6 @@ BLECharacteristic* inputCharacteristic = NULL; // Characteristic for sensor data
 BLECharacteristic* slowModeCharacteristic = NULL; // Characteristic for LED control
 
 SecureSession sec;
-
-void blink(uint8_t interval, uint8_t repeats){
-  for(int i; i<=repeats; i++){
-    led.setColor(255,255,255);  // Red
-    led.show();    
-    delay(interval);
-    led.setColor(0,0,0);  // off
-    led.show();
-    delay(interval);
-  }
-}
 
 class MyServerCallbacks: public BLEServerCallbacks { // Callback handler for BLE Connection events
   void onConnect(BLEServer* bluServer) {
@@ -112,7 +104,7 @@ void setup() {
   
   int ret = sec.generateKeypair(pubKey, pubLen); // Generate the public key on setup
   if (!ret) {
-    blink(200, 3);
+    led.blink(500, 3, 30,30,30); // blink 3 times
 
     size_t olen = 0;
     char base64pubKey[50];
@@ -121,8 +113,8 @@ void setup() {
     
     delay(5000);
     sendString(base64pubKey);
-    led.setColor(0,255,255);
-    led.show();
+    
+    led.set(0, 30, 30);
   }
   
   else{

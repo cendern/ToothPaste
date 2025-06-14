@@ -1,4 +1,4 @@
-#include <hid.h>
+#include <espHID.h>
 #include <USB.h>
 
 USBHIDKeyboard keyboard;

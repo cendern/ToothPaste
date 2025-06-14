@@ -9,6 +9,9 @@ public:
     void begin();
     void setColor(uint8_t r, uint8_t g, uint8_t b);
     void show();
+    void set(uint8_t r, uint8_t g, uint8_t b);
+    void blink(int interval, int count, uint8_t r, uint8_t g, uint8_t b);
+
 
 private:
     rmt_obj_t* rmt = nullptr;
@@ -17,5 +20,7 @@ private:
 
     void encodeBit(bool bitVal, rmt_data_t& item);
 };
+
+class Blinker
 
 #endif

@@ -1,4 +1,4 @@
-#include <security.h>
+#include <SecureSession.h>
 
 mbedtls_ecdh_context ecdh_ctx;
 mbedtls_ctr_drbg_context ctr_drbg;

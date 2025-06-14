@@ -1,6 +1,5 @@
 #include <USBHIDKeyboard.h>
 
-#define HID_KEY_KEYPAD_EXCLAMATION                 0xCF
 #ifndef HID_H
 #define HID_H
 
