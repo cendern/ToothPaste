@@ -1,4 +1,4 @@
-// From https://github.com/hathach/tinyusb/blob/master/src/class/hid/hid.h
+#include "NeoPixelRMT.h"
 
 
 #define RGB_LED 48 // Override the board's defined RGB
@@ -7,5 +7,6 @@
 #define LED_CHARACTERISTIC_UUID "19b10002-e8f2-537e-4f6c-d104768a1214"
 
 
+extern NeoPixelRMT led(GPIO_NUM_48);
 
 
