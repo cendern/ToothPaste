@@ -18,7 +18,7 @@ export function BLEProvider({ children }) {
             setStatus(0);
             const device = await navigator.bluetooth.requestDevice({
                 filters: [
-                {name: "Clipboard NRF"},
+                {namePrefix: "Clip"},
                 ],
                 optionalServices: [serviceUUID],
             });
@@ -28,15 +28,27 @@ export function BLEProvider({ children }) {
             const char = await service.getCharacteristic(characteristicUUID);
 
             setDevice(device);
+            device.addEventListener("gattserverdisconnected", () => {
+                setStatus(0);
+                console.log("Clipboard Disconnected");
+            });
+
+            
             setServer(server);
             setCharacteristic(char);
             setStatus(1);
         } 
         
         catch (error) {
-            console.error(error);
+        console.error("Connection failed", error);
+
+        // ✅ Only mark disconnected if you're sure it's not already connected
+        if (!device || !device.gatt.connected) {
             setStatus(0);
+        } else {
+            setStatus(1); // still connected, just something else failed
         }
+    }
         
     };
 

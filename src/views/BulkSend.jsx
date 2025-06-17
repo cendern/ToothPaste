@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef, useEffect, useCallback } from 'react';
 import { Button, Typography } from "@material-tailwind/react";
 import { Textarea } from "@material-tailwind/react";
 import { BLEContext } from '../context/BLEContext';
@@ -16,14 +16,38 @@ export default function BulkSend() {
         if (!characteristic || !input) return; 
 
         try {
-        console.log("Data sent", input)
-        const encoder = new TextEncoder();
-        const data = encoder.encode(input);
-        await characteristic.writeValue(data);
-        } catch (error) {
-        console.error(error);
+            console.log("Data sent", input)
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+            await characteristic.writeValue(data);
+        } 
+        
+        catch (error) {
+            console.error(error);
         }
     };   
+
+    // Use Ctrl + Shift + Enter to send 
+    const handleShortcut = useCallback((event) => {
+        const isCtrl = event.ctrlKey || event.metaKey;
+        const isShift = event.shiftKey;
+        const isEnter = event.key == "Enter";
+
+        if (isCtrl && isShift && isEnter){
+            console.log("Shortcut detected: Ctrl + Shift + Enter");
+            event.preventDefault();
+            sendString();
+        }
+    }, [sendString]);
+
+
+    useEffect(() => {
+        const keyListener = (e) => handleShortcut(e);
+        window.addEventListener("keydown", keyListener);
+        return () => window.removeEventListener("keydown", keyListener);
+    }, [handleShortcut]);
+
+
 
     return( 
         <div className="flex flex-col max-h-screen w-full p-6 bg-background text-text">
@@ -40,7 +64,7 @@ export default function BulkSend() {
                 <RichTextArea onChange={(text) => setInput(text)}/>
                 <Button 
                     onClick={sendString} 
-                    disabled={!characteristic} 
+                    disabled={!status} 
                     className='my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-lg disabled:bg-hover'>
                     
                     <ClipboardIcon className="h-7 w-7 mr-2" />
