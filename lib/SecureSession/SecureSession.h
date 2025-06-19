@@ -7,6 +7,10 @@
 #include <mbedtls/sha256.h>
 #include <mbedtls/base64.h>
 
+#ifndef SECURESESSION_H
+#define SECURESESSION_H
+
+
 class SecureSession {
 public:
     static constexpr size_t KEY_SIZE = 32;       // 256-bit key
@@ -54,3 +58,4 @@ private:
     int deriveAESKeyFromSharedSecret(uint8_t key_out[KEY_SIZE]);
 };
 
+#endif

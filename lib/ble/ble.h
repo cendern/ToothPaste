@@ -4,10 +4,9 @@
 #include <BLE2902.h>
 
 #include "espHID.h"
-
+#include "SecureSession.h"
 
 #define PACKET_DATA_SIZE 240
-
 
 #define SERVICE_UUID        "19b10000-e8f2-537e-4f6c-d104768a1214"
 #define INPUT_STRING_CHARACTERISTIC "6856e119-2c7b-455a-bf42-cf7ddd2c5907"
@@ -21,7 +20,7 @@ typedef struct {
     
 } clipPacket;
 
-void bleSetup();
+void bleSetup(SecureSession* session);
 
 extern bool deviceConnected;
 extern bool oldDeviceConnected;

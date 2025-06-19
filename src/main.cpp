@@ -5,17 +5,15 @@
 #include <BLE2902.h>
 
 // ClipBoard libraries
-#include "SecureSession.h"
 #include "espHID.h"
 #include "main.h"
 #include "ble.h"
 
 SecureSession sec;
 
-
 void setup() {
   hidSetup();
-  bleSetup();
+  bleSetup(&sec);
 
   led.begin();
   led.setColor(10,10,10);
@@ -65,7 +63,7 @@ void loop() {
 
   // disconnecting  
   if (!deviceConnected && oldDeviceConnected) {
-    led.blinkStart(1000,10,0,10);
+    led.blinkStart(1000,10,0,10); // Device was connected, then disconnected
 
     Serial.println("Device disconnected.");
     bluServer->startAdvertising(); // restart advertising

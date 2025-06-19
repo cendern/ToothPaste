@@ -3,12 +3,14 @@
 bool oldDeviceConnected = false;
 bool deviceConnected= false;
 
+
 BLEServer* bluServer = NULL; // Pointer to the BLE Server instance
 BLECharacteristic* inputCharacteristic = NULL; // Characteristic for sensor data
 BLECharacteristic* slowModeCharacteristic = NULL; // Characteristic for LED control
 
 
-class MyServerCallbacks: public BLEServerCallbacks { // Callback handler for BLE Connection events
+class MyServerCallbacks: public BLEServerCallbacks {
+   // Callback handler for BLE Connection events
   void onConnect(BLEServer* bluServer) {
     deviceConnected = true;
   };
@@ -18,17 +20,65 @@ class MyServerCallbacks: public BLEServerCallbacks { // Callback handler for BLE
   }
 };
 
-class MyCharacteristicCallbacks : public BLECharacteristicCallbacks { // Callback handler for BLE Characteristic events
-  void onWrite(BLECharacteristic* inputCharacteristic) {
-    String value = String(inputCharacteristic->getValue().c_str());
-    if (value.length() > 0) {
-      sendString(value.c_str()); // send the string over HID
+class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
+  public:
+    MyCharacteristicCallbacks(SecureSession* session) : session(session) {}
+     
+    // Callback handler for BLE Characteristic events
+    void onWrite(BLECharacteristic* inputCharacteristic) {
+      String value = String(inputCharacteristic->getValue().c_str());
+      std::string rawValue = inputCharacteristic->getValue();
+
+      // Receive base64 encoded value
+      if (!rawValue.empty() && session != nullptr) {
+        const size_t IV_SIZE = 12;
+        const size_t TAG_SIZE = 16;
+
+        if (rawValue.length() < IV_SIZE + TAG_SIZE) {
+          Serial.println("Characteristic too short!");
+          return;
+        }
+
+        const uint8_t* raw = reinterpret_cast<const uint8_t*>(rawValue.data());
+
+        const uint8_t* iv = raw;
+        const uint8_t* tag = raw + IV_SIZE;
+        const uint8_t* ciphertext = raw + IV_SIZE + TAG_SIZE;
+        size_t ciphertext_len = rawValue.length() - IV_SIZE - TAG_SIZE;
+
+        // Allocate buffer for plaintext output
+        uint8_t* plaintext_out = new uint8_t[ciphertext_len + 1];  // +1 for null-terminator if it's a string
+        memset(plaintext_out, 0, ciphertext_len + 1);  // optional, to null-terminate
+
+        SecureSession session;
+        int ret = session.decrypt(ciphertext, ciphertext_len, iv, tag, plaintext_out);
+
+        if (ret == 0) {
+          //Serial.print("Decrypted: ");
+          //Serial.println((char*)plaintext_out);  // assuming it's printable text
+          sendString((char*) plaintext_out);
+        } 
+        
+        else {
+          char retchar[12];
+          snprintf(retchar, 12, "%d", ret);
+
+          sendString("Decryption failed");
+          sendString(retchar);
+          // Serial.print("Decryption failed! Code: ");
+          // Serial.println(ret);
+        }
+
+      delete[] plaintext_out;
+      }
     }
-  }
+
+  private:
+    SecureSession* session;
 };
 
 
-void bleSetup(){
+void bleSetup(SecureSession* session){
     // Create the BLE Device
     BLEDevice::init("ClipBoard");
     BLEDevice::setPower(ESP_PWR_LVL_N3); // low power for heat
@@ -55,7 +105,7 @@ void bleSetup(){
                         );
 
     // Register the callback for the ON button characteristic
-    inputCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+    inputCharacteristic->setCallbacks(new MyCharacteristicCallbacks(session));
 
     // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
     // Create a BLE Descriptor
