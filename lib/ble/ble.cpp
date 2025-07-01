@@ -8,6 +8,37 @@ BLECharacteristic* slowModeCharacteristic = NULL; // Characteristic for LED cont
 bool manualDisconnect = false; // Flag to indicate if the user manually disconnected
 bool pairingMode = false; // Flag to indicate if we are in pairing mode
 
+// Decrpyt a packet and type its contents over HID
+void decryptAndSend(void * sessionParams) {  //SecureSession* session, SecureSession::rawDataPacket* packet
+    
+  auto* params = static_cast<SharedSecretTaskParams*>(sessionParams);
+  SecureSession* session = params->session;
+  std::string* rawValue = params->rawValue;
+
+
+  SecureSession::rawDataPacket packet;
+  
+  const uint8_t* raw = reinterpret_cast<const uint8_t*>(rawValue->data()); // Gets the raw data pointer from the std::string
+  
+  memcpy(&packet, rawValue->data(), sizeof(SecureSession::rawDataPacket));
+
+
+  uint8_t plaintext[PACKET_DATA_SIZE];
+  int ret = session->decrypt(&packet, plaintext);
+
+    if (ret == 0) {
+        Serial0.println("Decryption successful, sending data over HID:");
+        Serial0.println((const char*) plaintext);
+        sendString((const char*)  plaintext); // Send the decrypted data over HID
+
+    } else {
+        Serial0.print("Decryption failed with error code: ");
+        Serial0.println(ret);
+    }
+}
+
+
+
 class MyServerCallbacks: public BLEServerCallbacks { // Callback handler for BLE Connection events
   void onConnect(BLEServer* bluServer) {
     led.blinkEnd(); // Stop blinking when a device connects
@@ -37,12 +68,14 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
     // Callback handler for BLE Characteristic events
     void onWrite(BLECharacteristic* inputCharacteristic) {
       //String value = String(inputCharacteristic->getValue().c_str());
-      std::string rawValue = inputCharacteristic->getValue(); // Gets the std::strig value of the characteristic
+      std::string rawValue = inputCharacteristic->getValue(); // Gets the std::string value of the characteristic
+      
       // Receive base64 encoded value
       if (!rawValue.empty() && session != nullptr) {
         const size_t IV_SIZE = 12;
         const size_t TAG_SIZE = 16;
 
+        // Handle bad packets
         if (rawValue.length() < IV_SIZE + TAG_SIZE) {
           Serial.println("Characteristic too short!");
           return;
@@ -52,8 +85,8 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
         if(pairingMode) {
           Serial0.println("Pairing mode active, waiting for peer to send public key...");
 
-          const uint8_t* raw = reinterpret_cast<const uint8_t*>(rawValue.data()); // Gets the raw data pointer from the std::string
-          auto* rawCopy = new std::string(rawValue);  // allocate a heap copy
+          //const uint8_t* raw = reinterpret_cast<const uint8_t*>(rawValue.data()); // Gets the raw data pointer from the std::string
+          auto* rawCopy = new std::string(rawValue);  // allocate a heap copy of the received packet
           auto* taskParams = new SharedSecretTaskParams{session, rawCopy};
         
           // Create new RTOS task to prevent stack overflow in BLE callback stack
@@ -68,13 +101,30 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
           );
         }
 
+
+        // If not in pairing mode
         else{
 
+          Serial0.println(rawValue.c_str());
+
+          auto* rawCopy = new std::string(rawValue);
+          auto* taskParams = new SharedSecretTaskParams{session, rawCopy};
+
+          xTaskCreatePinnedToCore(
+            decryptAndSend, // Function to run in the task
+            "DecryptTask", // Task name
+            8192, // Task stack size in bytes
+            taskParams, 
+            1,
+            nullptr, // Callback for task handle (TODO: use this to finish up the handshake)
+            1
+          );
+          //sendString(rawValue.c_str());
         }
       }
 
       else{
-        sendString("No data received or session not initialized.");
+        Serial0.println("No data received or session not initialized.");
       }
     }
 
@@ -82,9 +132,8 @@ class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
     SecureSession* session;
 };
 
-
+// Create the BLE Device
 void bleSetup(SecureSession* session){
-    // Create the BLE Device
     BLEDevice::init("ClipBoard");
     BLEDevice::setPower(ESP_PWR_LVL_N3); // low power for heat
     // Create the BLE Server
@@ -164,11 +213,6 @@ void generateSharedSecret(void* sessionParams){
       return;
     }
 
-    // Serial0.println("Decode Successful");
-    // Serial0.println((char*) peerKey); // Send the received public key over HID for debugging
-    
-
-   
 
     // int ret = session->decrypt(ciphertext, ciphertext_len, iv, tag, plaintext_out); // Decrypt the received data
     ret = session->computeSharedSecret(peerKey, 66); // Compute shared secret first
@@ -177,16 +221,19 @@ void generateSharedSecret(void* sessionParams){
     if (!ret) {
       Serial0.println("Shared secret computed successfully");
 
-      ret = session->deriveAESKeyFromSharedSecret(); // Derive AES key from shared secret
+      ret = session->deriveAESKeyFromSharedSecret(); // Derive AES key from shared secret and save it
 
       if(!ret){
         Serial0.println("AES key derived successfully");
+        led.setColor(Colors::Cyan);
+
       }
       else {
         char retchar[12];
         snprintf(retchar, 12, "%d", ret);
         Serial0.print("AES key derivation failed! Code: ");
         Serial0.println(ret);
+        led.set(Colors::Orange);
       }
 
     } 
@@ -196,6 +243,8 @@ void generateSharedSecret(void* sessionParams){
       snprintf(retchar, 12, "%d", ret);
       Serial0.print("Decryption failed! Code: ");
       Serial0.println(ret);
+      led.set(Colors::Orange);
+
     }
 
     pairingMode = false; // Disable pairing mode after processing
@@ -205,21 +254,6 @@ void generateSharedSecret(void* sessionParams){
     delete params;
     vTaskDelete(nullptr);
     //delete[] plaintext_out;
-}
-
-
-void decryptAndSend(SecureSession* session, SecureSession::rawDataPacket* packet) {  
-    uint8_t plaintext[PACKET_DATA_SIZE];
-    int ret = session->decrypt(packet, plaintext);
-
-    if (ret == 0) {
-        Serial0.println("Decryption successful, sending data over HID:");
-        sendString((const char*)  plaintext); // Send the decrypted data over HID
-
-    } else {
-        Serial0.print("Decryption failed with error code: ");
-        Serial0.println(ret);
-    }
 }
 
 

@@ -26,16 +26,17 @@ public:
     uint8_t sharedSecret[KEY_SIZE];
 
     struct rawDataPacket {
-        int packetId; // Unique ID for type of packet (0 = RESERVED, 1 = DATA, 2 = ACK, 3 = HANDSHAKE, 4=KEEPALIVE)
-        int sourceId; // Unique ID for the source of the packet (e.g., device ID)
-        bool slowmode; // When enabled reduces the wpm and slows down HID timing to enable legacy text input compatibility (notepad)
+        //int packetId; // Unique ID for type of packet (0 = RESERVED, 1 = DATA, 2 = ACK, 3 = HANDSHAKE, 4=KEEPALIVE)
+        //int sourceId; // Unique ID for the source of the packet (e.g., device ID)
+        //bool slowmode; // When enabled reduces the wpm and slows down HID timing to enable legacy text input compatibility (notepad)
 
-        int totalDataLen; // Total length of the data in the final message
-        int packetNumber; // Current packet number out of total
-        int totalPackets; // Total packets for current message
+        //int totalDataLen; // Total length of the data in the final message
+        //int packetNumber; // Current packet number out of total
+        //int totalPackets; // Total packets for current message
         
+        uint32_t dataLen;
         uint8_t IV[IV_SIZE]; // Nonce
-        uint8_t datatype; // Type of data (e.g., text, image, storage0, storage1, etc.)
+        //uint8_t datatype; // Type of data (e.g., text, image, storage0, storage1, etc.)
         uint8_t data[MAX_DATA_LEN]; // Array to store data, fixed size to simplify design
         uint8_t TAG[TAG_SIZE]; // The AES-GCM integrity tag
 

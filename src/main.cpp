@@ -4,6 +4,8 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <esp_timer.h>
+#include <nvs_flash.h>
+
 // ClipBoard libraries
 #include "espHID.h"
 #include "main.h"
@@ -11,7 +13,7 @@
 
 SecureSession sec;
 
-
+// Send the public key over hid
 void sendPublicKey(void* arg) {
   const char* pubKey = static_cast<const char*>(arg);
   Serial0.println("Sending public key: ");
@@ -20,13 +22,29 @@ void sendPublicKey(void* arg) {
   led.blinkEnd(); // Stop blinking
   
   // Finish the handshake here
-  led.set(Colors::Green); // Blink to indicate pairing mode
-  enablePairingMode(); // Re-enter pairing mode to wait for the peer to send their public key
+  led.set(Colors::Green); // Set green to indicate waiting for peer public key
+  enablePairingMode(); // Set ble to interpret the next write as a peer public key
+}
+
+
+void nvsinit(){
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    // NVS partition was truncated or version mismatch, so erase and retry
+    nvs_flash_erase();
+    err = nvs_flash_init();
+  }
+
+  if (err != ESP_OK) {
+    Serial0.printf("NVS init failed: %s\n", esp_err_to_name(err));
+  } else {
+    Serial0.println("NVS initialized");
+  }
 }
 
 // Enter pairing mode, generate a keypair, and send the public key to the transmitter
 void enterPairingMode() { 
-  disconnect(); // Disconnect any existing BLE connection
+  //disconnect(); // Disconnect any existing BLE connection
   Serial0.println("Entering pairing mode...");
   led.blinkStart(1000, Colors::Purple); // Blinking Purple
 
@@ -70,6 +88,7 @@ void setup() {
   Serial0.begin(115200); // Initialize Serial for debugging
   hidSetup(); // Initialize the HID device
   bleSetup(&sec); // Initialize the BLE device with the secure session
+  nvsinit();
   sec.init(); // Initialize the secure session
 
   // Intialize the RMT LED Driver
@@ -89,6 +108,4 @@ void loop() {
     Serial0.println("Button held!");
     enterPairingMode(); // Enter pairing mode on hold
   }
-
-
 }

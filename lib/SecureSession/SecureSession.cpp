@@ -1,5 +1,7 @@
-#include <secureSession.h>
 #include <Preferences.h>
+
+#include "secureSession.h"
+
 
 mbedtls_ecdh_context ecdh_ctx;
 mbedtls_ctr_drbg_context ctr_drbg;
@@ -64,7 +66,6 @@ int SecureSession::generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t& ou
     return 0;
 }
 
-
 int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[66], size_t peerPubLen) { // Compute shared secret given the peer's public key
     if (peerPubLen < 65) return -1;
 
@@ -115,6 +116,7 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[66], size_t p
 int SecureSession::deriveAESKeyFromSharedSecret() { // KDF to generate a key with entropy on every bit
     if (!sharedReady) return -1;
     uint8_t key_out[KEY_SIZE]; // Buffer to hold the derived key
+    
     // Use SHA-256 to hash shared secret to derive AES key
     int ret = mbedtls_sha256_ret(sharedSecret, KEY_SIZE, key_out, 0);
 
@@ -201,12 +203,13 @@ int SecureSession::decrypt( // Decrypt an encrypted string
 int SecureSession::decrypt(struct rawDataPacket* packet, uint8_t* plaintext_out) {
     if (!sharedReady) return -1;
 
+
     uint8_t aesKey[KEY_SIZE];
     // set the generated AES key in the GCM context
     preferences.getBytes("aesKey", aesKey, KEY_SIZE); // Get the AES key from preferences (for debugging)
 
-    uint8_t plaintext[packet->totalDataLen]; // Buffer to hold the decrypted plaintext
-    int ret = decrypt(packet->IV, packet->totalDataLen, packet->data, packet->TAG, plaintext); // Decrypt the packet data
+    //uint8_t plaintext[packet->totalDataLen]; // Buffer to hold the decrypted plaintext
+    int ret = decrypt(packet->IV, packet->dataLen, packet->data, packet->TAG, plaintext_out); // Decrypt the packet data
 
     return ret;
 }
