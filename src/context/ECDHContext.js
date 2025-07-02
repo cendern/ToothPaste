@@ -152,31 +152,27 @@ export const ECDHProvider = ({ children }) => {
         const encoder = new TextEncoder();
         const data = encoder.encode(plaintext);
 
-        console.log(aesKey);
+        // Encrypt the data with the AES key from storage
         const encrypted = await crypto.subtle.encrypt(
             { name: 'AES-GCM', iv },
             aesKey.current,
             data
         );
 
-        const encryptedBytes = new Uint8Array(encrypted);
-        const plaintextLength = data.length;
-
-
-
+        const encryptedBytes = new Uint8Array(encrypted); // encryptedBytes contains data + 16 byte tag
+        
         // Return base64 string with IV prepended (IV + ciphertext)
         const combined = new Uint8Array(4 + iv.length + encryptedBytes.length);        
 
-        combined[0] = (plaintextLength >> 24) & 0xff;
-        combined[1] = (plaintextLength >> 16) & 0xff;
-        combined[2] = (plaintextLength >> 8) & 0xff;
-        combined[3] = plaintextLength & 0xff;
+        // First 4 bytes are the length of the data
+        combined[0] = (data.length >> 24) & 0xff;
+        combined[1] = (data.length >> 16) & 0xff;
+        combined[2] = (data.length >> 8) & 0xff;
+        combined[3] = data.length & 0xff;
 
-
-
-
-        combined.set(iv, 4);
-        combined.set(encryptedBytes, 4 + iv.length);
+        
+        combined.set(iv, 4); // The iv is byte 5+12 bytes
+        combined.set(encryptedBytes, 4 + iv.length); // The rest of the packet
         return combined;
     }
 

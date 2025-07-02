@@ -16,9 +16,7 @@ export function BLEProvider({ children }) {
 
     // Connecting to a clipboard device using WEB BLE
     const connectToDevice = async () => {
-
         try {
-
             // Look for device whose name starts with 'Clip' (change this later)
             const device = await navigator.bluetooth.requestDevice({
                 filters: [
@@ -27,19 +25,23 @@ export function BLEProvider({ children }) {
                 optionalServices: [serviceUUID],
             });
 
+            // Set an on disconnect listener
+            device.addEventListener("gattserverdisconnected", () => {
+                setStatus(0);
+                console.log("Clipboard Disconnected");
+            });
+
+            // Try to connect
             const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(serviceUUID);
+
+            // Get device info
+            const service = await getServiceWithRetry(server, serviceUUID);
             const char = await service.getCharacteristic(characteristicUUID);
 
             setServer(server);
             setCharacteristic(char);
             setDevice(device);
 
-            // Set an on disconnect listener
-            device.addEventListener("gattserverdisconnected", () => {
-                setStatus(0);
-                console.log("Clipboard Disconnected");
-            });
 
 
             // If we don't know the public key of the device, we need to pair before sending
@@ -65,6 +67,22 @@ export function BLEProvider({ children }) {
         }
 
     };
+
+    // Retry service query to prevent "ghost connections" where BLE is connected but the service query returns too quickly
+    const getServiceWithRetry = async (server, uuid, attempts = 3) => {
+        for (let i = 0; i < attempts; i++) {
+            try {
+                return await server.getPrimaryService(uuid);
+            } catch (err) {
+                if (i < attempts - 1) {
+                    console.warn("Retrying service discovery...", err);
+                    await new Promise(r => setTimeout(r, 300));
+                } else {
+                    throw err;
+                }
+            }
+        }
+    }
 
     return (
         <BLEContext.Provider value={{
