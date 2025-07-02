@@ -5,9 +5,11 @@ import { BLEContext } from '../context/BLEContext';
 import { HomeIcon , PaperAirplaneIcon,  ClipboardIcon} from "@heroicons/react/24/outline";
 import CustomTyping from '../components/CustomTyping/CustomTyping';
 import RichTextArea from '../components/CustomTextArea/RichTextArea';
+import { ECDHContext } from '../context/ECDHContext';
 
 
 export default function BulkSend() {
+    const {encryptText} = useContext(ECDHContext);
     const [input, setInput] = useState('');
     const {characteristic, status} = useContext(BLEContext);
     const editorRef = useRef(null);
@@ -16,10 +18,12 @@ export default function BulkSend() {
         if (!characteristic || !input) return; 
 
         try {
-            console.log("Data sent", input)
-            const encoder = new TextEncoder();
-            const data = encoder.encode(input);
-            await characteristic.writeValue(data);
+            const encrypted = await encryptText(input); // First 12 bytes are IV
+            
+            //console.log("Data sent", encrypted);
+            //const encoder = new TextEncoder();
+            //const data = encoder.encode(encrypted);
+            await characteristic.writeValue(encrypted);
         } 
         
         catch (error) {

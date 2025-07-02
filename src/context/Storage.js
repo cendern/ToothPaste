@@ -1,5 +1,5 @@
 const DB_NAME = 'ToothPasteDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Open or upgrade the database to include any needed object store
 function openDB(clientID) {
@@ -22,7 +22,7 @@ function openDB(clientID) {
 export async function saveBase64(clientID, key, value) {
   const db = await openDB(clientID);
   const tx = db.transaction(clientID, 'readwrite');
-  tx.objectStore(clientID).put(value, key);
+  await tx.objectStore(clientID).put(value, key);
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
