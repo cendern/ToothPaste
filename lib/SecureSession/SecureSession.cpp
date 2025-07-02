@@ -8,27 +8,6 @@ mbedtls_ctr_drbg_context ctr_drbg;
 mbedtls_entropy_context entropy;
 Preferences preferences; // Preferences for storing data (Not secure, temporary solution)
 
-// Initialize non-volatile storage on the ESP32
-void nvsinit()
-{
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        // NVS partition was truncated or version mismatch, so erase and retry
-        nvs_flash_erase();
-        err = nvs_flash_init();
-    }
-
-    if (err != ESP_OK)
-    {
-        Serial0.printf("NVS init failed: %s\n", esp_err_to_name(err));
-    }
-    else
-    {
-        Serial0.println("NVS initialized");
-    }
-}
-
 SecureSession::SecureSession() : sharedReady(false)
 { // Class constructor
     // nvsinit(); // // Initialize non-volatile storage on the ESP32
