@@ -28,9 +28,26 @@ struct SharedSecretTaskParams {
       std::string* rawValue;
 };
 
+
+class DeviceServerCallbacks : public BLEServerCallbacks{
+    public:
+        void onConnect(BLEServer *bluServer);
+        void onDisconnect(BLEServer * bluServer);
+};
+
+class InputCharacteristicCallbacks : public BLECharacteristicCallbacks{
+    public:
+        InputCharacteristicCallbacks(SecureSession *session);
+        void onWrite(BLECharacteristic *inputCharacteristic);
+
+    private:
+        SecureSession *session;
+};
+
 void bleSetup(SecureSession* session);
 void generateSharedSecret(void* sessionParams);
 void disconnect();
 void enablePairingMode();
+void decryptAndSend(void *sessionParams);
 
 #endif // BLE_H
