@@ -7,6 +7,7 @@ const ec = new EC('p256');
 
 export const ECDHContext = createContext(); // Shared context for ECDH operations
 
+
 export const ECDHProvider = ({ children }) => {
     const [keyPair, setKeyPair] = useState(null); // { privateKey, publicKey }
     const aesKey = useRef(null); // Shared secret derived from ECDH
@@ -80,6 +81,16 @@ export const ECDHProvider = ({ children }) => {
         );
     };
 
+    const importSelfPrivateKey = async (rawKeyBuffer) => {
+      return await crypto.subtle.importKey(
+        "pkcs8",               // Private key format
+        rawKeyBuffer,
+        { name: "ECDH", namedCurve: "P-256"},
+        false,                  // extractable
+        ["deriveKey", "deriveBits"] // Key usages for ECDH
+      );
+    };
+    
     // Save PeerPublicKey (Uint8Array) in base64 format to indexedDB under the clientID store
     const savePeerPublicKey = async (peerPublicKey, clientID) => {
         if (!peerPublicKey) {
@@ -168,20 +179,13 @@ export const ECDHProvider = ({ children }) => {
         // Return base64 string with IV prepended (IV + ciphertext)
         //const combined = new Uint8Array(4 + iv.length + encryptedBytes.length);        
         const combined = new Uint8Array(iv.length + encryptedBytes.length);        
-
-        // First 4 bytes are the length of the data
-        // combined[0] = (data.length >> 24) & 0xff;
-        // combined[1] = (data.length >> 16) & 0xff;
-        // combined[2] = (data.length >> 8) & 0xff;
-        // combined[3] = data.length & 0xff;
-
         
         // combined.set(iv, 4); // The iv is byte 5+12 bytes
         // combined.set(encryptedBytes, 4 + iv.length); // The rest of the packet
         combined.set(iv);
         combined.set(encryptedBytes, iv.length);
         return combined;
-    }
+    };
 
     // Decrypt ciphertext (base64 string with IV prepended)
     const decryptText = async (ciphertextBase64) => {
@@ -195,7 +199,7 @@ export const ECDHProvider = ({ children }) => {
         );
         const decoder = new TextDecoder();
         return decoder.decode(decrypted);
-    }
+    };
 
     // create and encrypt packet -> returns an iterator of one or more packets where payload size < max_data_size
     const createEncryptedPackets = async function *(id, payload, slowMode=false){
@@ -219,8 +223,18 @@ export const ECDHProvider = ({ children }) => {
             const encrypted = await encryptText(nullTerminated, aad);
             yield new Packet(id, encrypted, chunkNumber, totalChunks, slowMode);
         }
-    }
+    };
     
+    const loadKeys = async(clientID) => {
+      const peerPubKey = await loadBase64(clientID, 'PeerPublicKey');
+      const pubKeyObject = await importPeerPublicKey(base64ToArrayBuffer(peerPubKey));
+
+      const sprivKey = await loadBase64(clientID, 'SelfPrivateKey');
+      const privKeyObject =  await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
+
+      deriveKey(privKeyObject, pubKeyObject);
+    };
+
     // Context Provider return
     return (
         <ECDHContext.Provider
@@ -235,7 +249,8 @@ export const ECDHProvider = ({ children }) => {
                 savePeerPublicKey,
                 encryptText,
                 decryptText,
-                createEncryptedPackets
+                createEncryptedPackets,
+                loadKeys,
             }}
         >
             {children}

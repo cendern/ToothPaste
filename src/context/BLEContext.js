@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef } from "react";
 import { keyExists } from './Storage';
+import { ECDHContext } from "./ECDHContext";
 
 
 export const BLEContext = createContext();
@@ -9,7 +10,9 @@ export function BLEProvider({ children }) {
     const [status, setStatus] = React.useState(0); // 0 = disconnected, 1 = connected & paired, 2 = connected & not paired
     const [device, setDevice] = useState(null);
     const [server, setServer] = useState(null);
+    const {loadKeys} = useContext(ECDHContext);
     const [pktCharacteristic, setpktCharacteristic] = useState(null);
+    
     const readyToReceive = useRef({ promise: null, resolve: null });
 
     const serviceUUID = '19b10000-e8f2-537e-4f6c-d104768a1214'; // ClipBoard service UUID from example
@@ -77,6 +80,7 @@ export function BLEProvider({ children }) {
 
             // Else we can send
             else {
+                loadKeys(device.id);
                 setStatus(1);
             }
         }

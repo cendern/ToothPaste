@@ -12,15 +12,15 @@ function App() {
   const [showOverlay, setShowOverlay] = useState(false);
 
   return (
+    <ECDHProvider>
       <BLEProvider>
-        <ECDHProvider>
           <div className="flex flex-1 min-h-screen max-h-screen">
             <SidebarWithLogo onOpenPairing={() => setShowOverlay(true)}/>
             <BulkSend />
             <ECDHOverlay showOverlay={showOverlay} setShowOverlay={setShowOverlay} />
           </div>
-        </ECDHProvider>
       </BLEProvider>
+    </ECDHProvider>
   );
 }
 

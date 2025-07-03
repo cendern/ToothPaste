@@ -28,14 +28,6 @@ export default function BulkSend() {
     const sendString = async () => {
         if (!pktCharacteristic || !input) return;
 
-        // try {
-        //     const encrypted = await encryptText(input); // First 12 bytes are IV
-        //     //console.log("Data sent", encrypted);
-        //     //const encoder = new TextEncoder();
-        //     //const data = encoder.encode(encrypted);
-        //     await characteristic.writeValue(encrypted);
-        // } 
-
         try {
             console.log("Send starting....")
             console.log(input);

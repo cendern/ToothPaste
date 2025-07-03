@@ -14,7 +14,7 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
     const [sharedSecret, setSharedSecret] = useState(null);
     const [error, setError] = useState(null);
     const [pkey, setpkey] = useState(null);
-    const {device, pktCharacteristic, status } = useContext(BLEContext);
+    const {device, pktCharacteristic, status} = useContext(BLEContext);
 
     const sendPublicKey = async () => {
         if (!pktCharacteristic || !pkey) return;
@@ -31,7 +31,7 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
         }
     };
 
-    const handleSubmit = async () => {
+    const computeSecret = async () => {
         try {
             setError(null);
             const compressedBytes = Uint8Array.from(atob(inputKey.trim()), c => c.charCodeAt(0)); // Parse the Base64 compressed public key input into a Uint8Array
@@ -49,7 +49,7 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
             const keys = await generateECDHKeyPair(); // Generate ECDH key pair
             const { privateKey, publicKey } = keys;
 
-            // Save the uncompressed public key of the peer in the database as base64
+            // Save the uncompressed peer public key in the database as base64
             await crypto.subtle.exportKey('raw', peerPublicKeyObject).then((rawKey) => {
                 savePeerPublicKey(rawKey, device.id);
             });
@@ -57,12 +57,14 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
 
             // Compress our public key and turn it into Base64 to send to the peer
             const rawPublicKey = await crypto.subtle.exportKey('raw', publicKey);
-            const b64Uncompressed = arrayBufferToBase64(rawPublicKey);
+            const b64SelfPublic = arrayBufferToBase64(rawPublicKey);
+
+
             const rawPrivateKey = await crypto.subtle.exportKey('pkcs8', privateKey);
             const b64PrivateKey = arrayBufferToBase64(rawPrivateKey);
 
-            await saveSelfKeys(b64Uncompressed, b64PrivateKey, device.id); // Store in DB
-            setpkey(b64Uncompressed);
+            await saveSelfKeys(b64SelfPublic, b64PrivateKey, device.id); // Store in DB
+            setpkey(b64SelfPublic);
 
 
 
@@ -121,7 +123,7 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
                     className='w-full h-10 opacity-1 color-text bg-shelf rounded-md p-2 my-4 focus:outline-none focus:border-primary-hover focus:ring-1 focus:ring-primary-hover'
                 />
                 <Button
-                    onClick={handleSubmit}
+                    onClick={computeSecret}
                     disabled={null}
                     className='my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'>
 
