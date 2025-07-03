@@ -257,27 +257,28 @@ void decryptAndSend(void *sessionParams)
   const uint8_t *raw = reinterpret_cast<const uint8_t *>(rawValue->data()); // Pointer to the heap copy of the received data
   size_t offset = 0;
   // Extract dataLen (uint32_t, big-endian or little-endian depending on your format)
-  packet.dataLen = (raw[offset] << 24) |
-                   (raw[offset + 1] << 16) |
-                   (raw[offset + 2] << 8) |
-                   raw[offset + 3];
+  // packet.dataLen = (raw[offset] << 24) |
+  //                  (raw[offset + 1] << 16) |
+  //                  (raw[offset + 2] << 8) |
+  //                  raw[offset + 3];
+  
+  packet.packetId = raw[0];
+  packet.slowmode = raw[1];
+  packet.packetNumber = raw[2];
+  packet.totalPackets = raw[3];
+  
+  
   offset += 4;
-
-  Serial0.println("DataLen: ");
-  Serial0.print(packet.dataLen);
-  if (packet.dataLen > MAX_DATA_LEN)
-  {
-    Serial0.println("Invalid packet length");
-    return;
-  }
 
   // Copy IV
   memcpy(packet.IV, raw + offset, SecureSession::IV_SIZE);
   offset += SecureSession::IV_SIZE;
 
   // Copy ciphertext
-  memcpy(packet.data, raw + offset, packet.dataLen);
-  offset += packet.dataLen;
+  size_t dataLength = (rawValue->length()) - (SecureSession::IV_SIZE + SecureSession::TAG_SIZE + SecureSession::HEADER_SIZE);
+  packet.dataLen = dataLength;
+  memcpy(packet.data, raw + offset, dataLength);
+  offset += dataLength;
 
   // Copy tag
   memcpy(packet.TAG, raw + offset, SecureSession::TAG_SIZE);
@@ -286,9 +287,15 @@ void decryptAndSend(void *sessionParams)
   uint8_t plaintext[PACKET_DATA_SIZE];
   int ret = session->decrypt(&packet, plaintext);
 
+  Serial0.printf("Data length: %d\n", dataLength);
+  Serial0.printf("ID: %d\nSlowMode: %d\nPacket Number: %d\nTotal Packets: %d\n",
+    packet.packetId, packet.slowmode, packet.packetNumber, packet.totalPackets);
   if (ret == 0)
   {
     Serial0.println("Decryption successful, sending data over HID:");
+    
+    
+
     Serial0.println((const char *)plaintext);
     sendString((const char *)plaintext); // Send the decrypted data over HID
   }
