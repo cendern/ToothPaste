@@ -11,7 +11,7 @@
 #define SECURESESSION_H
 
 
-#define MAX_DATA_LEN 199
+#define MAX_DATA_LEN 200
 
 
 class SecureSession {
@@ -86,7 +86,6 @@ private:
     mbedtls_entropy_context entropy;
     mbedtls_gcm_context gcm;
 
-    //uint8_t sharedSecret[ENC_KEYSIZE];
     bool sharedReady;
 
 };

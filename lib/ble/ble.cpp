@@ -3,7 +3,7 @@
 
 BLEServer *bluServer = NULL;                      // Pointer to the BLE Server instance
 BLECharacteristic *inputCharacteristic = NULL;    // Characteristic for sensor data
-BLECharacteristic *slowModeCharacteristic = NULL; // Characteristic for LED control
+BLECharacteristic *semaphoreCharacteristic = NULL; // Characteristic for LED control
 
 bool manualDisconnect = false; // Flag to indicate if the user manually disconnected
 bool pairingMode = false;      // Flag to indicate if we are in pairing mode
@@ -105,7 +105,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
           8192,           // Task stack size in bytes
           taskParams,
           1,
-          nullptr, // Callback
+          nullptr, // Store the task handle somewhere
           1);
     }
   }
@@ -126,15 +126,15 @@ void bleSetup(SecureSession *session)
   // Create a BLE Characteristic
   inputCharacteristic = pService->createCharacteristic(
       INPUT_STRING_CHARACTERISTIC,
-      BLECharacteristic::PROPERTY_READ |
-          BLECharacteristic::PROPERTY_WRITE |
-          BLECharacteristic::PROPERTY_NOTIFY |
-          BLECharacteristic::PROPERTY_INDICATE);
+      BLECharacteristic::PROPERTY_READ |      // Client can read
+      BLECharacteristic::PROPERTY_WRITE_NR |  // Client can Write without Response
+      BLECharacteristic::PROPERTY_NOTIFY |    // Server can async notify
+      BLECharacteristic::PROPERTY_INDICATE);  // Server can notify with ACK
 
-  // Create the ON button Characteristic
-  slowModeCharacteristic = pService->createCharacteristic(
-      LED_CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_WRITE);
+  // Create the HID Ready Semaphore Characteristic
+  semaphoreCharacteristic = pService->createCharacteristic(
+      HID_SEMAPHORE_CHARCTERISTIC,
+      BLECharacteristic::PROPERTY_NOTIFY);
 
   // Register the callback for the ON button characteristic
   inputCharacteristic->setCallbacks(new InputCharacteristicCallbacks(session));
@@ -142,7 +142,7 @@ void bleSetup(SecureSession *session)
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
   inputCharacteristic->addDescriptor(new BLE2902());
-  slowModeCharacteristic->addDescriptor(new BLE2902());
+  semaphoreCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();
@@ -244,6 +244,11 @@ void generateSharedSecret(void *sessionParams)
   vTaskDelete(nullptr);
 }
 
+// Notify the input characteristic
+void notifyClient(){
+  semaphoreCharacteristic->notify();
+}
+
 // RTOS task to decrpyt a packet and type its contents over HID
 void decryptAndSend(void *sessionParams)
 {
@@ -256,19 +261,13 @@ void decryptAndSend(void *sessionParams)
 
   const uint8_t *raw = reinterpret_cast<const uint8_t *>(rawValue->data()); // Pointer to the heap copy of the received data
   size_t offset = 0;
-  // Extract dataLen (uint32_t, big-endian or little-endian depending on your format)
-  // packet.dataLen = (raw[offset] << 24) |
-  //                  (raw[offset + 1] << 16) |
-  //                  (raw[offset + 2] << 8) |
-  //                  raw[offset + 3];
-  
+
+  // Unpack the first 4 bytes (header) into packet vars
   packet.packetId = raw[0];
   packet.slowmode = raw[1];
   packet.packetNumber = raw[2];
   packet.totalPackets = raw[3];
-  
-  
-  offset += 4;
+  offset += SecureSession::HEADER_SIZE;
 
   // Copy IV
   memcpy(packet.IV, raw + offset, SecureSession::IV_SIZE);
@@ -287,26 +286,41 @@ void decryptAndSend(void *sessionParams)
   uint8_t plaintext[PACKET_DATA_SIZE];
   int ret = session->decrypt(&packet, plaintext);
 
-  Serial0.printf("Data length: %d\n", dataLength);
-  Serial0.printf("ID: %d\nSlowMode: %d\nPacket Number: %d\nTotal Packets: %d\n",
-    packet.packetId, packet.slowmode, packet.packetNumber, packet.totalPackets);
+  // Debugging data
+  Serial0.printf("Data length: %d\r\n", dataLength);
+  Serial0.printf("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
+    packet.packetId, 
+    packet.slowmode, 
+    packet.packetNumber, 
+    packet.totalPackets);
+
+  // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
     Serial0.println("Decryption successful, sending data over HID:");
-    
-    
-
     Serial0.println((const char *)plaintext);
-    sendString((const char *)plaintext); // Send the decrypted data over HID
+
+    if(!packet.slowmode)
+      sendString((const char *)plaintext); // Send the decrypted data over HID
+    
+    else
+      sendString((const char *)plaintext, true); // If slowmode is enabled, time between keypresses is 20ms (For windows legacy keyboard handler e.g. notepad)
   }
+
   else
   {
     Serial0.print("Decryption failed with error code: ");
     Serial0.println(ret);
+    led.blinkStart(300, Colors::Blue);
   }
+
+  notifyClient(); // Once a HID report has been sent, notify that we are ready to receive another
 
   // Free task memory
   delete rawValue;
   delete params;
   vTaskDelete(nullptr);
+  led.blinkEnd();
+
 }
+
