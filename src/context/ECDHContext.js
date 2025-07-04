@@ -232,7 +232,7 @@ export const ECDHProvider = ({ children }) => {
       const sprivKey = await loadBase64(clientID, 'SelfPrivateKey');
       const privKeyObject =  await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
 
-      deriveKey(privKeyObject, pubKeyObject);
+      await deriveKey(privKeyObject, pubKeyObject);
     };
 
     // Context Provider return
