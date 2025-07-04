@@ -22,7 +22,7 @@ namespace Colors {
     constexpr RGB Purple  = {10, 0, 10};
     constexpr RGB White   = {10, 10, 10};
     constexpr RGB Off     = {0, 0, 0};
-    constexpr RGB Orange  = {10, 5, 0};
+    constexpr RGB Orange  = {30, 3, 0};
 }
 
 #endif

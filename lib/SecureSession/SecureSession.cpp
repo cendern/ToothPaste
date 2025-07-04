@@ -8,8 +8,9 @@ mbedtls_ctr_drbg_context ctr_drbg;
 mbedtls_entropy_context entropy;
 Preferences preferences; // Preferences for storing data (Not secure, temporary solution)
 
+// Class constructor
 SecureSession::SecureSession() : sharedReady(false)
-{ // Class constructor
+{
     // nvsinit(); // // Initialize non-volatile storage on the ESP32
     mbedtls_ecdh_init(&ecdh_ctx);
     mbedtls_ctr_drbg_init(&ctr_drbg);
@@ -17,24 +18,28 @@ SecureSession::SecureSession() : sharedReady(false)
     mbedtls_gcm_init(&gcm);
 }
 
+// Class destructor
 SecureSession::~SecureSession()
-{ // Class destructor
+{
     mbedtls_ecdh_free(&ecdh_ctx);
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_entropy_free(&entropy);
     mbedtls_gcm_free(&gcm);
 }
 
+// Initialize prng and define curve
 int SecureSession::init()
-{ // Initialize prng and define curve
-    const char *personalSalt = "ecdh_session";
+{
+    const char* personalSalt = "ecdh_session";
     // Try generating the rng seed
     int ret = mbedtls_ctr_drbg_seed(
         &ctr_drbg,
         mbedtls_entropy_func,
         &entropy,
-        (const unsigned char *)personalSalt,
-        strlen(personalSalt));
+        (const unsigned char*)personalSalt,
+        strlen(personalSalt)
+    );
+
     if (ret != 0)
         return ret;
 
@@ -42,8 +47,9 @@ int SecureSession::init()
     return ret;
 }
 
-int SecureSession::generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t &outPubLen)
-{ // Generate private and public key
+// Generate private and public key
+int SecureSession::generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t& outPubLen)
+{
 
     // Try generating the keypair (TODO: store into memory to persist after 1 pairing)
     int ret = mbedtls_ecdh_gen_public(
@@ -51,7 +57,9 @@ int SecureSession::generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t &ou
         &ecdh_ctx.d,   // private key
         &ecdh_ctx.Q,   // public key
         mbedtls_ctr_drbg_random,
-        &ctr_drbg);
+        &ctr_drbg
+    );
+
     if (ret != 0)
         return ret;
 
@@ -64,7 +72,9 @@ int SecureSession::generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t &ou
         MBEDTLS_ECP_PF_COMPRESSED, // <-- Use compressed format
         &olen,
         outPublicKey,
-        sizeof(pubkey));
+        sizeof(pubkey)
+    );
+
     if (ret != 0)
         return ret;
 
@@ -102,7 +112,8 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE *
         &peerPoint,              // Peer Public Key
         &ecdh_ctx.d,             // Private Key
         mbedtls_ctr_drbg_random, // PRNG
-        &ctr_drbg);
+        &ctr_drbg
+    );
 
     mbedtls_ecp_point_free(&peerPoint);
     if (ret != 0)
@@ -124,13 +135,17 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE *
     return 0;
 }
 
-int SecureSession::deriveAESKeyFromSharedSecret()
-{                                         // KDF to generate a key with entropy on every bit
-    preferences.begin("security", false); // Start the preferences RW sesion (NOT SECURE, just for testing)
-    preferences.clear(); // Clear all historical data TODO: this forces single device pairing
-
+int SecureSession::deriveAESKeyFromSharedSecret(const char *base64Input)
+{
+    // Return if a shared secret was never generated
     if (!sharedReady)
         return -1;
+
+    preferences.begin("security", false); // Start the preferences RW sesion (NOT SECURE, just for testing)
+    preferences.clear();                  // Clear all historical data TODO: this forces single device pairing
+
+    uint8_t aesKey[ENC_KEYSIZE];
+
     const uint8_t info[] = "aes-gcm-256"; // Must match JS
     size_t info_len = sizeof(info) - 1;
 
@@ -139,18 +154,18 @@ int SecureSession::deriveAESKeyFromSharedSecret()
         nullptr, 0,                         // optional salt (can be NULL/0)
         sharedSecret, sizeof(sharedSecret), // input key material (from ECDH)
         info, info_len,                     // context info (optional domain separation)
-        globalAESKey, sizeof(globalAESKey)  // output key
+        aesKey, sizeof(aesKey)              // output key
     );
 
     // Debugging
     Serial0.println("AES Key: ");
-    printBase64(globalAESKey, sizeof(globalAESKey));
+    printBase64(aesKey, sizeof(aesKey));
     Serial0.println();
 
     // If a key was successfully generated, store it
     if (!ret)
-    {   
-        preferences.putBytes("aesKey", globalAESKey, sizeof(globalAESKey)); // Store the key in preferences for debugging
+    {
+        preferences.putBytes(base64Input, aesKey, sizeof(aesKey)); // Store the key in preferences for debugging
         Serial0.println("AES Key saved successfully");
     };
 
@@ -158,10 +173,11 @@ int SecureSession::deriveAESKeyFromSharedSecret()
     return ret;
 }
 
-int SecureSession::encrypt(   // Encrypt a given text string using gcm
-    const uint8_t *plaintext, // Text data to be encrypted
+// Encrypt a given text string using gcm
+int SecureSession::encrypt(
+    const uint8_t* plaintext, // Text data to be encrypted
     size_t plaintext_len,     // Len of plaintext
-    uint8_t *ciphertext,      // Pointer to store the encrypted data
+    uint8_t* ciphertext,      // Pointer to store the encrypted data
     uint8_t iv[IV_SIZE],      // prng initialization vector
     uint8_t tag[TAG_SIZE])    // Tag for GCM to ensure data integrity
 
@@ -185,76 +201,88 @@ int SecureSession::encrypt(   // Encrypt a given text string using gcm
 
     // Generate ciphertext using GCM to ensure data integrity
     ret = mbedtls_gcm_crypt_and_tag(&gcm, MBEDTLS_GCM_ENCRYPT,
-                                    plaintext_len,
-                                    iv, IV_SIZE,
-                                    nullptr, 0, // no additional data
-                                    plaintext,
-                                    ciphertext,
-                                    TAG_SIZE,
-                                    tag);
+        plaintext_len,
+        iv, IV_SIZE,
+        nullptr, 0, // no additional data
+        plaintext,
+        ciphertext,
+        TAG_SIZE,
+        tag);
     mbedtls_gcm_free(&gcm);
     return ret;
 }
 
-int SecureSession::decrypt( // Decrypt an encrypted string
+// Decrypt an encrypted string
+int SecureSession::decrypt(
     const uint8_t iv[IV_SIZE],
     size_t ciphertext_len,
-    const uint8_t *ciphertext,
+    const uint8_t* ciphertext,
     const uint8_t tag[TAG_SIZE],
-    uint8_t *plaintext_out)
+    uint8_t* plaintext_out,
+    const char* base64pubKey)
 {
 
     preferences.begin("security", true); // Open storage session in read only mode
-    if (!preferences.isKey("aesKey")){
-        Serial0.println("aesKey not found in preferences storage");   
+    if (!preferences.isKey(base64pubKey))
+    {
+        Serial0.println("aesKey not found in preferences storage");
         return 1;
     }
-    
+
     uint8_t aesKey[ENC_KEYSIZE];
     // set the generated AES key in the GCM context
-    preferences.getBytes("aesKey", aesKey, ENC_KEYSIZE); // Get the AES key from preferences (for debugging)
+    preferences.getBytes(base64pubKey, aesKey, ENC_KEYSIZE); // Get the AES key from preferences (for debugging)
 
     Serial0.println("AES KEY FROM PERFERENCES: ");
     printBase64(aesKey, ENC_KEYSIZE);
     Serial0.println();
 
-    Serial0.println("AES KEY FROM GLOBAL: ");
-    printBase64(globalAESKey, ENC_KEYSIZE);
-    Serial0.println();
-
+    // Import the bytearray AES key into the mbedtls context
     mbedtls_gcm_init(&gcm);
     int ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, aesKey, ENC_KEYSIZE * 8); // Set the AES key for the GCM context
     if (ret != 0)
         return ret;
 
+    // Decrypt the ciphertext using the AES key
     ret = mbedtls_gcm_auth_decrypt(&gcm,
-                                   ciphertext_len,
-                                   iv, IV_SIZE,
-                                   nullptr, 0,
-                                   tag,
-                                   TAG_SIZE,
-                                   ciphertext,
-                                   plaintext_out);
+        ciphertext_len,
+        iv, IV_SIZE,
+        nullptr, 0,
+        tag,
+        TAG_SIZE,
+        ciphertext,
+        plaintext_out
+    );
     mbedtls_gcm_free(&gcm);
 
     plaintext_out[ciphertext_len] = '\0';
     return ret;
 }
 
-// Decrypt a rawDataPacket and output the plaintext
-int SecureSession::decrypt(struct rawDataPacket *packet, uint8_t *plaintext_out)
-{
+// Decrypt a rawDataPacket
+int SecureSession::decrypt(struct rawDataPacket* packet, uint8_t* plaintext_out, const char* base64pubKey)
+{   
+    // Decrypt the packet data
     int ret = decrypt(
         packet->IV,
         packet->dataLen,
         packet->data,
         packet->TAG,
-        plaintext_out); // Decrypt the packet data
+        plaintext_out,
+        base64pubKey
+    ); 
+    return ret;
+}
+
+bool SecureSession::isEnrolled(const char* key){
+    preferences.begin("security", true); // Open storage session in read only mode
+    bool ret = preferences.isKey(key); // Check if the AES key for the given public key exists
+    preferences.end();
     return ret;
 }
 
 // Debugging helper to print uint8_t arrays as base64 strings to serial0
-void SecureSession::printBase64(const uint8_t *data, size_t dataLen)
+void SecureSession::printBase64(const uint8_t* data, size_t dataLen)
 {
     // Calculate the output length: base64 output is ~1.37x input, so (4 * ceil(dataLen / 3))
     size_t outputLen = 4 * ((dataLen + 2) / 3);
@@ -271,7 +299,7 @@ void SecureSession::printBase64(const uint8_t *data, size_t dataLen)
     if (ret == 0)
     {
         encoded[actualLen] = '\0'; // Null-terminate the string
-        Serial0.println((const char *)encoded);
+        Serial0.println((const char*)encoded);
     }
     else
     {
@@ -281,16 +309,16 @@ void SecureSession::printBase64(const uint8_t *data, size_t dataLen)
 }
 
 // Helper: HKDF-Extract and Expand using SHA-256
-int SecureSession::hkdf_sha256(const uint8_t *salt, size_t salt_len,
-                               const uint8_t *ikm, size_t ikm_len,
-                               const uint8_t *info, size_t info_len,
-                               uint8_t *okm, size_t okm_len)
+int SecureSession::hkdf_sha256(const uint8_t* salt, size_t salt_len,
+    const uint8_t* ikm, size_t ikm_len,
+    const uint8_t* info, size_t info_len,
+    uint8_t* okm, size_t okm_len)
 {
     int ret = 0;         // Return code to mimic other mbedTLS functions
     uint8_t pre_key[32]; // SHA-256 output size
 
     // Initialize the hashing context for mbedtls - use SHA256
-    const mbedtls_md_info_t *md = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+    const mbedtls_md_info_t* md = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
     if (!md)
         return -1;
 

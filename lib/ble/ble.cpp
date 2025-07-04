@@ -7,7 +7,7 @@ BLECharacteristic *semaphoreCharacteristic = NULL; // Characteristic for LED con
 
 bool manualDisconnect = false; // Flag to indicate if the user manually disconnected
 bool pairingMode = false;      // Flag to indicate if we are in pairing mode
-
+const char* clientPubKey;
 
 // Handle Connect
 void DeviceServerCallbacks::onConnect(BLEServer *bluServer)
@@ -61,22 +61,13 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
   // Receive base64 encoded value
   if (!rawValue.empty() && session != nullptr)
   {
-    const size_t IV_SIZE = 12;
-    const size_t TAG_SIZE = 16;
-
-    // // Handle bad packets
-    // if (rawValue.length() < IV_SIZE + TAG_SIZE) {
-    //   Serial.println("Characteristic too short!");
-    //   return;
-    // }
-
+    auto *rawCopy = new std::string(rawValue); // allocate a heap copy of the received packet
+    auto *taskParams = new SharedSecretTaskParams{session, rawCopy, clientPubKey}; // Create the parameters passed to the RTOS task
+    
     // Interpret data as peer public key when in pairing mode
     if (pairingMode)
     {
-      Serial0.println("Pairing mode enabled, uncompressed peer public key received \n");
-
-      auto *rawCopy = new std::string(rawValue); // allocate a heap copy of the received packet
-      auto *taskParams = new SharedSecretTaskParams{session, rawCopy};
+      Serial0.println("Pairing mode: Uncompressed peer public key received \n");
 
       // Generate a shared secret once the Peer Public Key has been received
       // Create new RTOS task to prevent stack overflow in BLE callback stack
@@ -84,21 +75,22 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
           generateSharedSecret, // Function to run in the task
           "SharedSecretTask",   // Task name
           8192,                 // Task stack size in bytes
-          taskParams,
+          taskParams,           // Params passed to generateSharedSecret
           1,
-          nullptr, // Callback for task handle (TODO: use this to finish up the handshake)
-          1);
+          nullptr, // Task handler, we dont care since the secret decode is 'fire-and-forget'
+          1
+      );
     }
 
     // If not in pairing mode
     else
-    {
-
-      Serial0.println(rawValue.c_str());
-
-      auto *rawCopy = new std::string(rawValue);
-      auto *taskParams = new SharedSecretTaskParams{session, rawCopy};
-
+    { 
+      // Handle bad packets
+      if (rawValue.length() < SecureSession::IV_SIZE + SecureSession::TAG_SIZE + SecureSession::HEADER_SIZE) {
+        Serial.println("Characteristic too short!");
+        return;
+      }
+      // Decrypt the received packet in a new RTOS task, the task then calls HID functions if applicable
       xTaskCreatePinnedToCore(
           decryptAndSend, // Function to run in the task
           "DecryptTask",  // Task name
@@ -106,7 +98,8 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
           taskParams,
           1,
           nullptr, // Store the task handle somewhere
-          1);
+          1
+      );
     }
   }
 }
@@ -161,6 +154,11 @@ void disconnect()
   manualDisconnect = true; // Set the flag to indicate manual disconnection
 }
 
+// Notify the input characteristic
+void notifyClient(){
+  semaphoreCharacteristic->notify();
+}
+
 // Interpret the next write event as a pairing packet
 void enablePairingMode()
 {
@@ -168,6 +166,7 @@ void enablePairingMode()
   Serial0.println("Pairing mode enabled. Waiting for peer public key...");
 }
 
+// TODO: Refactor
 // RTOS task to run once peer public key is received
 void generateSharedSecret(void *sessionParams)
 {
@@ -204,15 +203,17 @@ void generateSharedSecret(void *sessionParams)
     return;
   }
 
+  // TODO: Can probably be moved to SecureSession for clarity
   // Compute shared secret from peer public key array
   ret = session->computeSharedSecret(peerKeyArray, 66);
   if (!ret)
   {
     // Derive AES key from shared secret and save it
-    ret = session->deriveAESKeyFromSharedSecret();
+    ret = session->deriveAESKeyFromSharedSecret(base64Input);
     if (!ret)
     {
       Serial0.println("AES key derived successfully");
+      clientPubKey = base64Input;
       led.set(Colors::Cyan);
     }
     // If the AES key derivation fails
@@ -244,29 +245,28 @@ void generateSharedSecret(void *sessionParams)
   vTaskDelete(nullptr);
 }
 
-// Notify the input characteristic
-void notifyClient(){
-  semaphoreCharacteristic->notify();
-}
 
+
+// TODO: Refactor
 // RTOS task to decrpyt a packet and type its contents over HID
 void decryptAndSend(void *sessionParams)
 {
-  // SecureSession* session, SecureSession::rawDataPacket* packet
+  // Unpack the parameter pointer into the SecureSession and Packet
   auto *params = static_cast<SharedSecretTaskParams *>(sessionParams);
   SecureSession *session = params->session;
   std::string *rawValue = params->rawValue;
-
-  SecureSession::rawDataPacket packet; // Packet instance inside RTOS task
+  //const char* base64PubKey = params->base64pubKey;
 
   const uint8_t *raw = reinterpret_cast<const uint8_t *>(rawValue->data()); // Pointer to the heap copy of the received data
-  size_t offset = 0;
 
+  SecureSession::rawDataPacket packet; // Packet instance inside RTOS task
+  size_t offset = 0;
+  
   // Unpack the first 4 bytes (header) into packet vars
-  packet.packetId = raw[0];
-  packet.slowmode = raw[1];
-  packet.packetNumber = raw[2];
-  packet.totalPackets = raw[3];
+  packet.packetId = raw[0];      // Unique ID for type of packet (0 = DATA, 1 = HANDSHAKE)
+  packet.slowmode = raw[1];      // When enabled reduces the wpm and slows down HID timing to enable legacy text input compatibility (notepad)
+  packet.packetNumber = raw[2];  // Current packet number out of total
+  packet.totalPackets = raw[3];  // Total packets for current message
   offset += SecureSession::HEADER_SIZE;
 
   // Copy IV
@@ -283,30 +283,56 @@ void decryptAndSend(void *sessionParams)
   memcpy(packet.TAG, raw + offset, SecureSession::TAG_SIZE);
   offset += SecureSession::TAG_SIZE;
 
-  uint8_t plaintext[PACKET_DATA_SIZE];
-  int ret = session->decrypt(&packet, plaintext);
-
   // Debugging data
   Serial0.printf("Data length: %d\r\n", dataLength);
   Serial0.printf("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
     packet.packetId, 
     packet.slowmode, 
     packet.packetNumber, 
-    packet.totalPackets);
+    packet.totalPackets
+  );
+
+  // If the packet is an AUTH packet, the data is the pubKey of the client
+  // TODO: Severe refactoring needed
+  if(packet.packetId == 1){
+    clientPubKey = rawValue->c_str();
+    
+    // If we don't know the AES key for the given public key, display 'unpaired' status led
+    if(!session->isEnrolled(clientPubKey))
+      led.set(Colors::Orange);
+    
+    else
+      led.set(Colors::Cyan);
+
+    return;
+  }
+
+  // Allocate plaintext buffer and decrypt
+  uint8_t plaintext[SecureSession::MAX_DATA_LEN];
+  int ret = session->decrypt(&packet, plaintext, clientPubKey);
 
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
-    Serial0.println("Decryption successful, sending data over HID:");
+    Serial0.println("Decryption successful");
     Serial0.println((const char *)plaintext);
 
-    if(!packet.slowmode)
-      sendString((const char *)plaintext); // Send the decrypted data over HID
-    
-    else
-      sendString((const char *)plaintext, true); // If slowmode is enabled, time between keypresses is 20ms (For windows legacy keyboard handler e.g. notepad)
+    switch(packet.packetId){
+      case 0:
+        sendString((const char *)plaintext, packet.slowmode); // Send the decrypted data over HID
+        break;
+
+      case 1:
+        // Valid the AES_key:PeerID relationship  
+        break;
+
+      default:
+        led.blinkStart(500, Colors::Green);
+        break;
+    } 
   }
 
+  // If the decryption fails
   else
   {
     Serial0.print("Decryption failed with error code: ");

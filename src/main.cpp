@@ -21,7 +21,7 @@ void sendPublicKey(void* arg) {
   led.blinkEnd(); // Stop blinking
   
   // Finish the handshake here
-  led.set(Colors::Green); // Set green to indicate waiting for peer public key
+  led.set(Colors::Purple); // Set green to indicate waiting for peer public key
   enablePairingMode(); // Set ble to interpret the next write as a peer public key
 }
 
