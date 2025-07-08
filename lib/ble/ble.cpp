@@ -1,5 +1,6 @@
 #include "ble.h"
 #include "NeoPixelRMT.h"
+#include "StateManager.h"
 
 BLEServer *bluServer = NULL;                      // Pointer to the BLE Server instance
 BLECharacteristic *inputCharacteristic = NULL;    // Characteristic for sensor data
@@ -18,12 +19,11 @@ void DeviceServerCallbacks::onConnect(BLEServer *bluServer)
   
   // If a device is not already connected
   if(connectedCount == 0){
-    led.blinkEnd();        // Stop blinking when a device connects
-    led.set(Colors::Cyan); // Led cyan when connected
+    stateManager.setState(UNPAIRED);
   }
 
   // If a device is already connected, no new connections are possible until the current one disconnects 
-  //(since WEB-BLE does not auto connect this means the device can be restarted for new connections)
+  // (since WEB-BLE does not auto connect this means the device can be restarted for new connections)
   // TODO: This will need to be improved later
   else{
     uint16_t newClient = bluServer->getConnId();
@@ -35,17 +35,17 @@ void DeviceServerCallbacks::onConnect(BLEServer *bluServer)
 void DeviceServerCallbacks::onDisconnect(BLEServer *bluServer)
 {
   // If there are no devices connected (otherwise the disconnect was a result of a new client being rejected)
-  if(bluServer->getConnectedCount() <= 1){
+  if(bluServer->getConnectedCount() <= 1){ // getConnectedCount() doesnt change until much later after the callback fires so clients will be 1 at disconnect time as well
     if (manualDisconnect)
     {
-      manualDisconnect = false; // Reset the flag if the disconnection was manual
-      led.blinkStart(500, Colors::Yellow);  // LED blinks yellow when disconnected manually
-      return;                   // Do not blink if the disconnection was manual
+      manualDisconnect = false;             // Reset the flag if the disconnection was manual
+      led.set(Colors::Orange);              // LED back to unpaired ready state
+      return;                               // Do not blink if the disconnection was manual
     }
 
     else
     {
-      led.blinkStart(500, Colors::Red); // Start blinking red when a device disconnects by itself
+      stateManager.setState(DISCONNECTED);
     }
 
     bluServer->startAdvertising(); // Restart advertising
@@ -67,7 +67,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
     auto *taskParams = new SharedSecretTaskParams{session, rawCopy, clientPubKey}; // Create the parameters passed to the RTOS task
     
     // Interpret data as peer public key when in pairing mode
-    if (pairingMode)
+    if (stateManager.getState() == PAIRING)
     {
       Serial0.println("Pairing mode: Uncompressed peer public key received \n");
 
@@ -157,18 +157,18 @@ void disconnect()
   manualDisconnect = true; // Set the flag to indicate manual disconnection
 }
 
-// Notify the input characteristic
+// Notify the semaphore characteristic
 void notifyClient(const uint8_t data){
   semaphoreCharacteristic->setValue((uint8_t*)&data, 1);  // Set the data to be notified
   semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
 }
 
-// Interpret the next write event as a pairing packet
-void enablePairingMode()
-{
-  pairingMode = true; // Enable pairing mode
-  Serial0.println("Pairing mode enabled. Waiting for peer public key...");
-}
+// // Interpret the next write event as a pairing packet
+// void enablePairingMode()
+// {
+//   pairingMode = true; // Enable pairing mode
+//   Serial0.println("Pairing mode enabled. Waiting for peer public key...");
+// }
 
 // TODO: Refactor
 // RTOS task to run once peer public key is received
@@ -204,6 +204,7 @@ void generateSharedSecret(void *sessionParams)
     char retchar[12];
     snprintf(retchar, 12, "%d", ret);
     Serial0.printf("Base64 decode failed, Error code: %d\n", retchar);
+    stateManager.setState(ERROR);
     return;
   }
 
@@ -218,7 +219,7 @@ void generateSharedSecret(void *sessionParams)
     {
       Serial0.println("AES key derived successfully");
       clientPubKey = base64Input;
-      led.set(Colors::Cyan);
+      stateManager.setState(READY);
     }
     // If the AES key derivation fails
     else
@@ -226,7 +227,7 @@ void generateSharedSecret(void *sessionParams)
       char retchar[12];
       snprintf(retchar, 12, "%d", ret);
       Serial0.printf("AES key derivation failed! Code: %d\n", retchar);
-      led.set(Colors::Orange);
+      stateManager.setState(ERROR);
     }
   }
 
@@ -236,11 +237,12 @@ void generateSharedSecret(void *sessionParams)
     char retchar[12];
     snprintf(retchar, 12, "%d", ret);
     Serial0.printf("Shared Secret computation failed! Code: %d\n", retchar);
-    led.set(Colors::Orange);
+    stateManager.setState(ERROR);
   }
 
   // Disable pairing mode after processing
   pairingMode = false;
+  stateManager.setState(READY);
   Serial0.println("Pairing mode disabled.");
 
   // Clean up RTOS task
@@ -301,10 +303,9 @@ void decryptAndSend(void *sessionParams)
   if(packet.packetId == 1){
     clientPubKey = (const char*) rawValue->data() + 4;
     
-    //led.set(Colors::White);
-
     // If we don't know the AES key for the given public key, display 'unpaired' status led
     if(!session->isEnrolled(clientPubKey)){
+      
       // Lower bits of notification are auth status to tell if we recognize the pubkey of the sender
       // Upper bits are the notification itself ([0] = KeepAlive, [1] = Ready to Receive, [2] = Not ready to receive )
       notificationPacket.packetType = 2;
@@ -312,7 +313,7 @@ void decryptAndSend(void *sessionParams)
       uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
       notifyClient(packed);
 
-      led.set(Colors::Orange);
+      stateManager.setState(UNPAIRED); // Set the device to the unpaired state
     }
 
     else{
@@ -320,7 +321,8 @@ void decryptAndSend(void *sessionParams)
       notificationPacket.authStatus = 1;
       uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
       notifyClient(packed);
-      led.set(Colors::White);
+
+      stateManager.setState(READY);
     }
     
     // Clean up RTOS task
@@ -364,7 +366,9 @@ void decryptAndSend(void *sessionParams)
   {
     Serial0.print("Decryption failed with error code: ");
     Serial0.println(ret);
-    led.blinkStart(300, Colors::Blue);
+    
+    led.blinkStart(500, Colors::Blue);
+    //stateManager.setState(ERROR);
   }
 
   notificationPacket.packetType = 1;

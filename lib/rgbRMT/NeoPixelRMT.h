@@ -7,6 +7,7 @@
 
 #define RGB_LED_PIN GPIO_NUM_21 // Default pin for the RGB LED, can be changed in constructor
 
+
 class NeoPixelRMT {
 public:
     explicit NeoPixelRMT(gpio_num_t pin); 
@@ -43,7 +44,7 @@ private:
     bool blinking;
 };
 
-
 extern NeoPixelRMT led;
+
 
 #endif // NEOPIXELRMT_H

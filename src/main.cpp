@@ -10,7 +10,7 @@
 #include "main.h"
 #include "ble.h"
 
-SecureSession sec;
+SecureSession sec; // Global Secure Session
 
 // Send the public key over hid and wait for ble peer public key
 void sendPublicKey(void* arg) {
@@ -75,13 +75,15 @@ void enterPairingMode() {
 
 void setup() {
   Serial0.begin(115200); // Initialize Serial for debugging
+  led.begin();    // Intialize the RMT LED Driver
+
   hidSetup(); // Initialize the HID device
   bleSetup(&sec); // Initialize the BLE device with the secure session
   sec.init(); // Initialize the secure session
 
-  // Intialize the RMT LED Driver
-  led.begin();
-  led.set(Colors::Orange); // Set the LED to Orange on startup (TODO: Change this to query state - paired / not)
+  //stateManager.onChange();
+
+  stateManager.setState(NOT_CONNECTED);
 }
 
 // The loop is only used for gpio polling
@@ -97,6 +99,7 @@ void loop() {
 
   else if (buttonEvent == 2) { // Hold event
     Serial0.println("Button held!");
-    enterPairingMode(); // Enter pairing mode on hold
+    stateManager.setState(PAIRING);
+    //enterPairingMode(); // Enter pairing mode on hold
   }
 }
