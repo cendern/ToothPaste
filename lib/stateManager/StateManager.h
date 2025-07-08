@@ -28,7 +28,7 @@ public:
     DeviceState getState() const;
     void onChange(StateCallback cb);
 private:
-    DeviceState currentState = NOT_CONNECTED;
+    DeviceState currentState = ERROR;
     StateCallback callback = nullptr;  // Only one callback
 
 };

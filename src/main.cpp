@@ -11,6 +11,8 @@
 #include "ble.h"
 
 SecureSession sec; // Global Secure Session
+static char base64pubKey[45]; // Buffer to hold the Base64 encoded public key (44 base64 chars + 1 null)
+
 
 // Send the public key over hid and wait for ble peer public key
 void sendPublicKey(void* arg) {
@@ -22,7 +24,7 @@ void sendPublicKey(void* arg) {
   
   // Finish the handshake here
   led.set(Colors::Purple); // Set green to indicate waiting for peer public key
-  enablePairingMode(); // Set ble to interpret the next write as a peer public key
+  //enablePairingMode(); // Set ble to interpret the next write as a peer public key
 }
 
 
@@ -31,7 +33,7 @@ void enterPairingMode() {
   //disconnect(); // Disconnect any existing BLE connection
 
   Serial0.println("Entering pairing mode...");
-  led.blinkStart(1000, Colors::Purple); // Blinking Purple
+  stateManager->setState(PAIRING);
 
   uint8_t pubKey[SecureSession::PUBKEY_SIZE]; 
   size_t pubLen;
@@ -42,7 +44,6 @@ void enterPairingMode() {
   if (!ret) { 
     // Base64 encode the public key for transmission
     size_t olen = 0;
-    static char base64pubKey[45]; // Buffer to hold the Base64 encoded public key (44 base64 chars + 1 null)
     mbedtls_base64_encode((unsigned char *)base64pubKey, sizeof(base64pubKey), &olen, pubKey, SecureSession::PUBKEY_SIZE);
     base64pubKey[olen] = '\0';  // Null-terminate the public key string
     
@@ -69,7 +70,7 @@ void enterPairingMode() {
 
     Serial0.println("Keygen failed with error: ");
     Serial0.println(retchar); // Print the error code to Serial for debugging
-    led.set(Colors::Red);  // Red
+    stateManager->setState(ERROR);
   }
 }
 
@@ -95,13 +96,17 @@ void loop() {
   // Poll the button state (interrupts would cause issues with RTOS)
   int buttonEvent = checkButton();
   if (buttonEvent == 1) { // Single click event
-    sendString("Button clicked!");
+    if(stateManager->getState() == PAIRING){
+      sendString(base64pubKey);
+    }
+    else
+      sendString("Button clicked!");
   } 
 
 
   else if (buttonEvent == 2) { // Hold event
     Serial0.println("Button held!");
     stateManager->setState(PAIRING);
-    //enterPairingMode(); // Enter pairing mode on hold
+    enterPairingMode(); // Enter pairing mode on hold
   }
 }
