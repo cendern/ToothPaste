@@ -19,7 +19,7 @@ void DeviceServerCallbacks::onConnect(BLEServer *bluServer)
   
   // If a device is not already connected
   if(connectedCount == 0){
-    stateManager.setState(UNPAIRED);
+    stateManager->setState(UNPAIRED);
   }
 
   // If a device is already connected, no new connections are possible until the current one disconnects 
@@ -45,7 +45,7 @@ void DeviceServerCallbacks::onDisconnect(BLEServer *bluServer)
 
     else
     {
-      stateManager.setState(DISCONNECTED);
+      stateManager->setState(DISCONNECTED);
     }
 
     bluServer->startAdvertising(); // Restart advertising
@@ -67,7 +67,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
     auto *taskParams = new SharedSecretTaskParams{session, rawCopy, clientPubKey}; // Create the parameters passed to the RTOS task
     
     // Interpret data as peer public key when in pairing mode
-    if (stateManager.getState() == PAIRING)
+    if (stateManager->getState() == PAIRING)
     {
       Serial0.println("Pairing mode: Uncompressed peer public key received \n");
 
@@ -204,7 +204,7 @@ void generateSharedSecret(void *sessionParams)
     char retchar[12];
     snprintf(retchar, 12, "%d", ret);
     Serial0.printf("Base64 decode failed, Error code: %d\n", retchar);
-    stateManager.setState(ERROR);
+    stateManager->setState(ERROR);
     return;
   }
 
@@ -219,7 +219,7 @@ void generateSharedSecret(void *sessionParams)
     {
       Serial0.println("AES key derived successfully");
       clientPubKey = base64Input;
-      stateManager.setState(READY);
+      stateManager->setState(READY);
     }
     // If the AES key derivation fails
     else
@@ -227,7 +227,7 @@ void generateSharedSecret(void *sessionParams)
       char retchar[12];
       snprintf(retchar, 12, "%d", ret);
       Serial0.printf("AES key derivation failed! Code: %d\n", retchar);
-      stateManager.setState(ERROR);
+      stateManager->setState(ERROR);
     }
   }
 
@@ -237,12 +237,12 @@ void generateSharedSecret(void *sessionParams)
     char retchar[12];
     snprintf(retchar, 12, "%d", ret);
     Serial0.printf("Shared Secret computation failed! Code: %d\n", retchar);
-    stateManager.setState(ERROR);
+    stateManager->setState(ERROR);
   }
 
   // Disable pairing mode after processing
   pairingMode = false;
-  stateManager.setState(READY);
+  stateManager->setState(READY);
   Serial0.println("Pairing mode disabled.");
 
   // Clean up RTOS task
@@ -313,7 +313,7 @@ void decryptAndSend(void *sessionParams)
       uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
       notifyClient(packed);
 
-      stateManager.setState(UNPAIRED); // Set the device to the unpaired state
+      stateManager->setState(UNPAIRED); // Set the device to the unpaired state
     }
 
     else{
@@ -322,7 +322,7 @@ void decryptAndSend(void *sessionParams)
       uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
       notifyClient(packed);
 
-      stateManager.setState(READY);
+      stateManager->setState(READY);
     }
     
     // Clean up RTOS task
@@ -368,7 +368,7 @@ void decryptAndSend(void *sessionParams)
     Serial0.println(ret);
     
     led.blinkStart(500, Colors::Blue);
-    //stateManager.setState(ERROR);
+    //stateManager->setState(ERROR);
   }
 
   notificationPacket.packetType = 1;

@@ -75,15 +75,17 @@ void enterPairingMode() {
 
 void setup() {
   Serial0.begin(115200); // Initialize Serial for debugging
+  
   led.begin();    // Intialize the RMT LED Driver
+  stateManager = new StateManager();
+  stateManager->registerLedCallbacks();
+  stateManager->setState(NOT_CONNECTED);
 
   hidSetup(); // Initialize the HID device
   bleSetup(&sec); // Initialize the BLE device with the secure session
   sec.init(); // Initialize the secure session
 
-  //stateManager.onChange();
 
-  stateManager.setState(NOT_CONNECTED);
 }
 
 // The loop is only used for gpio polling
@@ -99,7 +101,7 @@ void loop() {
 
   else if (buttonEvent == 2) { // Hold event
     Serial0.println("Button held!");
-    stateManager.setState(PAIRING);
+    stateManager->setState(PAIRING);
     //enterPairingMode(); // Enter pairing mode on hold
   }
 }

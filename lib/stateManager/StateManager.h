@@ -23,17 +23,17 @@ using StateCallback = std::function<void(DeviceState)>; // Define StateCallback 
 
 class StateManager {
 public:
-    StateManager();
+    void registerLedCallbacks();
     void setState(DeviceState newState);
     DeviceState getState() const;
     void onChange(StateCallback cb);
 private:
     DeviceState currentState = NOT_CONNECTED;
-    std::vector<StateCallback> callbacks;
+    StateCallback callback = nullptr;  // Only one callback
 
 };
 
 
-extern StateManager stateManager; // Global device state manager instance
+extern StateManager* stateManager; // Global device state manager instance
 
 #endif
