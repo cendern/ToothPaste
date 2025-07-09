@@ -44,6 +44,6 @@ void bleSetup(SecureSession* session);
 void generateSharedSecret(void* sessionParams);
 void disconnect();
 void enablePairingMode();
-void decryptAndSend(void *sessionParams);
+void packetTask(void *sessionParams);
 
 #endif // BLE_H

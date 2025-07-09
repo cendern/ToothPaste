@@ -95,7 +95,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic *inputCharacteristi
       }
       // Decrypt the received packet in a new RTOS task, the task then calls HID functions if applicable
       xTaskCreatePinnedToCore(
-          decryptAndSend, // Function to run in the task
+          packetTask, // Function to run in the task
           "DecryptTask",  // Task name
           8192,           // Task stack size in bytes
           taskParams,
@@ -286,9 +286,64 @@ SecureSession::rawDataPacket unpack(void *rawPacketBytes){
   return packet;
 }
 
-// TODO: Refactor
-// RTOS task to decrpyt a packet and type its contents over HID
-void decryptAndSend(void *sessionParams)
+// Decrypt a data packet and type the text content as a string
+void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* session){
+  // Allocate plaintext buffer and decrypt
+  uint8_t plaintext[SecureSession::MAX_DATA_LEN];
+  int ret = session->decrypt(packet, plaintext, clientPubKey);
+
+  // If the decryption succeeds type the plaintext over HID    
+  if (ret == 0)
+  {
+    Serial0.println("Decryption successful");
+    Serial0.println((const char *)plaintext);
+    sendString((const char *)plaintext, packet->slowmode); // Send the decrypted data over HID
+
+    // Set the ready confirmation notification
+    notificationPacket.packetType = 1;
+    uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F); // [packetType(4bits) = 1 | authStatus(4bits)]
+    notifyClient(packed); // Once a HID report has been sent, notify that we are ready to receive another
+  }  
+  // If the decryption fails
+  else
+  {
+    Serial0.print("Decryption failed with error code: ");
+    Serial0.println(ret);
+    
+    led.blinkStart(500, Colors::Blue);
+    //stateManager->setState(ERROR);
+  }
+}
+
+// Read an AUTH packet and check if the client public key and AES key are known
+void authenticateClient(SecureSession::rawDataPacket* packet, SecureSession* session){
+  clientPubKey = (const char*) packet->data;
+    
+  // If we don't know the AES key for the given public key, set Device Status to UNPAIRED
+  if(!session->isEnrolled(clientPubKey)){
+    
+    // Lower bits of notification are auth status to tell if we recognize the pubkey of the sender
+    // Upper bits are the notification itself ([0] = KeepAlive, [1] = Ready to Receive, [2] = Not ready to receive )
+    notificationPacket.packetType = 2;
+    notificationPacket.authStatus = 0;
+    uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
+    notifyClient(packed);
+    stateManager->setState(UNPAIRED); // Set the device to the unpaired state
+  }
+
+  // If we know the AES key set device status to PAIRED (Note: This does not gurantee that the AES key is correct, just that it exists)
+  else{
+    notificationPacket.packetType = 0;
+    notificationPacket.authStatus = 1;
+    uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
+    notifyClient(packed);
+
+    stateManager->setState(READY);
+  }
+}
+
+// RTOS task to decode a packet outside the BLE callback scope 
+void packetTask(void *sessionParams)
 {
   // Unpack the parameter pointer into the SecureSession and Packet
   auto *params = static_cast<SharedSecretTaskParams *>(sessionParams);
@@ -299,6 +354,7 @@ void decryptAndSend(void *sessionParams)
   SecureSession::rawDataPacket packet = unpack(rawValue);
   
   // Debugging data
+  Serial0.println("BLE Data Received.");
   Serial0.printf("Data length: %d\r\n", packet.dataLen);
   Serial0.printf("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
     packet.packetId, 
@@ -306,83 +362,19 @@ void decryptAndSend(void *sessionParams)
     packet.packetNumber, 
     packet.totalPackets
   );
+  Serial0.println();
 
-  // If the packet is an AUTH packet, the data is the pubKey of the client
-  // TODO: Severe refactoring needed
-  if(packet.packetId == 1){
-    clientPubKey = (const char*) packet.data;
-    
-    // If we don't know the AES key for the given public key, display 'unpaired' status led
-    if(!session->isEnrolled(clientPubKey)){
-      
-      // Lower bits of notification are auth status to tell if we recognize the pubkey of the sender
-      // Upper bits are the notification itself ([0] = KeepAlive, [1] = Ready to Receive, [2] = Not ready to receive )
-      notificationPacket.packetType = 2;
-      notificationPacket.authStatus = 0;
-      uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
-      notifyClient(packed);
 
-      stateManager->setState(UNPAIRED); // Set the device to the unpaired state
-    }
-
-    else{
-      notificationPacket.packetType = 0;
-      notificationPacket.authStatus = 1;
-      uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
-      notifyClient(packed);
-
-      stateManager->setState(READY);
-    }
-    
-    // Clean up RTOS task
-    delete rawValue;
-    delete params;
-    vTaskDelete(nullptr);
-    return;
-
+  // If the packet is an DATA packet, the data is the ciphertext
+  if(packet.packetId == 0){
+    decryptSendString(&packet, session);
   }
 
-  // Allocate plaintext buffer and decrypt
-  uint8_t plaintext[SecureSession::MAX_DATA_LEN];
-  int ret = session->decrypt(&packet, plaintext, clientPubKey);
-
-  // If the decryption succeeds type the plaintext over HID    
-  if (ret == 0)
-  {
-    Serial0.println("Decryption successful");
-    Serial0.println((const char *)plaintext);
-
-
-    
-
-    switch(packet.packetId){
-      case 0:
-        sendString((const char *)plaintext, packet.slowmode); // Send the decrypted data over HID
-        break;
-
-      case 1:
-        // Valid the AES_key:PeerID relationship  
-        break;
-
-      default:
-        led.blinkStart(500, Colors::Green);
-        break;
-    } 
+  // If the packet is an AUTH packet, the data is the public key of the client
+  else if(packet.packetId == 1){
+    authenticateClient(&packet, session);
   }
-
-  // If the decryption fails
-  else
-  {
-    Serial0.print("Decryption failed with error code: ");
-    Serial0.println(ret);
-    
-    led.blinkStart(500, Colors::Blue);
-    //stateManager->setState(ERROR);
-  }
-
-  notificationPacket.packetType = 1;
-  uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
-  notifyClient(packed); // Once a HID report has been sent, notify that we are ready to receive another
+  
   //led.blinkEnd();
 
   // Free task memory
