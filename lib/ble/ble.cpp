@@ -89,7 +89,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
 void bleSetup(SecureSession* session)
 {
   BLEDevice::init("ClipBoard");
-  BLEDevice::setPower(ESP_PWR_LVL_N3); // low power for heat
+  //BLEDevice::setPower(ESP_PWR_LVL_N3); // low power for heat
   // Create the BLE Server
   bluServer = BLEDevice::createServer();
   bluServer->setCallbacks(new DeviceServerCallbacks());
@@ -139,6 +139,7 @@ void disconnect()
 void notifyClient(const uint8_t data) {
   semaphoreCharacteristic->setValue((uint8_t*)&data, 1);  // Set the data to be notified
   semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
+  semaphoreCharacteristic->setValue(0, 1);                // Clear the notification
 }
 
 // Use the AUTH packet and peer public key to derive a new ecdh shared secret and AES key
@@ -256,8 +257,6 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
 
     // Set the ready confirmation notification
     notificationPacket.packetType = 1;
-    uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F); // [packetType(4bits) = 1 | authStatus(4bits)]
-    notifyClient(packed); // Once a HID report has been sent, notify that we are ready to receive another
   }
   // If the decryption fails
   else
@@ -281,18 +280,13 @@ void authenticateClient(SecureSession::rawDataPacket* packet, SecureSession* ses
     // Upper bits are the notification itself ([0] = KeepAlive, [1] = Ready to Receive, [2] = Not ready to receive )
     notificationPacket.packetType = 2;
     notificationPacket.authStatus = 0;
-    uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
-    notifyClient(packed);
     stateManager->setState(UNPAIRED); // Set the device to the unpaired state
   }
 
   // If we know the AES key set device status to PAIRED (Note: This does not gurantee that the AES key is correct, just that it exists)
   else {
-    notificationPacket.packetType = 0;
+    notificationPacket.packetType = 1;
     notificationPacket.authStatus = 1;
-    uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
-    notifyClient(packed);
-
     stateManager->setState(READY);
   }
 }
@@ -337,7 +331,9 @@ void packetTask(void* sessionParams)
   }
 
   //led.blinkEnd();
+  uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
 
+  notifyClient(packed); // Once a HID report has been sent, notify that we are ready to receive another
   // Free task memory
   delete rawValue;
   delete params;
