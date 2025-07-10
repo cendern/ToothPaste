@@ -6,13 +6,27 @@ BLEServer* bluServer = NULL;                      // Pointer to the BLE Server i
 BLECharacteristic* inputCharacteristic = NULL;    // Characteristic for sensor data
 BLECharacteristic* semaphoreCharacteristic = NULL; // Characteristic for LED control
 
-QueueHandle_t packetQueue = xQueueCreate(10, sizeof(SharedSecretTaskParams*));
+QueueHandle_t packetQueue = xQueueCreate(50, sizeof(SharedSecretTaskParams*)); // Queue to manage RTOS task parameters
 
 bool manualDisconnect = false; // Flag to indicate if the user manually disconnected
 std::string clientPubKey;  // safer than char*
 int count = 1;
 
 NotificationPacket notificationPacket = { 0 }; // Initialize the persistent notification packet to 0
+
+// Create the persistent RTOS packet handler task
+void createPacketTask(SecureSession* sec){
+  // Start the persistent RTOS task
+  xTaskCreatePinnedToCore(
+        packetTask,
+        "PacketWorker",
+        8192,
+        sec, // Persistent task shares 1 ECDH session
+        1,
+        nullptr,
+        1
+    );
+}
 
 // Handle Connect
 void DeviceServerCallbacks::onConnect(BLEServer* bluServer)
@@ -75,27 +89,21 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
       return;
     }
 
-    // Decrypt the received packet in a new RTOS task, the task then calls HID functions if applicable
-    BaseType_t taskreturn = xTaskCreatePinnedToCore(
-      packetTask, // Function to run in the task
-      "DecryptTask",  // Task name
-      8192,           // Task stack size in bytes
-      taskParams,
-      1,
-      nullptr, // Store the task handle somewhere
-      1
-    );
+    // Queue the received packet params in the task queue
+    if (xQueueSend(packetQueue, &taskParams, 0) != pdTRUE) {
+            // Queue full, drop packet or handle error
+            Serial.println("Packet queue full! Dropping packet.");
+            delete taskParams->rawValue;
+            delete taskParams;
+        }
 
-    if (taskreturn != pdPASS) {
-      Serial0.println("Failed to create task! Probably out of heap or task slots.");
-      delete taskParams; // Avoid leak
-    }
   }
 }
 
 // Create the BLE Device
 void bleSetup(SecureSession* session)
 {
+  createPacketTask(session);
   BLEDevice::init("ClipBoard");
   //BLEDevice::setPower(ESP_PWR_LVL_N3); // low power for heat
   // Create the BLE Server
@@ -288,7 +296,6 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
 // Read an AUTH packet and check if the client public key and AES key are known
 void authenticateClient(SecureSession::rawDataPacket* packet, SecureSession* session) {
   Serial0.println("Entered authenticateClient");
-  //clientPubKey = (const char*)packet->data;
   clientPubKey = std::string((const char*)packet->data, packet->dataLen);  // if you're using std::string
 
   Serial0.printf("clientPubKey: %s\n\r", clientPubKey);
@@ -312,53 +319,49 @@ void authenticateClient(SecureSession::rawDataPacket* packet, SecureSession* ses
   }
 }
 
-// RTOS task to decode a packet outside the BLE callback scope 
-void packetTask(void* sessionParams)
+// Persistent RTOS that waits for packets
+void packetTask(void* params)
 {
-  // Unpack the parameter pointer into the SecureSession and Packet
-  auto* params = static_cast<SharedSecretTaskParams*>(sessionParams);
-  SecureSession* session = params->session;
-  std::string* rawValue = params->rawValue;
-  
-  // Decode the byte array into a rawDataPacket object
-  SecureSession::rawDataPacket packet = unpack(rawValue);
-  delete rawValue;
 
-  // Debugging data
-  Serial0.println("BLE Data Received.");
-  Serial0.printf("Data length: %d\r\n", packet.dataLen);
-  Serial0.printf("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
-    packet.packetId,
-    packet.slowmode,
-    packet.packetNumber,
-    packet.totalPackets
-  );
-  Serial0.println();
+    // Share the same securesession for the whole task
+    SecureSession* session = static_cast<SecureSession*>(params);
+    while (true) {
+        SharedSecretTaskParams* taskParams = nullptr; // The queue fills in this pointer as packets become available
 
+        // Wait indefinitely for next packet pointer
+        if (xQueueReceive(packetQueue, &taskParams, portMAX_DELAY) == pdTRUE) {
+            if (taskParams) {
+                std::string* rawValue = taskParams->rawValue;
 
-  // If the packet is an DATA packet, the data is the ciphertext
-  if (packet.packetId == 0) {
-    decryptSendString(&packet, session);
-  }
+                SecureSession::rawDataPacket packet = unpack(rawValue);
+                delete rawValue; // Free string memory
 
-  // If the packet is an AUTH packet, the data is the public key of the client
-  else if (packet.packetId == 1) {
-    if (stateManager->getState() == PAIRING) {
-      generateSharedSecret(&packet, session);
+                // Debug prints...
+                Serial0.println("BLE Data Received.");
+                Serial0.printf("Data length: %d\r\n", packet.dataLen);
+                Serial0.printf("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
+                    packet.packetId,
+                    packet.slowmode,
+                    packet.packetNumber,
+                    packet.totalPackets
+                );
+                Serial0.println();
+
+                if (packet.packetId == 0) {
+                    decryptSendString(&packet, session);
+                }
+                else if (packet.packetId == 1) {
+                    if (stateManager->getState() == PAIRING) {
+                        generateSharedSecret(&packet, session);
+                    } else {
+                        authenticateClient(&packet, session);
+                    }
+                }
+
+                notifyClient();
+
+                delete taskParams; // Free the parameter struct
+            }
+        }
     }
-
-    else {
-      authenticateClient(&packet, session);
-    }
-  }
-
-  //led.blinkEnd();
-
-  notifyClient(); // Once a HID report has been sent, notify that we are ready to receive another
-  // Free task memory
-  delete params;
-  Serial0.printf("Deleting packetTask: %d\n\r", count);
-  count++;
-  vTaskDelete(nullptr);
 }
-

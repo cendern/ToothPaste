@@ -46,5 +46,6 @@ void disconnect();
 void enablePairingMode();
 void packetTask(void *sessionParams);
 void notifyClient(const uint8_t data);
+void packetTask(void* params);
 
 #endif // BLE_H
