@@ -15,7 +15,7 @@
 
 class SecureSession {
 public:
-    static constexpr size_t MAX_DATA_LEN = 200;  // Max data bytes that can be sent in 1 MTU leaving room for protocol bytes
+    static constexpr size_t MAX_DATA_LEN = 201;  // Max data bytes that can be sent in 1 MTU leaving room for protocol bytes
     static constexpr size_t ENC_KEYSIZE = 32;    // 256-bit (32 byte) AES and ECDH keys
     static constexpr size_t PUBKEY_SIZE = 33;    // Uncompressed point size for secp256r1
     static constexpr size_t IV_SIZE = 12;        // Recommended IV size for AES-GCM

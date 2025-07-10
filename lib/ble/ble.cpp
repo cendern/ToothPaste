@@ -6,8 +6,11 @@ BLEServer* bluServer = NULL;                      // Pointer to the BLE Server i
 BLECharacteristic* inputCharacteristic = NULL;    // Characteristic for sensor data
 BLECharacteristic* semaphoreCharacteristic = NULL; // Characteristic for LED control
 
+QueueHandle_t packetQueue = xQueueCreate(10, sizeof(SharedSecretTaskParams*));
+
 bool manualDisconnect = false; // Flag to indicate if the user manually disconnected
-const char* clientPubKey;
+std::string clientPubKey;  // safer than char*
+int count = 1;
 
 NotificationPacket notificationPacket = { 0 }; // Initialize the persistent notification packet to 0
 
@@ -15,7 +18,7 @@ NotificationPacket notificationPacket = { 0 }; // Initialize the persistent noti
 void DeviceServerCallbacks::onConnect(BLEServer* bluServer)
 {
   int connectedCount = bluServer->getConnectedCount();
-
+  
   // If a device is not already connected
   if (connectedCount == 0) {
     stateManager->setState(UNPAIRED);
@@ -63,7 +66,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
   if (!rawValue.empty() && session != nullptr)
   {
     auto* rawCopy = new std::string(rawValue); // allocate a heap copy of the received packet
-    auto* taskParams = new SharedSecretTaskParams{ session, rawCopy, clientPubKey }; // Create the parameters passed to the RTOS task
+    auto* taskParams = new SharedSecretTaskParams{ session, rawCopy }; // Create the parameters passed to the RTOS task
 
     // Handle bad packets
     if (rawValue.length() < SecureSession::IV_SIZE + SecureSession::TAG_SIZE + SecureSession::HEADER_SIZE) {
@@ -73,7 +76,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
     }
 
     // Decrypt the received packet in a new RTOS task, the task then calls HID functions if applicable
-    xTaskCreatePinnedToCore(
+    BaseType_t taskreturn = xTaskCreatePinnedToCore(
       packetTask, // Function to run in the task
       "DecryptTask",  // Task name
       8192,           // Task stack size in bytes
@@ -82,6 +85,11 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
       nullptr, // Store the task handle somewhere
       1
     );
+
+    if (taskreturn != pdPASS) {
+      Serial0.println("Failed to create task! Probably out of heap or task slots.");
+      delete taskParams; // Avoid leak
+    }
   }
 }
 
@@ -139,7 +147,14 @@ void disconnect()
 void notifyClient(const uint8_t data) {
   semaphoreCharacteristic->setValue((uint8_t*)&data, 1);  // Set the data to be notified
   semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
-  semaphoreCharacteristic->setValue(0, 1);                // Clear the notification
+}
+
+// Notify the semaphore characteristic
+void notifyClient() {
+  uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
+
+  semaphoreCharacteristic->setValue((uint8_t*)&packed, 1);  // Set the data to be notified
+  semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
 }
 
 // Use the AUTH packet and peer public key to derive a new ecdh shared secret and AES key
@@ -177,7 +192,7 @@ void generateSharedSecret(SecureSession::rawDataPacket* packet, SecureSession* s
     if (!session->deriveAESKeyFromSharedSecret(base64Input))
     {
       Serial0.println("AES key derived successfully");
-      clientPubKey = base64Input;
+      clientPubKey = std::string((const char*)base64Input, base64InputLen);
       stateManager->setState(READY);
 
       // Notify once pairing is successful
@@ -245,14 +260,13 @@ SecureSession::rawDataPacket unpack(void* rawPacketBytes) {
 // Decrypt a data packet and type the text content as a string
 void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* session) {
   // Allocate plaintext buffer and decrypt
-  uint8_t plaintext[SecureSession::MAX_DATA_LEN];
-  int ret = session->decrypt(packet, plaintext, clientPubKey);
+  uint8_t* plaintext = new uint8_t[SecureSession::MAX_DATA_LEN];
+  int ret = session->decrypt(packet, plaintext, clientPubKey.c_str());
 
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
-    Serial0.println("Decryption successful");
-    Serial0.println((const char*)plaintext);
+    Serial0.printf("Decryption successful: %s\n\r\n\r", plaintext);
     sendString((const char*)plaintext, packet->slowmode); // Send the decrypted data over HID
 
     // Set the ready confirmation notification
@@ -267,15 +281,20 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
     led.blinkStart(500, Colors::Blue);
     //stateManager->setState(ERROR);
   }
+  
+  delete[] plaintext;  // Free heap memory
 }
 
 // Read an AUTH packet and check if the client public key and AES key are known
 void authenticateClient(SecureSession::rawDataPacket* packet, SecureSession* session) {
-  clientPubKey = (const char*)packet->data;
+  Serial0.println("Entered authenticateClient");
+  //clientPubKey = (const char*)packet->data;
+  clientPubKey = std::string((const char*)packet->data, packet->dataLen);  // if you're using std::string
 
+  Serial0.printf("clientPubKey: %s\n\r", clientPubKey);
   // If we don't know the AES key for the given public key, set Device Status to UNPAIRED
-  if (!session->isEnrolled(clientPubKey)) {
-
+  if (!session->isEnrolled(clientPubKey.c_str())) {
+    Serial0.println("Client is not enrolled");
     // Lower bits of notification are auth status to tell if we recognize the pubkey of the sender
     // Upper bits are the notification itself ([0] = KeepAlive, [1] = Ready to Receive, [2] = Not ready to receive )
     notificationPacket.packetType = 2;
@@ -285,6 +304,8 @@ void authenticateClient(SecureSession::rawDataPacket* packet, SecureSession* ses
 
   // If we know the AES key set device status to PAIRED (Note: This does not gurantee that the AES key is correct, just that it exists)
   else {
+    Serial0.println("Client is enrolled");
+
     notificationPacket.packetType = 1;
     notificationPacket.authStatus = 1;
     stateManager->setState(READY);
@@ -298,9 +319,10 @@ void packetTask(void* sessionParams)
   auto* params = static_cast<SharedSecretTaskParams*>(sessionParams);
   SecureSession* session = params->session;
   std::string* rawValue = params->rawValue;
-
+  
   // Decode the byte array into a rawDataPacket object
   SecureSession::rawDataPacket packet = unpack(rawValue);
+  delete rawValue;
 
   // Debugging data
   Serial0.println("BLE Data Received.");
@@ -331,12 +353,12 @@ void packetTask(void* sessionParams)
   }
 
   //led.blinkEnd();
-  uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
 
-  notifyClient(packed); // Once a HID report has been sent, notify that we are ready to receive another
+  notifyClient(); // Once a HID report has been sent, notify that we are ready to receive another
   // Free task memory
-  delete rawValue;
   delete params;
+  Serial0.printf("Deleting packetTask: %d\n\r", count);
+  count++;
   vTaskDelete(nullptr);
 }
 
