@@ -25,7 +25,7 @@ import {
 } from "@heroicons/react/24/outline";
   
 import { useBLEContext } from "../../context/BLEContext";
-
+import ToothPaste from '../../assets/ToothPaste.png';
 
 
 // Status icon for a given device
@@ -64,9 +64,9 @@ export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView}) {
   return (
     <Card className={'h-[calc(100vh)] w-full max-w-[20rem] p-3 shadow-xl bg-shelf text-text '}>
       
-      <div className="mb-2 flex items-center gap-4 p-4">
-        <img src="https://docs.material-tailwind.com/img/logo-ct-dark.png" alt="brand" className="h-8 w-8" />
-        <Typography variant="h5" color="text">
+      <div className="mb-2 flex items-center gap-1 p-4">
+        <img src={ToothPaste} alt="brand" className="h-12 w-12 p-0" />
+        <Typography variant="h3" color="text">
           ClipBoard
         </Typography>
       </div>
