@@ -67,7 +67,7 @@ export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView}) {
       <div className="mb-2 flex items-center gap-1 p-4">
         <img src={ToothPaste} alt="brand" className="h-12 w-12 p-0" />
         <Typography variant="h3" color="text">
-          ClipBoard
+          'ToothPaste
         </Typography>
       </div>
 
