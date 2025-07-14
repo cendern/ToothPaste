@@ -38,7 +38,7 @@ void sendString(const char *str, bool slowMode)
 }
 
 // Cast a pointer to a string pointer and send the string 
-void sendString(void *arg, bool slowMode = true)
+void sendString(void *arg, bool slowMode)
 {
   const char *str = static_cast<const char *>(arg);
   sendString(str, slowMode);
