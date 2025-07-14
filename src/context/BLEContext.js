@@ -37,7 +37,7 @@ export function BLEProvider({ children }) {
                 const dataIV = new Uint8Array(16+12+textData.length); // Offset the data by IV length [TODO: Refactor this to make a consistent AUTH packet constructor]
                 dataIV.set(textData,12);
                 
-                const packet = new Packet(1, dataIV, 0, 1, 0)
+                const packet = new Packet(1, dataIV, 0, 1, 1);
                 const packetData = packet.serialize();
                 console.log("Send AUTH packet of size: ", packetData.length)
                 await pktChar.writeValueWithoutResponse(packetData);
