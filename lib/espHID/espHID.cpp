@@ -39,9 +39,11 @@ size_t sendStringSlow(const char *str, bool slowMode)
 // Send a string
 void sendString(const char *str, bool slowMode)
 {
+  keyboard.flush();
+
   if(!slowMode)
     keyboard.print(str);
-
+    
   else
     sendStringSlow(str, SLOWMODE_DELAY_MS);
 }

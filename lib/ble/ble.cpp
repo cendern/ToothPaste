@@ -289,8 +289,9 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
-    Serial0.printf("Decryption successful: %s\n\r\n\r", plaintext);
-    sendString((const char*)plaintext, packet->slowmode); // Send the decrypted data over HID
+    std::string textString((const char*)plaintext, packet->dataLen);
+    Serial0.printf("Decryption successful: %s\n\r\n\r", textString);
+    sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
 
     // Set the ready confirmation notification
   }
@@ -304,7 +305,7 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
     //stateManager->setState(ERROR);
   }
   
-  delete[] plaintext;  // Free heap memory
+  delete[] plaintext;
 }
 
 // Read an AUTH packet and check if the client public key and AES key are known
