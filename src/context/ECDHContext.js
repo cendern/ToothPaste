@@ -37,7 +37,6 @@ export const ECDHProvider = ({ children }) => {
 
 
         console.log("Self public key saved:", publicKey);
-        console.log("Self private key saved:", privateKey);
         return;
     };
 
@@ -114,8 +113,8 @@ export const ECDHProvider = ({ children }) => {
             256
         );
 
-        console.log("Shared Secret: ")
-        console.log(arrayBufferToBase64(sharedSecret));
+        // console.log("Shared Secret: ")
+        // console.log(arrayBufferToBase64(sharedSecret));
 
         const info = new TextEncoder().encode("aes-gcm-256");
         const keyMaterial = await crypto.subtle.importKey(
@@ -153,9 +152,6 @@ export const ECDHProvider = ({ children }) => {
 
         const rawKey = await crypto.subtle.exportKey("raw", aesKey.current);
         const keyBytes = new Uint8Array(rawKey);
-
-        console.log("AES KEY: ")
-        console.log(arrayBufferToBase64(keyBytes));
     };
 
     // Encrypt plaintext using AES-GCM with shared secret key
@@ -202,14 +198,14 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // create and encrypt packet -> returns an iterator of one or more packets where payload size < max_data_size
-    const createEncryptedPackets = async function *(id, payload, slowMode=false){
+    const createEncryptedPackets = async function *(id, payload, slowMode=true){
         const encoder = new TextEncoder();
         const data = (payload instanceof Uint8Array) ? payload : encoder.encode(payload);
         const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
         
-        console.log(payload);
-        console.log(data.length);
-        console.log(totalChunks);   
+        // console.log(payload);
+        // console.log(data.length);
+        // console.log(totalChunks);   
         // TODO: Raise here if too much data is given
         if(totalChunks > 254)
             return;
