@@ -6,7 +6,7 @@ BLEServer* bluServer = NULL;                      // Pointer to the BLE Server i
 BLECharacteristic* inputCharacteristic = NULL;    // Characteristic for sensor data
 BLECharacteristic* semaphoreCharacteristic = NULL; // Characteristic for LED control
 
-QueueHandle_t packetQueue = xQueueCreate(50, sizeof(SharedSecretTaskParams*)); // Queue to manage RTOS task parameters
+QueueHandle_t packetQueue = xQueueCreate(10, sizeof(SharedSecretTaskParams*)); // Queue to manage RTOS task parameters
 
 bool manualDisconnect = false; // Flag to indicate if the user manually disconnected
 std::string clientPubKey;  // safer than char*
@@ -291,9 +291,9 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
   {
     std::string textString((const char*)plaintext, packet->dataLen);
     Serial0.printf("Decryption successful: %s\n\r\n\r", textString);
+    
     sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
-
-    // Set the ready confirmation notification
+    
   }
   // If the decryption fails
   else
