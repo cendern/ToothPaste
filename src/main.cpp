@@ -20,6 +20,7 @@ void sendPublicKey(void* arg) {
   Serial0.println("Sending public key: ");
   Serial0.println(pubKey); // Print the public key to Serial for debugging
   sendString(pubKey); // Send the public key to the client over HID
+  sendString("\n");
   led.blinkEnd(); // Stop blinking
   
   // Finish the handshake here
