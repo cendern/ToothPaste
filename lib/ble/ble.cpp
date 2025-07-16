@@ -17,6 +17,7 @@ NotificationPacket notificationPacket = {
     KEEPALIVE,
     AUTH_FAILED
 };
+
 // Create the persistent RTOS packet handler task
 void createPacketTask(SecureSession* sec){
   // Start the persistent RTOS task
@@ -287,11 +288,18 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
-    std::string textString((const char*)plaintext, packet->dataLen);
-    Serial0.printf("Decryption successful: %s\n\r\n\r", textString);
-    
-    sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
-    
+
+    if(plaintext[0] == 0){
+      std::string textString((const char*)plaintext+1, (packet->dataLen)-1);
+      Serial0.printf("Decryption successful: %s\n\r\n\r", textString);
+      
+      sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
+    }
+
+    else if(plaintext[0] == 1){
+      sendKeycode(plaintext+1, true);
+    }
+
     notificationPacket.packetType = RECV_READY;
   }
   // If the decryption fails

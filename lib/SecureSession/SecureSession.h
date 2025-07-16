@@ -18,11 +18,19 @@ public:
     static constexpr size_t MAX_DATA_LEN = 201;  // Max data bytes that can be sent in 1 MTU leaving room for protocol bytes
     static constexpr size_t ENC_KEYSIZE = 32;    // 256-bit (32 byte) AES and ECDH keys
     static constexpr size_t PUBKEY_SIZE = 33;    // Uncompressed point size for secp256r1
+    
     static constexpr size_t IV_SIZE = 12;        // Recommended IV size for AES-GCM
     static constexpr size_t TAG_SIZE = 16;       // AES-GCM authentication tag size
     static constexpr size_t HEADER_SIZE = 4;     // Size of the header  [packetId(0), slowmode(1), packetNumber(2), totalPackets(3)]
     
     uint8_t sharedSecret[ENC_KEYSIZE];
+
+    // Preamble byte in encrypted data to indicate the type of data (string, keycode, etc..)
+    enum DataType: uint8_t {
+        TEXT,
+        KEYCODE,
+        OTHER
+    };
 
     struct rawDataPacket {
         // Header
@@ -35,6 +43,7 @@ public:
         // Cipher data
         size_t dataLen;
         uint8_t IV[IV_SIZE]; // Nonce
+        DataType dataType;
         uint8_t data[MAX_DATA_LEN]; // Array to store data, fixed size to simplify design
         uint8_t TAG[TAG_SIZE]; // The AES-GCM integrity tag
     };
