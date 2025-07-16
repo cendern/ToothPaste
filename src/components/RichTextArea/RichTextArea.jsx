@@ -1056,7 +1056,7 @@ const editorConfig = {
   ],
 };
  
-export default function RichTextArea({onChange}) {
+export default function RichTextArea({onChange, onKeyDownCapture}) {
   const [isFocused, setIsFocused] = useState(false);
   
   return (
@@ -1068,7 +1068,7 @@ export default function RichTextArea({onChange}) {
           <RichTextPlugin
             
             contentEditable={
-              <ContentEditable onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} className="h-full w-full lexical px-2.5 py-4 text-base caret-text outline-none" />
+              <ContentEditable  onKeyDownCapture={onKeyDownCapture} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} className="h-full w-full lexical px-2.5 py-4 text-base caret-text outline-none" />
             }
             placeholder={<Placeholder />}
             ErrorBoundary={null}

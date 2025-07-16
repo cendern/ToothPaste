@@ -4,7 +4,7 @@ import { Textarea } from "@material-tailwind/react";
 import { BLEContext } from '../context/BLEContext';
 import { HomeIcon, PaperAirplaneIcon, ClipboardIcon } from "@heroicons/react/24/outline";
 import CustomTyping from '../components/CustomTyping/CustomTyping';
-import RichTextArea from '../components/CustomTextArea/RichTextArea';
+import RichTextArea from '../components/RichTextArea/RichTextArea';
 
 
 export default function BulkSend() {
@@ -18,7 +18,7 @@ export default function BulkSend() {
         if (!input) return;
 
         try {
-            sendEncrypted(input);
+            
         } catch (error) { 
             console.error(error); 
         }
@@ -27,13 +27,21 @@ export default function BulkSend() {
     // Use Ctrl + Shift + Enter to send 
     const handleShortcut = useCallback((event) => {
         const isCtrl = event.ctrlKey || event.metaKey;
-        const isShift = event.shiftKey;
+        const isAlt = event.altKey;
         const isEnter = event.key === "Enter";
 
-        if (isCtrl && isShift && isEnter) {
-            console.log("Shortcut detected: Ctrl + Shift + Enter");
+        if (isCtrl && isAlt && isEnter) {
+            console.log("Shortcut detected: Ctrl + Alt + Enter");
             event.preventDefault();
-            sendString();
+            event.stopPropagation(); // stop bubbling to native input handlers
+            sendEncrypted(input);
+        }
+        
+        else if (isCtrl && isAlt && event.key === "a") {
+            console.log("Shortcut detected: Ctrl + Alt + A");
+            event.preventDefault();
+            event.stopPropagation(); // stop bubbling to native input handlers
+            sendEncrypted(String.fromCharCode(1));
         }
     }, [sendString]);
 
@@ -58,7 +66,7 @@ export default function BulkSend() {
             <div className="flex flex-col flex-1 mt-5 min-h-0">
                 {/* <CustomTyping> </CustomTyping> */}
 
-                <RichTextArea onChange={(text) => setInput(text)} />
+                <RichTextArea onKeyDownCapture={handleShortcut} onChange={(text) => setInput(text)} />
                 <Button
                     onClick={sendString}
                     disabled={status !== 1}
