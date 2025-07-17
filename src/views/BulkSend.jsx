@@ -18,7 +18,7 @@ export default function BulkSend() {
         if (!input) return;
 
         try {
-            
+            sendEncrypted(input);
         } catch (error) { 
             console.error(error); 
         }
@@ -34,22 +34,29 @@ export default function BulkSend() {
             console.log("Shortcut detected: Ctrl + Alt + Enter");
             event.preventDefault();
             event.stopPropagation(); // stop bubbling to native input handlers
-            sendEncrypted(input);
+            sendString();
         }
         
-        else if (isCtrl && isAlt && event.key === "a") {
-            console.log("Shortcut detected: Ctrl + Alt + A");
+        else if (isCtrl && isAlt && !["Control", "Alt"].includes(event.key)) {
+            console.log("Shortcut detected: Ctrl + Alt +", event.key);
             event.preventDefault();
             event.stopPropagation(); // stop bubbling to native input handlers
+
+            var keypress = null;
+            if (event.key === "Backspace") keypress = '\b';
+            else keypress = event.key;
             
+            console.log("Sending: Ctrl +", keypress);
+
             var keycode = new Uint8Array(7); // Payload = DATA_TYPE+[KEYCODES(6)]
             keycode[0] = 1;   // Byte 0
             keycode[1] = 0x80;  // Byte 1
-            keycode[2] = 0x04;  // Byte 2
+            keycode[2] = keypress.charCodeAt(0);  // Byte 2
             keycode[3] = 0;    // Byte 3
 
             sendEncrypted(keycode);
         }
+
     }, [sendString]);
 
 

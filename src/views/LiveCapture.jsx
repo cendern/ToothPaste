@@ -5,44 +5,12 @@ import React, {
     useContext,
     useCallback,
 } from "react";
+
 import { Button, Typography } from "@material-tailwind/react";
-
 import { ECDHContext } from "../context/ECDHContext";
-
 import { BLEContext } from "../context/BLEContext";
 import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 
-// Async queue utility
-function createAsyncQueue() {
-    const queue = [];
-    let resolvers = [];
-
-    const push = (item) => {
-        if (resolvers.length > 0) {
-            const resolve = resolvers.shift();
-            resolve(item);
-        } else {
-            queue.push(item);
-        }
-    };
-
-    const iterator = {
-        [Symbol.asyncIterator]: async function* () {
-            while (true) {
-                if (queue.length > 0) {
-                    yield queue.shift();
-                } else {
-                    const item = await new Promise((resolve) => {
-                        resolvers.push(resolve);
-                    });
-                    yield item;
-                }
-            }
-        },
-    };
-
-    return { push, iterator };
-}
 
 export default function LiveCapture() {
     const [buffer, setBuffer] = useState(""); // what user is typing
@@ -57,15 +25,21 @@ export default function LiveCapture() {
 
     const DEBOUNCE_INTERVAL_MS = 50;
 
-    // Polling logic: send latest buffer every N ms if changed
+    // Send only recent characters while displaying the whole input
     const sendDiff = useCallback(async () => {
+        var keycode = new Uint8Array(7); // Payload = DATA_TYPE+[KEYCODES(6)]
+        keycode[0] = 1;     // Byte 0
+        keycode[1] = 0x00;  // Byte 1
+            
         const current = bufferRef.current;
         const previous = lastSentBuffer.current;
 
         let payload = "";
 
+
         if (current.length > previous.length) {
             payload += current.slice(previous.length);
+
         } else if (current.length < previous.length) {
             const numDeleted = previous.length - current.length;
             payload += "\b".repeat(numDeleted);
@@ -85,19 +59,25 @@ export default function LiveCapture() {
                         payload += "\t";
                         break;
                     case "ArrowUp":
-                        payload += "[UP]";
+                        keycode[1] = 0xDA;
                         break;
                     case "ArrowDown":
-                        payload += "[DOWN]";
+                        keycode[1] = 0xD9;
                         break;
                     case "ArrowLeft":
-                        payload += "[LEFT]";
+                        keycode[1] = 0xD8;
                         break;
                     case "ArrowRight":
-                        payload += "[RIGHT]";
+                        keycode[1] = 0xD7;
                         break;
                     // add other special keys as needed
                 }
+            }
+
+            if (keycode[1] !== 0){
+                console.log("Sending keycode")
+                sendEncrypted(keycode);
+                keycode[1] = 0;    
             }
             specialEvents.current = [];
         }
@@ -109,13 +89,14 @@ export default function LiveCapture() {
         // Update lastSentBuffer early to avoid duplicate sends
         lastSentBuffer.current = current;
 
-        sendEncrypted(payload);
+        sendEncrypted(payload); // Send the input
     }, [
         createEncryptedPackets,
         pktCharacteristic,
         readyToReceive,
     ]);
 
+    // Polling logic: send latest buffer every N ms if changed
     const scheduleSend = useCallback(() => {
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
@@ -125,65 +106,86 @@ export default function LiveCapture() {
         }, DEBOUNCE_INTERVAL_MS);
     }, [sendDiff]);
 
+    // Handle each keypress and reset the timer 
     const handleKeyDown = (e) => {
         e.preventDefault();
+        const isCtrl = e.ctrlKey || e.metaKey;
+        const isAlt = e.altKey;
 
         const buffer = bufferRef.current;
 
-        if (e.key === "Backspace") {
-            if (buffer.length === 0) {
-                specialEvents.current.push("Backspace");
+        if (isCtrl && !["Control"].includes(e.key)) {
+            console.log("Shortcut detected: Ctrl + ", e.key);
+
+            var keypress = null;
+            if (e.key === "Backspace") keypress = '\b';
+            else keypress = e.key;
+            
+            console.log("Sending: Ctrl +", keypress);
+
+            var keycode = new Uint8Array(7); // Payload = DATA_TYPE+[KEYCODES(6)]
+            keycode[0] = 1;   // Byte 0
+            keycode[1] = 0x80;  // Byte 1
+            keycode[2] = keypress.charCodeAt(0);  // Byte 2
+            keycode[3] = 0;    // Byte 3
+
+            sendEncrypted(keycode);
+        }
+
+        else{
+            if (e.key === "Backspace") {
+                if (buffer.length === 0) {
+                    specialEvents.current.push("Backspace");
+                    scheduleSend();
+                } else {
+                    const newBuffer = buffer.slice(0, -1);
+                    bufferRef.current = newBuffer;
+                    setBuffer(newBuffer);
+                    scheduleSend();
+                }
+                return;
+            }
+
+            if (e.key === "Enter") {
+                if (buffer.length === 0) {
+                    specialEvents.current.push("Enter");
+                    scheduleSend();
+                } else {
+                    const newBuffer = buffer + "\n";
+                    bufferRef.current = newBuffer;
+                    setBuffer(newBuffer);
+                    scheduleSend();
+                }
+                return;
+            }
+
+            if (e.key.startsWith("Arrow")) {
+                // Always enqueue arrow key events — they don't change buffer
+                specialEvents.current.push(e.key);
                 scheduleSend();
-            } else {
-                const newBuffer = buffer.slice(0, -1);
+                return;
+            }
+
+            if (e.key === "Tab") {
+                e.preventDefault(); // Stops focus from jumping to the next element
+
+                const newBuffer = bufferRef.current + "\t"; // Tab character is \t
+                bufferRef.current = newBuffer;
+                setBuffer(newBuffer);
+
+                scheduleSend(); // Your existing debounce/send logic
+                return;
+            }
+
+            if (e.key.length === 1) {
+                // Regular characters
+                const newBuffer = buffer + e.key;
                 bufferRef.current = newBuffer;
                 setBuffer(newBuffer);
                 scheduleSend();
+                return;
             }
-            return;
         }
-
-        if (e.key === "Enter") {
-            if (buffer.length === 0) {
-                specialEvents.current.push("Enter");
-                scheduleSend();
-            } else {
-                const newBuffer = buffer + "\n";
-                bufferRef.current = newBuffer;
-                setBuffer(newBuffer);
-                scheduleSend();
-            }
-            return;
-        }
-
-        if (e.key.startsWith("Arrow")) {
-            // Always enqueue arrow key events — they don't change buffer
-            specialEvents.current.push(e.key);
-            scheduleSend();
-            return;
-        }
-
-        if (e.key === "Tab") {
-            e.preventDefault(); // Stops focus from jumping to the next element
-
-            const newBuffer = bufferRef.current + "\t"; // Tab character is \t
-            bufferRef.current = newBuffer;
-            setBuffer(newBuffer);
-
-            scheduleSend(); // Your existing debounce/send logic
-            return;
-        }
-
-        if (e.key.length === 1) {
-            // Regular characters
-            const newBuffer = buffer + e.key;
-            bufferRef.current = newBuffer;
-            setBuffer(newBuffer);
-            scheduleSend();
-            return;
-        }
-
-        // Ignore other keys if any
     };
 
     useEffect(() => {
