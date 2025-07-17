@@ -94,7 +94,7 @@ void loop() {
   
   // Poll the button state (interrupts would cause issues with RTOS)
   int buttonEvent = checkButton();
-  uint8_t keycode[7] = { KEY_LEFT_CTRL, 0x04, 0, 0, 0, 0, 0 }; 
+  uint8_t keycode[7] = { 0x80, 'a', 0, 0, 0, 0, 0 }; 
   
   if (buttonEvent == 1) { // Single click event
     if(stateManager->getState() == PAIRING){

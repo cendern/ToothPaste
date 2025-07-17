@@ -43,29 +43,15 @@ void sendString(void *arg, bool slowMode)
   sendString(str, slowMode);
 }
 
-// Send the raw keycode over the report (upto 6 keys pressed + 2 byte modifier mask)
-void sendKeycode(uint8_t* modifiers, uint8_t* keys, bool slowMode) {
-    // Press modifier keys
-    if (*modifiers & 0x01) keyboard.press(KEY_LEFT_CTRL);
-    if (*modifiers & 0x02) keyboard.press(KEY_LEFT_SHIFT);
-    if (*modifiers & 0x04) keyboard.press(KEY_LEFT_ALT);
-    if (*modifiers & 0x08) keyboard.press(KEY_LEFT_GUI);
-    if (*modifiers & 0x10) keyboard.press(KEY_RIGHT_CTRL);
-    if (*modifiers & 0x20) keyboard.press(KEY_RIGHT_SHIFT);
-    if (*modifiers & 0x40) keyboard.press(KEY_RIGHT_ALT);
-    if (*modifiers & 0x80) keyboard.press(KEY_RIGHT_GUI);
-
-    // Press regular keys (assuming keys is an array of 6 keys, as USB HID standard)
-    for (int i = 0; i < 6; i++) {
-        if (keys[i] != 0) {
-            keyboard.press(keys[i]);
-        }
+// Press all the keys in the array together and release them after 50ms (max 6)
+void sendKeycode(uint8_t* keys, bool slowMode) {
+    for(int i=0; i<7; i++){
+      keyboard.press(keys[i]);
     }
-
-    delay(10); // optionally slower delay if slowMode
-
+    delay(50); // optionally slower delay if slowMode
     keyboard.releaseAll();
 }
+
 // ##################### Delay Functions #################### //
 // Timer callback must match `void (*)(void *)`
 void sendStringCallback(void *arg)

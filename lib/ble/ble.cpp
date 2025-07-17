@@ -288,7 +288,7 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
-
+    // The first byte indicates the keys are pressed sequentially
     if(plaintext[0] == 0){
       std::string textString((const char*)plaintext+1, (packet->dataLen)-1);
       Serial0.printf("Decryption successful: %s\n\r\n\r", textString);
@@ -296,8 +296,10 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
       sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
     }
 
+    // The first byte indicates the keys are supposed to be all pressed at once then released after a delay
     else if(plaintext[0] == 1){
-      sendKeycode(plaintext+1, true);
+      std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen);
+      sendKeycode(keycode.data(), true);
     }
 
     notificationPacket.packetType = RECV_READY;

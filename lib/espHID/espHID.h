@@ -9,6 +9,6 @@ void hidSetup();
 void sendString(const char* str, bool slowMode = true);
 void sendString(void* arg, bool slowMode = true);
 void sendStringDelay(void *arg, int delay);
-void sendKeycode(uint8_t* modifiers, uint8_t* keys, bool slowMode);
+void sendKeycode(uint8_t* keys, bool slowMode);
 
 #endif
