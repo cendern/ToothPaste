@@ -10,6 +10,7 @@ import { Button, Typography } from "@material-tailwind/react";
 import { ECDHContext } from "../context/ECDHContext";
 import { BLEContext } from "../context/BLEContext";
 import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
+import Keyboard from "../components/Keyboard/Keyboard";
 
 
 export default function LiveCapture() {
@@ -193,6 +194,7 @@ export default function LiveCapture() {
     }, []);
 
     return (
+        
         <div className="flex flex-col max-h-screen w-full p-6 bg-background text-text">
             <Typography variant="h2" className="text-text">
                 Start Typing
@@ -201,6 +203,8 @@ export default function LiveCapture() {
             <Typography variant="h5" className="text-hover">
                 It just works.....
             </Typography>
+            <Keyboard></Keyboard>
+
 
             <div className="flex flex-col flex-1 mt-5 min-h-0">
                 <div

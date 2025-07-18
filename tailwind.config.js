@@ -21,6 +21,16 @@ module.exports = withMT({
       'hover': '#222222',
       'orange': '#DE6240'
       },
+      keyframes: {
+        fadeout: {
+          '0%': { opacity: '1' },
+          '90%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+      },
+      animation: {
+        fadeout: `fadeout linear forwards`,
+      },
     },  
   },
   plugins: [],
