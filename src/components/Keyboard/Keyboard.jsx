@@ -1,6 +1,5 @@
-import { list } from "@material-tailwind/react";
 import React, { useEffect, useState, useRef } from "react";
-
+import { Button } from "@material-tailwind/react";
 const keys = [
     [ // Row 1
         { label: "ESC" },
@@ -38,17 +37,36 @@ const HISTORY_DURATION = 3000;
 const COMBO_COOLDOWN = 200; // minimum ms before logging same combo again
 const DEBOUNCE_DURATION = 300; // in ms
 
-const Keyboard = ({ listenerRef, deviceStatus, showKeyboard }) => {
+
+
+
+
+const Keyboard = ({ listenerRef, deviceStatus}) => {
     const [activeKeys, setActiveKeys] = useState(new Set());
     const [history, setHistory] = useState([]);
     const timeoutsRef = useRef({});
     const lastComboRef = useRef(null);
+
+    const [showKeyboard, setShowKeyboard] = useState(false);
 
     const comboTimestamps = useRef({});
     const activeKeysRef = useRef(new Set());
     const keyPressTimestamps = useRef({});
     const debounceTimer = useRef(null);
 
+
+    function ShowKeyboardButton (){
+        const handleToggle = () => setShowKeyboard(prev => !prev)
+            
+        return(
+                <Button variant="outlined" onClick={handleToggle} className={`p-3 border border-hover text-text 
+                    ${showKeyboard? 
+                    "bg-white text-shelf":
+                    "bg-shelf "}`}
+                >Keyboard</Button>
+        );
+
+    }
 
     // Return a list of all keys that have been pressed for >= DEBOUNCE_DURATION
     const getDebouncedKeys = () => {
@@ -214,9 +232,10 @@ const Keyboard = ({ listenerRef, deviceStatus, showKeyboard }) => {
                 </div>
 
                 {/* Command History Container Styling */}
-                <div className="rounded-lg bg-shelf px-4 py-2 mt-4 min-h-12 w-full max-w-full overflow-x-hidden">
+                <div className="rounded-lg bg-shelf px-2 py-2 mt-4 min-h-12 w-full max-w-full overflow-x-hidden">
                     {/* Command History Container Function*/}
                     <div className="flex flex-nowrap space-x-2">
+                        <ShowKeyboardButton/>
                         {history.map((entry) => (
                             <div
                                 key={entry.id}

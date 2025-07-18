@@ -196,6 +196,7 @@ export default function LiveCapture() {
     return (
         
         <div className="flex flex-col max-h-screen w-full p-4 bg-background text-text">
+            
             <Typography variant="h2" className="text-text">
                 Start Typing
             </Typography>

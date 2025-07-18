@@ -146,16 +146,6 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
                     {/* Paste to Device */}
                     <Typography variant="h6" className={`text-text font-sans normal-case font-semibold ${isLoading? "hidden":""}`}>Pair</Typography>
                 </Button>
-                
-                {/* <Button
-                    onClick={sendPublicKey}
-                    disabled={pkey === null}
-                    className='my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'>
-
-                    <KeyIcon className="h-7 w-7 mr-2" />
-
-                    <Typography variant="h6" className="text-text font-sans normal-case font-semibold">Send Public Key</Typography>
-                </Button> */}
 
                 {error && (
                     <div style={{ marginTop: 20, color: 'red' }}>
