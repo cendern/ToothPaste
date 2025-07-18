@@ -232,12 +232,12 @@ export const ECDHProvider = ({ children }) => {
             payload instanceof Uint8Array
                 ? payload
                 : (() => {
-                      const encoded = encoder.encode(payload);
-                      const withZeroPrefix = new Uint8Array(encoded.length + 1);
-                      withZeroPrefix[0] = 0;
-                      withZeroPrefix.set(encoded, 1);
-                      return withZeroPrefix;
-                  })();
+                    const encoded = encoder.encode(payload);
+                    const withZeroPrefix = new Uint8Array(encoded.length + 1);
+                    withZeroPrefix[0] = 0;
+                    withZeroPrefix.set(encoded, 1);
+                    return withZeroPrefix;
+                })();
 
         const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
 
@@ -248,10 +248,7 @@ export const ECDHProvider = ({ children }) => {
         if (totalChunks > 254) return;
 
         for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
-            const chunkData = data.slice(
-                chunkNumber * Packet.MAX_DATA_SIZE,
-                (chunkNumber + 1) * Packet.MAX_DATA_SIZE
-            );
+            const chunkData = data.slice(chunkNumber * Packet.MAX_DATA_SIZE, (chunkNumber + 1) * Packet.MAX_DATA_SIZE);
             const nullTerminated = new Uint8Array(chunkData.length + 1);
             nullTerminated.set(chunkData);
             const aad = new Uint8Array([chunkNumber, totalChunks]);

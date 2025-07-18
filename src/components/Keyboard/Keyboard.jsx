@@ -33,12 +33,12 @@ const keys = [
 
 ];
 
-const MAX_HISTORY_LENGTH = keys[0].length;
+const MAX_HISTORY_LENGTH = 23;
 const HISTORY_DURATION = 3000;
 const COMBO_COOLDOWN = 200; // minimum ms before logging same combo again
 const DEBOUNCE_DURATION = 300; // in ms
 
-const Keyboard = ({listenerRef}) => {
+const Keyboard = ({ listenerRef, deviceStatus, showKeyboard }) => {
     const [activeKeys, setActiveKeys] = useState(new Set());
     const [history, setHistory] = useState([]);
     const timeoutsRef = useRef({});
@@ -60,7 +60,7 @@ const Keyboard = ({listenerRef}) => {
 
     // Handle keypresses
     useEffect(() => {
-        
+
         // If component is not attached to anything, return
         const node = listenerRef?.current;
         if (!node) return;
@@ -90,9 +90,9 @@ const Keyboard = ({listenerRef}) => {
                 if (now - keyPressTimestamps.current[key] >= DEBOUNCE_DURATION) {
                     if (!validKeys.includes(key)) validKeys.push(key);
                 }
-                
+
                 // If there are no such keys, return
-                if (validKeys.length === 0) return; 
+                if (validKeys.length === 0) return;
 
 
                 const sortedCombo = validKeys.sort().join("+");
@@ -102,7 +102,7 @@ const Keyboard = ({listenerRef}) => {
                     if (now - comboTimestamps.current[combo] > COMBO_COOLDOWN) return false;
 
                     const comboKeys = combo.split("+");
-                    
+
                     // Check if validKeys is a subset of comboKeys
                     return validKeys.every(k => comboKeys.includes(k)) && comboKeys.length > validKeys.length;
                 });
@@ -110,7 +110,7 @@ const Keyboard = ({listenerRef}) => {
                 if (isSubsetOfRecentCombo) return; // If we're still holding down other keys this event is not logged
 
                 const lastLogged = comboTimestamps.current[sortedCombo] || 0;
-                
+
                 // If COMBO_COOLDOWN has elapsed, log this as a new combo event
                 if (now - lastLogged >= COMBO_COOLDOWN) {
                     comboTimestamps.current[sortedCombo] = now;
@@ -192,36 +192,43 @@ const Keyboard = ({listenerRef}) => {
 
     return (
         <div className="bg-black text-white flex flex-col items-center justify-center space-y-6">
-            {/* Command History */}
-            <div className="flex space-x-2 overflow-hidden">
-                {history.map((entry) => (
-                    <div
-                        key={entry.id}
-                        style={{ animationDuration: `${HISTORY_DURATION}ms` }}
-                        className="px-2 py-1 flex items-center justify-center text-sm font-bold rounded border border-gray-500 bg-primary animate-fadeout"
-                    >
-                        {entry.key}
-                    </div>
-                ))}
-            </div>
+            
+            {/* Wrap both history and keyboard in a fixed-width container */}
+            <div className="w-full">
 
-            {/* Keyboard Rows */}
-            {keys.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex space-x-2">
-                    {row.map(({ label, width }) => (
-                        <div
-                            key={label}
-                            className={`${width ?? "w-12"
-                                } h-12 border border-2 border-hover flex items-center justify-center text-lg rounded-lg ${isKeyActive(label.toUpperCase())
-                                    ? "bg-primary"
-                                    : "bg-black"
-                                }`}
-                        >
-                            {label}
+                {/* Keyboard Rows */}
+                <div className={`flex flex-col space-y-2 ${showKeyboard? "":"hidden"}`}>
+                    {keys.map((row, rowIndex) => (
+                        <div key={rowIndex} className="flex space-x-2">
+                            {row.map(({ label, width }) => (
+                                <div
+                                    key={label}
+                                    className={`${width ?? "w-12"} h-12 border-2 border-hover flex items-center justify-center text-lg rounded-lg ${isKeyActive(label.toUpperCase()) ? "bg-primary" : "bg-black"
+                                        }`}
+                                >
+                                    {label}
+                                </div>
+                            ))}
                         </div>
                     ))}
                 </div>
-            ))}
+
+                {/* Command History Container Styling */}
+                <div className="rounded-lg bg-shelf px-4 py-2 mt-4 min-h-12 w-full max-w-full overflow-x-hidden">
+                    {/* Command History Container Function*/}
+                    <div className="flex flex-nowrap space-x-2">
+                        {history.map((entry) => (
+                            <div
+                                key={entry.id}
+                                className="px-2 py-1 flex items-center justify-center text-sm font-bold rounded border border-gray-500 bg-primary animate-fadeout"
+                                style={{ animationDuration: `${HISTORY_DURATION}ms` }}
+                            >
+                                {entry.key}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

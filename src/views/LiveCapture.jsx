@@ -195,7 +195,7 @@ export default function LiveCapture() {
 
     return (
         
-        <div className="flex flex-col max-h-screen w-full p-6 bg-background text-text">
+        <div className="flex flex-col max-h-screen w-full p-4 bg-background text-text">
             <Typography variant="h2" className="text-text">
                 Start Typing
             </Typography>
@@ -203,20 +203,22 @@ export default function LiveCapture() {
             <Typography variant="h5" className="text-hover">
                 It just works.....
             </Typography>
-            <Keyboard listenerRef={inputRef}></Keyboard>
 
 
-            <div className="flex flex-col flex-1 mt-5 min-h-0">
+            
+            <Keyboard listenerRef={inputRef} showKeyboard={false}></Keyboard>
+
+
+            <div className="flex flex-col flex-1 min-h-0 my-4">
                 <div
                     ref={inputRef}
                     tabIndex={0}
                     onKeyDown={handleKeyDown}
                     className="w-full h-full min-h-[48px] p-4 rounded-xl transition-all border border-hover focus:border-shelf 
-                                bg-transparent text-text text-4xl outline-none focus:outline-none whitespace-pre-wrap font-sans overflow-y-auto">
+                                bg-transparent text-hover text-4xl outline-none focus:outline-none whitespace-pre-wrap font-sans overflow-y-auto">
                     
-                    {buffer.split("").map((char, i) => (<span key={i}>{char}</span>))
-                    }
-                    <span className="custom-caret" />
+                    Type Here
+                    <span className="" />
                 </div>
             </div>
         </div>
