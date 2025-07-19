@@ -1,46 +1,67 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@material-tailwind/react";
 const keys = [
-    [ // Row 0
-        { eventCode: "ESCAPE", label: "ESC", width: "w-14" },
-        { eventCode: "F1" }, { eventCode: "F2" }, { eventCode: "F3" },
-        { eventCode: "F4" }, { eventCode: "F5" }, { eventCode: "F6" }, { eventCode: "F7" },
-        { eventCode: "F8" }, { eventCode: "F9" }, { eventCode: "F10" }, { eventCode: "F11" },
-        { eventCode: "F12" }, { eventCode:"BACKSPACE", label: "←", width: "w-20 mr-20" } // Backspace
-    ],
-    [ // Row 1
-        { eventCode: "~" }, { eventCode: "1" }, { eventCode: "2" }, { eventCode: "3" },
-        { eventCode: "4" }, { eventCode: "5" }, { eventCode: "6" }, { eventCode: "7" },
-        { eventCode: "8" }, { eventCode: "9" }, { eventCode: "0" }, { eventCode: "-" },
-        { eventCode: "=" }, { eventCode:"BACKSPACE", label: "←", width: "w-20 mr-20" } // Backspace
-    ],
-    [ // Row 2
-        { eventCode: "Tab", width: "w-16" }, { eventCode: "Q" }, { eventCode: "W" },
-        { eventCode: "E" }, { eventCode: "R" }, { eventCode: "T" }, { eventCode: "Y" },
-        { eventCode: "U" }, { eventCode: "I" }, { eventCode: "O" }, { eventCode: "P" },
-        { eventCode: "[" }, { eventCode: "]" }, { eventCode: "\\", width: "w-16 mr-20" } // Backslash
-    ],
-    [ // Row 3
-        { eventCode: "CAPSLOCK", label: "Caps", width: "w-24" },
-        { eventCode: "A" }, { eventCode: "S" }, { eventCode: "D" }, { eventCode: "F" },
-        { eventCode: "G" }, { eventCode: "H" }, { eventCode: "J" }, { eventCode: "K" },
-        { eventCode: "L" }, { eventCode: ";" }, { eventCode: "'" }, { eventCode: "↩", width: "w-24 mr-20" } // Enter
-    ],
-    [ // Row 4
-        { eventCode: "SHIFT", width: "w-32" }, { eventCode: "Z" }, { eventCode: "X" },
-        { eventCode: "C" }, { eventCode: "V" }, { eventCode: "B" }, { eventCode: "N" }, { eventCode: "M" },
-        { eventCode: "," }, { eventCode: "." }, { eventCode: "/" }, { eventCode: "SHIFT", width: "w-32 mr-24" },
-        { eventCode: "ARROWUP", label: "↑", width: "w-20" },
-    ],
-    [ // Row 5
-        { eventCode: "CONTROL", label:"CTRL", width: "w-20 ml-5" }, { eventCode: "WIN", width: "w-20" }, { eventCode: "ALT", width: "w-20" },
-        { eventCode: "SPACE", width: "w-[300px]" },
-        { eventCode: "ALT", width: "w-20" }, { eventCode: "META", label: "WIN", width: "w-20" }, { eventCode: "CONTROL", label:"CTRL", width: "w-20 mr-20" },
-        { eventCode: "ARROWLEFT", label: "←", width: "w-20" }, { eventCode: "ARROWDOWN", label: "↓", width: "w-20" }, { eventCode: "ARROWRIGHT", label:"→", width: "w-20" },
+  [ // Row 0
+    { eventCode: "Escape", label: "ESC", width: "w-14" },
+    { eventCode: "F1", label: "F1" }, { eventCode: "F2", label: "F2" }, { eventCode: "F3", label: "F3" },
+    { eventCode: "F4", label: "F4" }, { eventCode: "F5", label: "F5" }, { eventCode: "F6", label: "F6" }, { eventCode: "F7", label: "F7" },
+    { eventCode: "F8", label: "F8" }, { eventCode: "F9", label: "F9" }, { eventCode: "F10", label: "F10" }, { eventCode: "F11", label: "F11" },
+    { eventCode: "F12", label: "F12" }, { eventCode: "Backspace", label: "←", width: "w-20 mr-20" } // Backspace
+  ],
 
-    ],
+  [ // Row 1
+    { eventCode: "Backquote", label: "~" }, { eventCode: "Digit1", label: "1" }, { eventCode: "Digit2", label: "2" }, { eventCode: "Digit3", label: "3" },
+    { eventCode: "Digit4", label: "4" }, { eventCode: "Digit5", label: "5" }, { eventCode: "Digit6", label: "6" }, { eventCode: "Digit7", label: "7" },
+    { eventCode: "Digit8", label: "8" }, { eventCode: "Digit9", label: "9" }, { eventCode: "Digit0", label: "0" }, { eventCode: "Minus", label: "-" },
+    { eventCode: "Equal", label: "=" }, { eventCode: "Backspace", label: "←", width: "w-20 mr-20" } // Backspace
+  ],
 
+  [ // Row 2
+    { eventCode: "Tab", label: "Tab", width: "w-16" }, { eventCode: "KeyQ", label: "Q" }, { eventCode: "KeyW", label: "W" },
+    { eventCode: "KeyE", label: "E" }, { eventCode: "KeyR", label: "R" }, { eventCode: "KeyT", label: "T" }, { eventCode: "KeyY", label: "Y" },
+    { eventCode: "KeyU", label: "U" }, { eventCode: "KeyI", label: "I" }, { eventCode: "KeyO", label: "O" }, { eventCode: "KeyP", label: "P" },
+    { eventCode: "BracketLeft", label: "[" }, { eventCode: "BracketRight", label: "]" }, { eventCode: "Backslash", label: "\\", width: "w-16 mr-20" } // Backslash
+  ],
+
+  [ // Row 3
+    { eventCode: "CapsLock", label: "Caps", width: "w-24" },
+    { eventCode: "KeyA", label: "A" }, { eventCode: "KeyS", label: "S" }, { eventCode: "KeyD", label: "D" }, { eventCode: "KeyF", label: "F" },
+    { eventCode: "KeyG", label: "G" }, { eventCode: "KeyH", label: "H" }, { eventCode: "KeyJ", label: "J" }, { eventCode: "KeyK", label: "K" },
+    { eventCode: "KeyL", label: "L" }, { eventCode: "Semicolon", label: ";" }, { eventCode: "Quote", label: "'" }, { eventCode: "Enter", label: "↩", width: "w-24 mr-20" } // Enter
+  ],
+
+  [ // Row 4
+    { eventCode: "ShiftLeft", label: "SHIFT", width: "w-32" }, { eventCode: "KeyZ", label: "Z" }, { eventCode: "KeyX", label: "X" },
+    { eventCode: "KeyC", label: "C" }, { eventCode: "KeyV", label: "V" }, { eventCode: "KeyB", label: "B" }, { eventCode: "KeyN", label: "N" }, { eventCode: "KeyM", label: "M" },
+    { eventCode: "Comma", label: "," }, { eventCode: "Period", label: "." }, { eventCode: "Slash", label: "/" }, { eventCode: "ShiftRight", label: "SHIFT", width: "w-32 mr-24" },
+    { eventCode: "ArrowUp", label: "↑", width: "w-20" },
+  ],
+
+  [ // Row 5
+    { eventCode: "ControlLeft", label:"CTRL", width: "w-20 ml-5" }, { eventCode: "MetaLeft", label: "WIN", width: "w-20" }, { eventCode: "AltLeft", label: "ALT", width: "w-20" },
+    { eventCode: "Space", label:"_", width: "w-[300px]" },
+    { eventCode: "AltRight", label: "ALT", width: "w-20" }, { eventCode: "MetaRight", label: "WIN", width: "w-20" }, { eventCode: "ControlRight", label:"CTRL", width: "w-20 mr-20" },
+    { eventCode: "ArrowLeft", label: "←", width: "w-20" }, { eventCode: "ArrowDown", label: "↓", width: "w-20" }, { eventCode: "ArrowRight", label:"→", width: "w-20" },
+  ],
 ];
+
+const modifierKeyCodes = [
+  "ShiftLeft",
+  "ShiftRight",
+  "ControlLeft",
+  "ControlRight",
+  "AltLeft",
+  "AltRight",
+  "MetaLeft",   // Windows key on Windows, Command key on macOS
+  "MetaRight"
+];
+
+
+
+const keyLabelMap = {};
+    keys.flat().forEach(({ eventCode, label }) => {
+    keyLabelMap[eventCode] = label || eventCode;
+});
 
 const MAX_HISTORY_LENGTH = 23;
 const HISTORY_DURATION = 3000;
@@ -64,6 +85,7 @@ const Keyboard = ({ listenerRef, deviceStatus}) => {
     const activeKeysRef = useRef(new Set());
     const keyPressTimestamps = useRef({});
     const debounceTimer = useRef(null);
+
 
 
     useEffect(() => {
@@ -111,7 +133,7 @@ const Keyboard = ({ listenerRef, deviceStatus}) => {
         if (!node) return;
 
         const handleKeyDown = (e) => {
-            const key = e.key === " " ? "SPACE" : e.key.toUpperCase(); // Translate " " to "SPACE"
+            const key =  e.code; // Translate " " to "SPACE"
 
             // Only timestamp if not already held
             if (!keyPressTimestamps.current[key]) {
@@ -140,8 +162,9 @@ const Keyboard = ({ listenerRef, deviceStatus}) => {
                 if (validKeys.length === 0) return;
 
 
-                const sortedCombo = validKeys.sort().join("+");
+                const sortedCombo = validKeys.map(code => keyLabelMap[code] || code).sort().join("+");
 
+            
                 // Check if a bigger combo including this combo was recently logged
                 const isSubsetOfRecentCombo = Object.keys(comboTimestamps.current).some(combo => {
                     if (now - comboTimestamps.current[combo] > COMBO_COOLDOWN) return false;
@@ -173,7 +196,7 @@ const Keyboard = ({ listenerRef, deviceStatus}) => {
         };
 
         const handleKeyUp = (e) => {
-            const key = e.key === " " ? "SPACE" : e.key.toUpperCase();
+            const key = e.code;
             const pressTime = keyPressTimestamps.current[key];
             const now = Date.now();
 
@@ -188,11 +211,11 @@ const Keyboard = ({ listenerRef, deviceStatus}) => {
             // If it's a quick tap, record the combo using remaining modifiers
             if (wasQuickTap) {
                 const modifiers = [...tempActiveKeys].filter(k =>
-                    ["SHIFT", "CONTROL", "ALT", "WIN"].includes(k)
+                    modifierKeyCodes.includes(k)
                 );
 
                 const comboKeys = [...modifiers, key].sort();
-                const sortedCombo = comboKeys.join("+");
+                const sortedCombo = comboKeys.map(k => keyLabelMap[k] || k).join("+");
 
                 if (now - (comboTimestamps.current[sortedCombo] || 0) >= COMBO_COOLDOWN) {
                     comboTimestamps.current[sortedCombo] = now;
@@ -249,10 +272,10 @@ const Keyboard = ({ listenerRef, deviceStatus}) => {
                                 <div
                                     key={eventCode}
                                     className={`${width ?? "w-12"} h-12 mx-1 border-2 border-hover flex items-center justify-center text-lg rounded-lg ${rowIndex === 0?"mb-5":""}
-                                        ${isKeyActive(eventCode.toUpperCase()) ? backgroundColor : "bg-black"
+                                        ${isKeyActive(eventCode) ? backgroundColor : "bg-black"
                                     }`}
                                 >
-                                    {label? label : eventCode}
+                                    {label}
                                 </div>
                             ))}
                         </div>

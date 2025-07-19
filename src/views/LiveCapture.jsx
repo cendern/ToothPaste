@@ -11,10 +11,10 @@ import { ECDHContext } from "../context/ECDHContext";
 import { BLEContext } from "../context/BLEContext";
 import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 import Keyboard from "../components/Keyboard/Keyboard";
+import KeyHistory from "../components/Keyboard/KeyHistory";
 
 
 export default function LiveCapture() {
-    const [buffer, setBuffer] = useState(""); // what user is typing
     const lastSentBuffer = useRef(""); // tracks last sent buffer
     const bufferRef = useRef("");
     const debounceTimeout = useRef(null);
@@ -141,7 +141,6 @@ export default function LiveCapture() {
                 } else {
                     const newBuffer = buffer.slice(0, -1);
                     bufferRef.current = newBuffer;
-                    setBuffer(newBuffer);
                     scheduleSend();
                 }
                 return;
@@ -154,7 +153,6 @@ export default function LiveCapture() {
                 } else {
                     const newBuffer = buffer + "\n";
                     bufferRef.current = newBuffer;
-                    setBuffer(newBuffer);
                     scheduleSend();
                 }
                 return;
@@ -172,7 +170,6 @@ export default function LiveCapture() {
 
                 const newBuffer = bufferRef.current + "\t"; // Tab character is \t
                 bufferRef.current = newBuffer;
-                setBuffer(newBuffer);
 
                 scheduleSend(); // Your existing debounce/send logic
                 return;
@@ -182,7 +179,6 @@ export default function LiveCapture() {
                 // Regular characters
                 const newBuffer = buffer + e.key;
                 bufferRef.current = newBuffer;
-                setBuffer(newBuffer);
                 scheduleSend();
                 return;
             }
@@ -208,7 +204,7 @@ export default function LiveCapture() {
 
             
             <Keyboard listenerRef={inputRef} deviceStatus={status}></Keyboard>
-
+            {/* <KeyHistory keyhistoryref={bufferRef.current}/> */}
 
             <div className="flex flex-col flex-1 min-h-0 my-4">
                 <div
