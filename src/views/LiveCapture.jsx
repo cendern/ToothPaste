@@ -320,9 +320,9 @@ export default function LiveCapture() {
       }
     }
 
-    const handleTouchInput = (e) => {
+    const onPaste = (e) => {
         e.preventDefault();
-        const newBuffer = buffer + e.data('text');
+        const newBuffer = buffer + e.clipboardData.getdata('text');
         bufferRef.current = newBuffer;
         setBuffer(newBuffer);
         scheduleSend();
@@ -330,7 +330,7 @@ export default function LiveCapture() {
 
     }
 
-    const onPaste = (e) => {
+    const handleTouchInput = (e) => {
         e.preventDefault();
         const newBuffer = null;
 
@@ -341,7 +341,7 @@ export default function LiveCapture() {
         } 
         
         else if (e.inputType === "insertText") {
-            const newBuffer = buffer + e.clipboardData.getData('text');      
+            const newBuffer = buffer + e.data();      
         } 
         
         else {
