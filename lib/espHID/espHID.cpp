@@ -58,7 +58,7 @@ void sendKeycode(uint8_t* keys, bool slowMode) {
     keyboard.releaseAll();
 }
 
-void moveMouse(int x, int y, bool LClick, bool RClick){
+void moveMouse(int32_t x, int32_t y, bool LClick, bool RClick){
   
   // Click before moving if the click is in the same report
   if(LClick){
@@ -69,7 +69,8 @@ void moveMouse(int x, int y, bool LClick, bool RClick){
     mouse.press(MOUSE_RIGHT);
   }
   
-  mouse.move(x, y, 0, 0); // Move the mouse by the x and y distance
+
+  smoothMoveMouse(x, y, 20, 5);
 
   // Release after moving the mouse
   if (mouse.isPressed(MOUSE_LEFT)) {
@@ -82,8 +83,37 @@ void moveMouse(int x, int y, bool LClick, bool RClick){
   
 }
 
-void moveMouse(int32_t* mousePacket){
-  moveMouse(mousePacket[0], mousePacket[1], (bool)mousePacket[2], (bool)mousePacket[3]);
+void moveMouse(uint8_t* mousePacket){
+  // mousePacket is an array of int32_t values sent over a uint8_t stream
+
+  int32_t* ints = reinterpret_cast<int32_t*>(mousePacket);
+  //moveMouse(mousePacket[0], mousePacket[1], (bool)mousePacket[2], (bool)mousePacket[3]);
+  moveMouse(ints[0], ints[1], false, false);
+}
+
+void smoothMoveMouse(int dx, int dy, int steps, int interval) {
+  float stepX = (float)dx / steps;
+  float stepY = (float)dy / steps;
+  
+  float accumulatedX = 0;
+  float accumulatedY = 0;
+
+  for (int i = 0; i < steps; i++) {
+    accumulatedX += stepX;
+    accumulatedY += stepY;
+
+    // Convert accumulated float deltas to int and move only if non-zero
+    int moveX = round(accumulatedX);
+    int moveY = round(accumulatedY);
+
+    if (moveX != 0 || moveY != 0) {
+      mouse.move(moveX, moveY);
+      accumulatedX -= moveX;
+      accumulatedY -= moveY;
+    }
+
+    delay(interval);
+  }
 }
 
 // ##################### Delay Functions #################### //
