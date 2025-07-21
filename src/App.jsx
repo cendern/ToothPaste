@@ -29,7 +29,7 @@ import {
 function App() {
     const [showOverlay, setShowOverlay] = useState(false);
     const [showSidebar, setshowSidebar] = useState(true);
-    const [activeView, setActiveView] = useState("paste"); // control view here
+    const [activeView, setActiveView] = useState("live"); // control view here
 
     const renderView = () => {
         switch (activeView) {
@@ -94,4 +94,4 @@ function App() {
     // );
 }
 
-export default App;
+export default App

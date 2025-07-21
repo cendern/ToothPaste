@@ -320,9 +320,35 @@ export default function LiveCapture() {
       }
     }
 
+    const handleTouchInput = (e) => {
+        e.preventDefault();
+        const newBuffer = buffer + e.data('text');
+        bufferRef.current = newBuffer;
+        setBuffer(newBuffer);
+        scheduleSend();
+        return;
+
+    }
+
     const onPaste = (e) => {
         e.preventDefault();
-        const newBuffer = buffer + e.clipboardData.getData('text');
+        const newBuffer = null;
+
+        if (e.inputType === "deleteContentBackward") {
+            // Backspace pressed
+            console.log("Backspace detected");
+            // Handle backspace here
+        } 
+        
+        else if (e.inputType === "insertText") {
+            const newBuffer = buffer + e.clipboardData.getData('text');      
+        } 
+        
+        else {
+            // Other input types like paste, delete forward, etc.
+            console.log("Input type:", e.inputType, "data:", e.data);
+        }
+        
         bufferRef.current = newBuffer;
         setBuffer(newBuffer);
         scheduleSend();
