@@ -2,11 +2,17 @@
 #include <USB.h>
 
 USBHIDKeyboard keyboard;
+USBHIDMouse mouse;
+USBHIDConsumerControl control;
+USBHIDSystemControl system;
 
 // Start the hid keyboard
 void hidSetup()
 {
   keyboard.begin();
+  mouse.begin();
+  control.begin();
+  system.begin();
   USB.begin();
 }
 
@@ -50,6 +56,34 @@ void sendKeycode(uint8_t* keys, bool slowMode) {
     }
     delay(50); // optionally slower delay if slowMode
     keyboard.releaseAll();
+}
+
+void moveMouse(int x, int y, bool LClick, bool RClick){
+  
+  // Click before moving if the click is in the same report
+  if(LClick){
+    mouse.press(MOUSE_LEFT);
+  }
+
+  if(RClick){
+    mouse.press(MOUSE_RIGHT);
+  }
+  
+  mouse.move(x, y, 0, 0); // Move the mouse by the x and y distance
+
+  // Release after moving the mouse
+  if (mouse.isPressed(MOUSE_LEFT)) {
+      mouse.release(MOUSE_LEFT);
+  }
+  
+  if (mouse.isPressed(MOUSE_RIGHT)) {
+      mouse.release(MOUSE_RIGHT);
+  }
+  
+}
+
+void moveMouse(int16_t* mousePacket){
+  moveMouse(mousePacket[0], mousePacket[1], (bool)mousePacket[2], (bool)mousePacket[3]);
 }
 
 // ##################### Delay Functions #################### //

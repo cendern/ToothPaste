@@ -302,6 +302,12 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
       std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen);
       sendKeycode(keycode.data(), true);
     }
+    
+    // The first byte indicates the data is mouse data
+    else if(plaintext[0] == 2){
+      std::vector<int16_t> keycode(plaintext + 1, plaintext + packet->dataLen);
+      moveMouse(keycode.data());
+    }
 
     notificationPacket.packetType = RECV_READY;
   }
