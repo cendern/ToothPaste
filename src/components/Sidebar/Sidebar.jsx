@@ -30,7 +30,7 @@ import { useBLEContext } from "../../context/BLEContext";
 import ToothPaste from "../../assets/ToothPaste.png";
 
 // Status icon for a given device
-function ConnectionButton({ connected }) {
+function ConnectionButton() {
     const { connectToDevice, status, device } = useBLEContext();
 
     const borderClass =
@@ -65,6 +65,7 @@ export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView }) {
         setOpen(open === value ? 0 : value);
     };
 
+    console.log("Status is: ", status);
     return (
         <div className="w-full bg-shelf text-white">
             <div className="flex justify-between h-24 items-center px-4">
@@ -98,7 +99,7 @@ export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView }) {
                         <Typography variant="h4">Live Capture</Typography>
                     </button>
 
-                    {device && (
+                    {status === 2 && (
                         <button
                             className="flex items-center space-x-1 p-4 gap-2 rounded hover:bg-hover"
                             onClick={onOpenPairing}
@@ -158,7 +159,7 @@ export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView }) {
                         <span>Live Capture</span>
                     </button>
 
-                    {device && (
+                    {status === 2 && (
                         <button
                             className="flex items-center space-x-1 px-3 py-2 rounded hover:bg-hover"
                             onClick={() => {

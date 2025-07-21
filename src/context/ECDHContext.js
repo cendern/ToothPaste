@@ -232,7 +232,6 @@ export const ECDHProvider = ({ children }) => {
         const pubKeyObject = await importPeerPublicKey(base64ToArrayBuffer(peerPubKey));
 
         const sprivKey = await loadBase64(clientID, "SelfPrivateKey");
-        console.log("Self private key: ", sprivKey);
         const privKeyObject = await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
 
         await deriveKey(privKeyObject, pubKeyObject);
