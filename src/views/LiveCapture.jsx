@@ -23,8 +23,108 @@ export default function LiveCapture() {
     const { pktCharacteristic, status, readyToReceive, sendEncrypted } = useContext(BLEContext);
     const { createEncryptedPackets } = useContext(ECDHContext);
     const inputRef = useRef(null);
-
     const DEBOUNCE_INTERVAL_MS = 50;
+
+    // Mouse Vars
+    const lastPos = useRef({ x: 0, y: 0 });
+    const isTracking = useRef(false);
+    const ctrlPressed = useRef(false);
+    const lastReportTime = useRef(0);
+    const REPORT_INTERVAL_MS = 500;
+
+    // Mouse acceleration function (simple example)
+    // You can tweak this curve as you like
+    function applyAcceleration(delta) {
+        const sensitivity = 1.5; // base sensitivity multiplier
+        const exponent = 1.3;    // acceleration curve power
+        const sign = Math.sign(delta);
+        const absDelta = Math.abs(delta);
+
+        return sign * (Math.pow(absDelta, exponent)) * sensitivity;
+    }
+
+    function onPointerDown(e) {
+        if (ctrlPressed.current) return; // ignore pointer down if ctrl held
+
+        isTracking.current = true;
+        lastPos.current = { x: e.clientX, y: e.clientY };
+    }
+
+    function onPointerMove(e) {
+        if (!isTracking.current || ctrlPressed.current) return;
+
+        const rect = inputRef.current.getBoundingClientRect();
+
+        if (
+        e.clientX < rect.left || e.clientX > rect.right ||
+        e.clientY < rect.top || e.clientY > rect.bottom
+        ) {
+        // Pointer outside div — lift finger
+        isTracking.current = false;
+        return;
+        }
+
+        const deltaX = e.clientX - lastPos.current.x;
+        const deltaY = e.clientY - lastPos.current.y;
+        lastPos.current = { x: e.clientX, y: e.clientY };
+
+        // Apply acceleration or report delta here
+        const accelDeltaX = applyAcceleration(deltaX);
+        const accelDeltaY = applyAcceleration(deltaY);
+
+
+        //console.log('Accel delta:', accelDeltaX.toFixed(2), accelDeltaY.toFixed(2));
+
+        const keycode = new Uint8Array(160);
+
+        keycode[0] = 2;            
+        keycode[1] = 0;   
+        keycode[2] = 0;  
+        keycode[3] = 0;
+
+        // X
+        keycode[4] = 1;
+        keycode[5] = 1;
+        keycode[6] = 1;
+        keycode[7] = 1;
+
+        // Y
+        keycode[8] = 0;
+        keycode[9] = 0;
+        keycode[10] = 0;
+        keycode[11] = 0;
+
+        // L Click
+        keycode[12] = 0;
+        keycode[13] = 0;
+        keycode[14] = 0;
+        keycode[15] = 0;
+        
+        // R Click
+        keycode[16] = 0;
+        keycode[17] = 0;
+        keycode[18] = 0;
+        keycode[19] = 0;
+
+
+                    
+        const now = e.timeStamp || performance.now();
+
+        if (now - lastReportTime.current >= REPORT_INTERVAL_MS) {
+            console.log('Accel delta:', accelDeltaX.toFixed(2), accelDeltaY.toFixed(2));
+            lastReportTime.current = now;
+            sendEncrypted(keycode);
+        }
+
+    }
+
+    function onPointerUp(e) {
+        isTracking.current = false;
+    }
+
+    function onPointerCancel() {
+        isTracking.current = false;
+    }
 
     // Send only recent characters while displaying the whole input
     const sendDiff = useCallback(async () => {
@@ -114,7 +214,7 @@ export default function LiveCapture() {
 
         const buffer = bufferRef.current;
 
-        if (isCtrl && !["Control"].includes(e.key)) {
+        if (isCtrl && !["Control"].includes(e.key)) { 
             console.log("Shortcut detected: Ctrl + ", e.key);
 
             var keypress = null;
@@ -180,6 +280,12 @@ export default function LiveCapture() {
                 scheduleSend(); // Your existing debounce/send logic
                 return;
             }
+            
+            if (e.key === "Control") {
+
+                ctrlPressed.current = true;
+                isTracking.current = false;
+            }
 
             if (e.key.length === 1) {
                 // Regular characters
@@ -191,6 +297,12 @@ export default function LiveCapture() {
             }
         }
     };
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'Control') {
+        ctrlPressed.current = false;
+      }
+    }
 
     useEffect(() => {
         inputRef.current?.focus();
@@ -218,6 +330,11 @@ export default function LiveCapture() {
                     ref={inputRef}
                     tabIndex={0}
                     onKeyDown={handleKeyDown}
+                    onKeyUp={handleKeyUp}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerCancel}
                     className="flex flex-1 w-full p-4 rounded-xl transition-all border border-hover focus:border-shelf 
                                 bg-transparent text-hover text-4xl outline-none focus:outline-none whitespace-pre-wrap font-sans overflow-y-auto">
                     
