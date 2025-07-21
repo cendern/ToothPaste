@@ -332,7 +332,7 @@ export default function LiveCapture() {
 
     const handleTouchInput = (e) => {
         e.preventDefault();
-        const newBuffer = buffer + e.data();      
+        const newBuffer = buffer + e.data;      
         
         
         bufferRef.current = newBuffer;
