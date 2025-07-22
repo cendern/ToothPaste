@@ -62,7 +62,7 @@ function ConnectionButton() {
     );
 }
 
-export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView }) {
+export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
     const [open, setOpen] = React.useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const { status, device } = useBLEContext();
@@ -195,48 +195,4 @@ export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView }) {
         </div>
     );
 }
-// export function SidebarWithLogo({ onOpenPairing, onNavigate, activeView }) {
-//     const [open, setOpen] = React.useState(0);
-//     const [openAlert, setOpenAlert] = React.useState(true);
-//     const { status, device } = useBLEContext();
 
-//     const handleOpen = (value) => {
-//         setOpen(open === value ? 0 : value);
-//     };
-
-//     return (
-//         <Card className={"h-full w-full max-w-[20rem] p-3 shadow-xl bg-shelf text-text "}>
-
-//             <List className="text-text gap-4">
-//                 <ConnectionButton connected={status} />
-//                 <hr className="my-0 border-none" />
-
-//                 <Typography variant="h4" className="mb-0 px-1 text-text"> Actions</Typography>
-
-//                 <ListItem className={`ml-1 ${activeView === "paste" ? "outline-text" : ""}`} onClick={() => onNavigate("paste")}>
-//                     <ListItemPrefix>
-//                         <ClipboardIcon className="h-5 w-5" />
-//                     </ListItemPrefix>
-//                     Paste
-//                 </ListItem>
-
-//                 <ListItem
-//                     className={`ml-1 ${activeView === "live" ? "outline-text" : ""}`} onClick={() => onNavigate("live")}>
-//                     <ListItemPrefix>
-//                         <PlayIcon className="h-5 w-5" />
-//                     </ListItemPrefix>
-//                     Live Capture
-//                 </ListItem>
-
-//                 {device && (
-//                     <ListItem className="ml-1" onClick={onOpenPairing}>
-//                         <ListItemPrefix>
-//                             <LinkIcon className="h-5 w-5" />
-//                         </ListItemPrefix>
-//                         Pair Device
-//                     </ListItem>
-//                 )}
-//             </List>
-//         </Card>
-//     );
-// }

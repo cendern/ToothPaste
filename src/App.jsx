@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import "./index.css";
 import "./styles/global.css"; // Ensure global styles are applied
-import { Sidebar, SidebarWithLogo } from "./components/Sidebar/Sidebar";
+import Navbar from "./components/Navigation/Navbar";
 import BulkSend from "./views/BulkSend";
 import LiveCapture from "./views/LiveCapture";
 import { BLEProvider } from "./context/BLEContext";
@@ -28,7 +28,7 @@ import {
 
 function App() {
     const [showOverlay, setShowOverlay] = useState(false);
-    const [showSidebar, setshowSidebar] = useState(true);
+    const [showNavbar, setshowNavbar] = useState(true);
     const [activeView, setActiveView] = useState("live"); // control view here
 
     const renderView = () => {
@@ -48,9 +48,9 @@ function App() {
         <div className="flex flex-col min-h-screen max-h-screen ">
           
           {/* Navbar with hamburger toggle */}
-          <SidebarWithLogo
-            showSidebar={showSidebar}
-            setShowSidebar={setshowSidebar}
+          <Navbar
+            showNavbar={showNavbar}
+            setshowNavbar={setshowNavbar}
             onNavigate={setActiveView}
             onOpenPairing={() => setShowOverlay(true)}
             activeView={activeView}
@@ -67,31 +67,6 @@ function App() {
       </BLEProvider>
     </ECDHProvider>
     );
-    // return (
-    //     <ECDHProvider>
-    //         <BLEProvider setShowOverlay={setShowOverlay} showOverlay={showOverlay}>
-    //             <div className="flex flex-1 min-h-screen max-h-screen">
-    //                 <div onClick={() => setshowSidebar(!showSidebar)} className="mb-2 flex items-center gap-1 p-4">
-    //                     <img src={ToothPaste} alt="brand" className="h-12 w-12 p-0" />
-    //                     <Typography variant="h3" color="text">
-    //                         'ToothPaste
-    //                     </Typography>
-    //                 </div>
-    //                 <div className={`fixed top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out
-    //                     ${showSidebar ? "translate-x-0" : "-translate-x-full"}`}
-    //                 >
-    //                     <SidebarWithLogo
-    //                         onOpenPairing={() => setShowOverlay(true)}
-    //                         onNavigate={setActiveView}
-    //                         activeView={activeView}
-    //                     />
-    //                 </div>
-    //                 {renderView()} {/* The page that is displayed*/}
-    //                 <ECDHOverlay showOverlay={showOverlay} setShowOverlay={setShowOverlay} /> {/*Pairing Overlay*/}
-    //             </div>
-    //         </BLEProvider>
-    //     </ECDHProvider>
-    // );
 }
 
 export default App
