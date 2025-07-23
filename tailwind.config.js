@@ -33,5 +33,7 @@ module.exports = withMT({
       },
     },  
   },
+  safelist: ['text-shelf', 'bg-shelf', 'border-shelf', 'text-hover', 'bg-hover', 'border-hover',
+    'text-orange', 'bg-orange', 'border-orange'],
   plugins: [],
 });
