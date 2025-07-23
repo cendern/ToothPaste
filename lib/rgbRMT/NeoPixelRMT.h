@@ -1,11 +1,13 @@
+#ifndef RGB_LED_PIN 
+#define RGB_LED_PIN GPIO_NUM_21 // Default pin for the RGB LED, can be changed in constructor
+#endif
+
 #ifndef NEOPIXELRMT_H
 #define NEOPIXELRMT_H
 
 #include <esp32-hal.h>
 #include "Colors.h" // Import the RGB struct and Colors namespace
 
-
-#define RGB_LED_PIN GPIO_NUM_21 // Default pin for the RGB LED, can be changed in constructor
 
 
 class NeoPixelRMT {
