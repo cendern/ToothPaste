@@ -383,9 +383,24 @@ export default function LiveCapture() {
     // Handle inputs from touch devices / on screen keyboards
     const handleTouchInput = (e) => {
         e.preventDefault();
+        console.log("Touch input detected: ", e.data);
+
+        if (e.data === "Backspace") {
+                if (buffer.length === 0) {
+                    specialEvents.current.push("Backspace");
+                    scheduleSend();
+                } else {
+                    const newBuffer = buffer.slice(0, -1);
+                    bufferRef.current = newBuffer;
+                    setBuffer(newBuffer);
+                    scheduleSend();
+                }
+            return;
+        }
+        
+        
         const newBuffer = buffer + e.data;      
         
-        console.log("Touch input detected: ", e.data);
         bufferRef.current = newBuffer;
         setBuffer(newBuffer);
         scheduleSend();
