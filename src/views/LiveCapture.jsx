@@ -240,14 +240,6 @@ export default function LiveCapture() {
         }
     }
 
-    // Helper: handle regular character input
-    function handleCharacterInput(e, buffer) {
-        if (e.key.length === 1) {
-            updateBufferAndSend(buffer + e.key);
-            return true;
-        }
-        return false;
-    }
 
     // Helper: handle Ctrl/Alt shortcuts
     function handleModifierShortcut(e, modifierByte) {
@@ -266,21 +258,26 @@ export default function LiveCapture() {
         const isAlt = e.altKey;
         const buffer = bufferRef.current;
 
-        if (isCtrl && e.key !== "Control") {
+        if (isCtrl && e.key !== "Control") { // Just Ctrl does nothing
             handleModifierShortcut(e, 0x80);
             return;
         }
-        if (isAlt && e.key !== "Alt") {
+        if (isAlt && e.key !== "Alt") { // Just Alt does nothing
             handleModifierShortcut(e, 0x83);
             return;
         }
 
-        if (handleSpecialKey(e, buffer)) return;
+        if (handleSpecialKey(e, buffer)) return; // Handle special keys first
+
         if (e.key === "Control") {
             ctrlPressed.current = true;
             return;
         }
-        handleCharacterInput(e, buffer);
+        if (e.key.length === 1) {
+            updateBufferAndSend(buffer + e.key);
+            return true;
+        }
+        return false;
     };
 
     // When ctrl is released, start sending mouse data (if enabled)
@@ -353,12 +350,7 @@ export default function LiveCapture() {
             return;
         }
 
-        const newBuffer = buffer + e.data;
-
-        bufferRef.current = newBuffer;
-        setBuffer(newBuffer);
-        scheduleSend();
-        return;
+        updateBufferAndSend(bufferRef.current + e.data); // Append the input data to the buffer and schedule send
     };
 
     return (
