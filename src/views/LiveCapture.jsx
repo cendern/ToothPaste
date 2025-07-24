@@ -1,10 +1,4 @@
-import React, {
-    useEffect,
-    useRef,
-    useState,
-    useContext,
-    useCallback,
-} from "react";
+import React, { useEffect, useRef, useState, useContext, useCallback } from "react";
 
 import { Button, IconButton, Typography } from "@material-tailwind/react";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/outline";
@@ -13,18 +7,17 @@ import { BLEContext } from "../context/BLEContext";
 import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 import Keyboard from "../components/Keyboard/Keyboard";
 
-import {ReactComponent as AppleLogo} from '../assets/appleLogo.svg'
-import {ReactComponent as WindowsLogo} from '../assets/windowsLogo.svg'
+import { ReactComponent as AppleLogo } from "../assets/appleLogo.svg";
+import { ReactComponent as WindowsLogo } from "../assets/windowsLogo.svg";
 
 export default function LiveCapture() {
     const [buffer, setBuffer] = useState(""); // Holds the full input to render (not needed for current implementation)
     const bufferRef = useRef(""); // Tracks the current input buffer
-    const lastSentBuffer = useRef(""); // tracks last sent buffer    
+    const lastSentBuffer = useRef(""); // tracks last sent buffer
     const inputRef = useRef(null);
 
-
     const [macMode, setMacMode] = useState(false); // Does WIN key send WIN or COMMAND key
-    
+
     const debounceTimeout = useRef(null); // Holds the promise to send the buffer data after DEBOUNCE_INTERVAL_MS
     const specialEvents = useRef([]); // store special keys pressed but not modifying buffer
 
@@ -59,12 +52,7 @@ export default function LiveCapture() {
     // When a pointer enters the div
     function onPointerEnter(e) {
         const rect = inputRef.current.getBoundingClientRect();
-        if (
-            e.clientX >= rect.left &&
-            e.clientX <= rect.right &&
-            e.clientY >= rect.top &&
-            e.clientY <= rect.bottom
-        ) {
+        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
             lastPos.current = { x: e.clientX, y: e.clientY };
             isTracking.current = true;
         }
@@ -79,10 +67,7 @@ export default function LiveCapture() {
 
         // Check if pointer is inside the div bounds
         const inside =
-            e.clientX >= rect.left &&
-            e.clientX <= rect.right &&
-            e.clientY >= rect.top &&
-            e.clientY <= rect.bottom;
+            e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
 
         if (!inside && ctrlPressed.current) {
             // Pointer outside div but pointer capture means we still get events
@@ -116,8 +101,7 @@ export default function LiveCapture() {
     }
 
     // Make a keycode packet and send it
-    function sendMouseReport(x, y, LClick, RClick){
-        
+    function sendMouseReport(x, y, LClick, RClick) {
         const flag = 2; // Flag to indicate mouse packet
         const numInts = 4;
 
@@ -128,20 +112,19 @@ export default function LiveCapture() {
         view.setUint8(0, flag); // set flag at first byte
 
         // set int32 values starting at offset 1
-        view.setInt32(1,  x, true);
-        view.setInt32(5,  y, true);
+        view.setInt32(1, x, true);
+        view.setInt32(5, y, true);
 
         const keycode = new Uint8Array(buffer);
-        console.log('Moved mouse by :(', x, y, ")");
+        console.log("Moved mouse by :(", x, y, ")");
         sendEncrypted(keycode);
     }
-
 
     // Send only recent characters while displaying the whole input
     const sendDiff = useCallback(async () => {
         var keycode = new Uint8Array(8); // Payload for special characters
-        keycode[0] = 1;     // DATA_TYPE is TEXT
-        
+        keycode[0] = 1; // DATA_TYPE is TEXT
+
         const current = bufferRef.current; // Current text data (new data + last sent data)
         const previous = lastSentBuffer.current; // Last sent text data
 
@@ -151,7 +134,7 @@ export default function LiveCapture() {
         if (current.length > previous.length) {
             payload += current.slice(previous.length);
 
-        // If data was removed, add n backspaces to the payload where n is the difference in length
+            // If data was removed, add n backspaces to the payload where n is the difference in length
         } else if (current.length < previous.length) {
             const numDeleted = previous.length - current.length;
             payload += "\b".repeat(numDeleted);
@@ -171,25 +154,25 @@ export default function LiveCapture() {
                         payload += "\t";
                         break;
                     case "ArrowUp":
-                        keycode[1] = 0xDA;
+                        keycode[1] = 0xda;
                         break;
                     case "ArrowDown":
-                        keycode[1] = 0xD9;
+                        keycode[1] = 0xd9;
                         break;
                     case "ArrowLeft":
-                        keycode[1] = 0xD8;
+                        keycode[1] = 0xd8;
                         break;
                     case "ArrowRight":
-                        keycode[1] = 0xD7;
+                        keycode[1] = 0xd7;
                         break;
                     // add other special keys as needed
                 }
             }
             // If the payload is not null
-            if (keycode[1] !== 0){
-                console.log("Sending keycode")
+            if (keycode[1] !== 0) {
+                console.log("Sending keycode");
                 sendEncrypted(keycode);
-                keycode[1] = 0;    
+                keycode[1] = 0;
             }
             specialEvents.current = []; // Clear the special events after sending
         }
@@ -202,8 +185,7 @@ export default function LiveCapture() {
         lastSentBuffer.current = current;
 
         sendEncrypted(payload); // Send the input
-    }, [createEncryptedPackets, pktCharacteristic, readyToReceive,]);
-
+    }, [createEncryptedPackets, pktCharacteristic, readyToReceive]);
 
     // Polling logic: send latest buffer every N ms unless the timout is reset
     const scheduleSend = useCallback(() => {
@@ -213,158 +195,132 @@ export default function LiveCapture() {
         }
 
         // Schedule the sendDiff function after DEBOUNCE_INTERVAL_MS
-        debounceTimeout.current = setTimeout(() => {sendDiff();}, DEBOUNCE_INTERVAL_MS);
+        debounceTimeout.current = setTimeout(() => {
+            sendDiff();
+        }, DEBOUNCE_INTERVAL_MS);
     }, [sendDiff]);
 
+    // Handle each keypress and reset the timer
+    function updateBufferAndSend(newBuffer) {
+        bufferRef.current = newBuffer;
+        setBuffer(newBuffer);
+        scheduleSend();
+    }
 
-    // Handle each keypress and reset the timer 
-    const handleKeyDown = (e) => {
-        e.preventDefault();
-        console.log("Key pressed: ", e.code, e.key);
-        const isCtrl = e.ctrlKey || e.metaKey;
-        const isAlt = e.altKey;
-
-        const buffer = bufferRef.current;
-
-        if (isCtrl && !["Control"].includes(e.key)) { 
-            console.log("Shortcut detected: Ctrl + ", e.key);
-
-            var keypress = null;
-            if (e.key === "Backspace") keypress = '\b';
-            else keypress = e.key;
-            
-            console.log("Sending: Ctrl +", keypress);
-
-            var keycode = new Uint8Array(8); // Payload = DATA_TYPE+[KEYCODES(6)]
-            keycode[0] = 1;   // Byte 0
-            keycode[1] = 0x80;  // Byte 1
-            keycode[2] = keypress.charCodeAt(0);  // Byte 2
-            keycode[4] = 0;    // Byte 3
-            keycode[5] = 0;    // Byte 3
-            keycode[6] = 0;    // Byte 3
-            keycode[7] = 0;    // Byte 3
-
-            sendEncrypted(keycode);
-            return;
-        }
-
-        if (isAlt && !["Alt"].includes(e.key)) { 
-            console.log("Shortcut detected: Alt + ", e.key);
-
-            var keypress = null;
-            if (e.key === "Backspace") keypress = '\b';
-            else keypress = e.key;
-            
-            console.log("Sending: Command +", keypress);
-
-            var keycode = new Uint8Array(8); // Payload = DATA_TYPE+[KEYCODES(6)]
-            keycode[0] = 1;   // Byte 0
-            keycode[1] = 0x83;  // Byte 1 (KEY_LEFT_GUI)
-            keycode[2] = keypress.charCodeAt(0);  // Byte 2
-            keycode[4] = 0;    // Byte 3
-            keycode[5] = 0;    // Byte 3
-            keycode[6] = 0;    // Byte 3
-            keycode[7] = 0;    // Byte 3
-
-            sendEncrypted(keycode);
-            return;
-        }
-
-        else{
-            if (e.key === "Backspace") {
+    // Helper: handle special key events (Backspace, Enter, Arrow, Tab)
+    function handleSpecialKey(e, buffer) {
+        switch (e.key) {
+            case "Backspace":
                 if (buffer.length === 0) {
                     specialEvents.current.push("Backspace");
                     scheduleSend();
                 } else {
-                    const newBuffer = buffer.slice(0, -1);
-                    bufferRef.current = newBuffer;
-                    setBuffer(newBuffer);
-                    scheduleSend();
+                    updateBufferAndSend(buffer.slice(0, -1));
                 }
-                return;
-            }
-
-            if (e.key === "Enter") {
+                return true;
+            case "Enter":
                 if (buffer.length === 0) {
                     specialEvents.current.push("Enter");
                     scheduleSend();
                 } else {
-                    const newBuffer = buffer + "\n";
-                    bufferRef.current = newBuffer;
-                    setBuffer(newBuffer);
-                    scheduleSend();
+                    updateBufferAndSend(buffer + "\n");
                 }
-                return;
-            }
-
-            if (e.key.startsWith("Arrow")) {
-                // Always enqueue arrow key events — they don't change buffer
-                specialEvents.current.push(e.key);
-                scheduleSend();
-                return;
-            }
-
-            if (e.key === "Tab") {
-                e.preventDefault(); // Stops focus from jumping to the next element
-
-                const newBuffer = bufferRef.current + "\t"; // Tab character is \t
-                bufferRef.current = newBuffer;
-                setBuffer(newBuffer);
-
-                scheduleSend(); // Your existing debounce/send logic
-                return;
-            }
-            
-            if (e.key === "Control") {
-                ctrlPressed.current = true;
-            }
-
-            if (e.key.length === 1) {
-                // Regular characters
-                const newBuffer = buffer + e.key;
-                bufferRef.current = newBuffer;
-                setBuffer(newBuffer);
-                scheduleSend();
-                return;
-            }
+                return true;
+            case "Tab":
+                e.preventDefault();
+                updateBufferAndSend(buffer + "\t");
+                return true;
+            default:
+                if (e.key.startsWith("Arrow")) {
+                    specialEvents.current.push(e.key);
+                    scheduleSend();
+                    return true;
+                }
+                return false;
         }
+    }
+
+    // Helper: handle regular character input
+    function handleCharacterInput(e, buffer) {
+        if (e.key.length === 1) {
+            updateBufferAndSend(buffer + e.key);
+            return true;
+        }
+        return false;
+    }
+
+    // Helper: handle Ctrl/Alt shortcuts
+    function handleModifierShortcut(e, modifierByte) {
+        let keypress = e.key === "Backspace" ? "\b" : e.key;
+        let keycode = new Uint8Array(8);
+        keycode[0] = 1;
+        keycode[1] = modifierByte;
+        keycode[2] = keypress.charCodeAt(0);
+        sendEncrypted(keycode);
+    }
+
+    // Main keydown handler
+    const handleKeyDown = (e) => {
+        e.preventDefault();
+        const isCtrl = e.ctrlKey || e.metaKey;
+        const isAlt = e.altKey;
+        const buffer = bufferRef.current;
+
+        if (isCtrl && e.key !== "Control") {
+            handleModifierShortcut(e, 0x80);
+            return;
+        }
+        if (isAlt && e.key !== "Alt") {
+            handleModifierShortcut(e, 0x83);
+            return;
+        }
+
+        if (handleSpecialKey(e, buffer)) return;
+        if (e.key === "Control") {
+            ctrlPressed.current = true;
+            return;
+        }
+        handleCharacterInput(e, buffer);
     };
 
     // When ctrl is released, start sending mouse data (if enabled)
     const handleKeyUp = (e) => {
-      if (e.key === 'Control') {
-        ctrlPressed.current = false;
-      }
-    }
+        if (e.key === "Control") {
+            ctrlPressed.current = false;
+        }
+    };
 
     // Toggle capturing and sending mouse data
     function CaptureMouseButton() {
         const handleToggle = () => setCaptureMouse((prev) => !prev);
 
         return (
-            <div onClick={handleToggle} 
-            className={`border border-hover h-10 w-10 justify-between items-center p-2 rounded-lg
-                        ${captureMouse ? "bg-white text-shelf" : "bg-shelf text-text"}`}>
-                <CursorArrowRaysIcon className="h-5 w-5">
-                </CursorArrowRaysIcon>
+            <div
+                onClick={handleToggle}
+                className={`border border-hover h-10 w-10 justify-between items-center p-2 rounded-lg
+                        ${captureMouse ? "bg-white text-shelf" : "bg-shelf text-text"}`}
+            >
+                <CursorArrowRaysIcon className="h-5 w-5"></CursorArrowRaysIcon>
             </div>
         );
     }
-    
+
     // Toggle between Mac and Windows mode to send command instead of windows
     function MacModeButton() {
         const handleToggle = () => setMacMode((prev) => !prev);
 
         return (
-            <div onClick={handleToggle} 
-            className={`border border-hover h-10 w-10 justify-between items-center p-2 rounded-lg
-                        ${macMode ? "bg-white text-shelf" : "bg-shelf text-white"}`}>
+            <div
+                onClick={handleToggle}
+                className={`border border-hover h-10 w-10 justify-between items-center p-2 rounded-lg
+                        ${macMode ? "bg-white text-shelf" : "bg-shelf text-white"}`}
+            >
                 {/* <IconButton>
                     <svg xmlns={windowsLogo} fill="white" className="h-5 w-5" />
                 </IconButton> */}
 
-                <WindowsLogo fill="currentColor" className={`${macMode?"hidden" : ""} h-5 w-5`} />
-                <AppleLogo fill="currentColor" className={`${macMode?"" : "hidden"} h-5 w-5`} />
+                <WindowsLogo fill="currentColor" className={`${macMode ? "hidden" : ""} h-5 w-5`} />
+                <AppleLogo fill="currentColor" className={`${macMode ? "" : "hidden"} h-5 w-5`} />
             </div>
         );
     }
@@ -372,13 +328,12 @@ export default function LiveCapture() {
     // Handle paste events (append pasted text to buffer)
     const onPaste = (e) => {
         e.preventDefault();
-        const newBuffer = buffer + e.clipboardData.getdata('text');
+        const newBuffer = buffer + e.clipboardData.getdata("text");
         bufferRef.current = newBuffer;
         setBuffer(newBuffer);
         scheduleSend();
         return;
-
-    }
+    };
 
     // Handle inputs from touch devices / on screen keyboards
     const handleTouchInput = (e) => {
@@ -386,31 +341,28 @@ export default function LiveCapture() {
         console.log("Touch input detected: ", e.data);
 
         if (e.data === "Backspace") {
-                if (buffer.length === 0) {
-                    specialEvents.current.push("Backspace");
-                    scheduleSend();
-                } else {
-                    const newBuffer = buffer.slice(0, -1);
-                    bufferRef.current = newBuffer;
-                    setBuffer(newBuffer);
-                    scheduleSend();
-                }
+            if (buffer.length === 0) {
+                specialEvents.current.push("Backspace");
+                scheduleSend();
+            } else {
+                const newBuffer = buffer.slice(0, -1);
+                bufferRef.current = newBuffer;
+                setBuffer(newBuffer);
+                scheduleSend();
+            }
             return;
         }
-        
-        
-        const newBuffer = buffer + e.data;      
-        
+
+        const newBuffer = buffer + e.data;
+
         bufferRef.current = newBuffer;
         setBuffer(newBuffer);
         scheduleSend();
         return;
-    }
+    };
 
     return (
-        
         <div className="flex flex-col flex-1 w-full p-4 bg-background text-text">
-            
             {/* <Typography variant="h4" className="text-text">
                 Send Keystrokes to the 'ToothPaste in real(ish) time
             </Typography> */}
@@ -419,32 +371,32 @@ export default function LiveCapture() {
                 It just works.....
             </Typography> */}
 
-
-            
             <Keyboard listenerRef={inputRef} deviceStatus={status}></Keyboard>
-
 
             <div className="flex flex-col flex-1 my-4 rounded-xl transition-all border border-hover focus:border-shelf relative group ">
                 <div className="absolute top-2 right-2">
                     <CaptureMouseButton />
                 </div>
 
-                
                 <div className="absolute top-14 right-2">
                     <MacModeButton />
                 </div>
 
-
-
                 <Typography
                     variant="h1"
                     className="flex items-center justify-center pointer-events-none select-none text-gray-800 p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0 group-focus-within:hidden"
-                    aria-hidden="true">Click here to start sending keystrokes in real time (kinda...)</Typography>
-                
+                    aria-hidden="true"
+                >
+                    Click here to start sending keystrokes in real time (kinda...)
+                </Typography>
+
                 <Typography
                     variant="h1"
                     className=" hidden group-focus-within:flex items-center justify-center pointer-events-none select-none text-hover p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0 "
-                    aria-hidden="true">Capturing inputs...</Typography>
+                    aria-hidden="true"
+                >
+                    Capturing inputs...
+                </Typography>
 
                 <div
                     ref={inputRef}
@@ -462,8 +414,8 @@ export default function LiveCapture() {
                     onBeforeInput={handleTouchInput}
                     onPaste={onPaste}
                     className="flex flex-1 w-full p-4 rounded-xl
-                            text-hover text-4xl bg-shelf focus:bg-background focus:bg-background focus:outline-none whitespace-pre-wrap font-sans overflow-y-auto">
-                    
+                            text-hover text-4xl bg-shelf focus:bg-background focus:bg-background focus:outline-none whitespace-pre-wrap font-sans overflow-y-auto"
+                >
                     <span className="" />
                 </div>
             </div>
