@@ -191,6 +191,11 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
             setActiveKeys((prevKeys) => {
                 const updated = new Set(prevKeys);
                 updated.add(key);
+
+                if(e.getModifierState("CapsLock")) {
+                    updated.add("CapsLock");
+                }
+
                 activeKeysRef.current = new Set(updated);
                 return updated;
             });
@@ -255,6 +260,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
             // Snapshot active keys *before* deleting the current key
             const tempActiveKeys = new Set(activeKeysRef.current);
             tempActiveKeys.delete(key);
+            
 
             // If it's a quick tap, record the combo using remaining modifiers
             if (wasQuickTap) {
@@ -280,7 +286,12 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
             // Update the actual state afterward
             setActiveKeys((prevKeys) => {
                 const updated = new Set(prevKeys);
-                updated.delete(key);
+
+                // If the keyUp event is for CapsLock, we need to check if it's still active before removing it
+                if(!(key === "CapsLock" && e.getModifierState("CapsLock"))) {
+                    updated.delete(key);
+                }
+                
                 activeKeysRef.current = new Set(updated); // keep ref in sync
                 return updated;
             });

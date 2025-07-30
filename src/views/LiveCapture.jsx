@@ -224,7 +224,7 @@ export default function LiveCapture() {
         sendEncrypted(payload); // Send the input
     }, [createEncryptedPackets, pktCharacteristic, readyToReceive]);
 
-    // Polling logic: send latest buffer every N ms unless the timout is reset
+    // Schedule the sendDiff function to be called after a delay, calling it again within the delay resets the timer
     const scheduleSend = useCallback(() => {
         // If schedulesSend is called while another timeout is running, reset it
         if (debounceTimeout.current) {
@@ -278,7 +278,7 @@ export default function LiveCapture() {
     }
 
 
-    // Helper: handle Ctrl/Alt shortcuts
+    // Helper: handle Ctrl/Alt + alpha shortcuts (Currently does not work with system shortcuts like alt+tab)
     function handleModifierShortcut(e, modifierByte) {
         let keypress = e.key === "Backspace" ? "\b" : e.key;
         let keycode = new Uint8Array(8);
@@ -287,6 +287,7 @@ export default function LiveCapture() {
         keycode[2] = keypress.charCodeAt(0);
         sendEncrypted(keycode);
     }
+
     // Main keydown handler
     const handleKeyDown = (e) => {
         e.preventDefault();
