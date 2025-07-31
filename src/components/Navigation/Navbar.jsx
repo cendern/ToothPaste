@@ -84,7 +84,7 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsOpen(false)}>
                     <img src={ToothPaste} alt="brand" className="h-10 w-10" />
                     <Typography variant="h3" color="text" className="select-none">
-                        'ToothPaste
+                        ToothPaste
                     </Typography>
                 </div>
 
