@@ -15,7 +15,8 @@ export default function LiveCapture() {
     const bufferRef = useRef(""); // Tracks the current input buffer
     const lastSentBuffer = useRef(""); // tracks last sent buffer
     const inputRef = useRef(null);
-
+    let lastText = '';
+    
     const [macMode, setMacMode] = useState(false); // Does WIN key send WIN or COMMAND key
 
     const debounceTimeout = useRef(null); // Holds the promise to send the buffer data after DEBOUNCE_INTERVAL_MS
@@ -291,7 +292,7 @@ export default function LiveCapture() {
     // Main keydown handler
     const handleKeyDown = (e) => {
         e.preventDefault();
-        console.log("Keydown event: ", e.key, "Code: ", e.code);
+        console.log("Keydown event: ", e.key, "Code: ", e.code, "Original Event: ", e.originalEvent);
 
         const isCtrl = e.ctrlKey || e.metaKey;
         const isAlt = e.altKey;
@@ -331,17 +332,40 @@ export default function LiveCapture() {
     // Handle inputs from touch devices / on screen keyboards
     const handleTouchInput = (e) => {
         e.preventDefault();
-        console.log("Touch input detected: ", e.data);
+        console.log("Touch input detected in beforeInput: ", e.data);
 
         // All touch backspaces are handled as special events
-        if (e.data === "Backspace") {
-                specialEvents.current.push("Backspace");
-                scheduleSend();
-            return;
-        }
+        // if (e.data === "Backspace") {
+        //         specialEvents.current.push("Backspace");
+        //         scheduleSend();
+        //     return;
+        // }
 
-        updateBufferAndSend(bufferRef.current + e.data); // Append the input data to the buffer and schedule send
+        // updateBufferAndSend(bufferRef.current + e.data); // Append the input data to the buffer and schedule send
     };
+
+    function getDiffChars(prev, curr) {
+        if (curr.startsWith(prev)) {
+            return curr.slice(prev.length).split('');
+        }
+        return curr.split('');
+    }
+
+
+    function handleInput() {
+        if (!inputRef) return;
+
+        const current = inputRef.textContent || '';
+        const diffChars = getDiffChars(lastText, current);
+
+        diffChars.forEach((char) => {
+            handleKeyDown({ key: char });
+        });
+
+        // Clear the input to keep it empty
+        inputRef.textContent = '';
+        lastText = '';
+    }
 
     const handleCompositionUpdate = (e) => {
         e.preventDefault();
