@@ -5,9 +5,9 @@ import React, {
     useRef,
     useEffect,
 } from "react";
-import { keyExists, loadBase64 } from "./Storage";
+import { keyExists, loadBase64 } from "../controllers/Storage";
 import { ECDHContext } from "./ECDHContext";
-import { Packet } from "./PacketFunctions";
+import { Packet } from "../controllers/PacketFunctions";
 
 export const BLEContext = createContext();
 export const useBLEContext = () => useContext(BLEContext);
