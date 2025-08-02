@@ -17,8 +17,10 @@ export function useInputController() {
     const [buffer, setBuffer] = useState(""); // Holds the full input to render (not needed for current implementation)
     const bufferRef = useRef(""); // Tracks the current input buffer
     const lastSentBuffer = useRef(""); // tracks last sent buffer
+    
     const isIMERef = useRef(false); // Flag to indicate if IME is active
     const isComposingRef = useRef(false);
+    const lastCompositionRef = useRef("");
     const lastInputRef = useRef(""); // Last input value to compare with current input
     const compositionStartRef = useRef(""); // Flag to indicate if composition has started
 
@@ -230,6 +232,7 @@ export function useInputController() {
         
         // Send the new data 
         updateBufferAndSend(bufferRef.current + event.data)
+        lastCompositionRef.current += event.data; // Create a ref for each character in the current composition (current word)
         isIMERef.current = false; // Reset IME flag on afterinput
 
         // -> This will fire an onChange event for the input div 
@@ -239,10 +242,10 @@ export function useInputController() {
     function handleCompositionStart(event) {
         console.log("Composition started++++++++++++++");
         isComposingRef.current = true;
-        compositionStartRef.current = event.target.value; // Store the initial composition data
+        compositionStartRef.current = lastCompositionRef.current; // Store the initial composition data
 
         console.log("Event target value: ", event.target.value);
-        console.log("Last input value: ", lastInputRef.current);
+        console.log("Last input value: ", compositionStartRef.current);
  
 
     };
@@ -251,13 +254,24 @@ export function useInputController() {
     function handleCompositionEnd(event) {
         console.log("Composition ended with data: ", event.data);
         
-        if ((compositionStartRef.current).trim() !== event.data.trim())  {
-            handleModifierShortcut({key: "Backspace"}, 0x80); // Delete the word typed word (ctrl + backspace)
+        var lastInput = (compositionStartRef.current).trim(); 
+        var isPartialComplete = (lastInput !== ""); // If the last input is not a character, we assume fully autofilled word
+
+        if (lastInput !== event.data.trim())  { // If the buffer doesnt match the composition end, autocorrect changed the word
+            console.log("Autocorrect / Autocomplete triggered")
+
+            if(isPartialComplete){
+                console.log("Partial word autofilled / autocorrected");
+                handleModifierShortcut({key: "Backspace"}, 0x80); // Delete the word typed word (ctrl + backspace)
+            }
             //backspaceString = "\b" * compositionStartRef.current.trim().length ; // Create a backspace string to delete the word typed
             updateBufferAndSend(bufferRef.current + event.data); // Add the new word
         }
-
-        inputRef.current.value = ""; // Clear the input field
+        
+        console.log("");
+        
+        //inputRef.current.value = " "; // Clear the input field (add a space to avoid auto capitalizing every word)
+        lastCompositionRef.current = "";
         lastInputRef.current = inputRef.current.value; // Update last input value to the new word
         isComposingRef.current = false;
     };
@@ -270,6 +284,7 @@ export function useInputController() {
         if (lastInputRef.current.length > event.target.value.length) {
             console.log("Handling backspace for input change");
             handleSpecialKey({key:"Backspace"}, buffer);
+            lastCompositionRef.current = lastCompositionRef.current.slice(0, -1); // Keep the lastinput buffer updated
         }
 
         lastInputRef.current = event.target.value; // Update last input value to the current input

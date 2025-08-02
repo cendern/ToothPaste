@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useContext, useCallback } from "react";
 
-import { Button, IconButton, input, Typography } from "@material-tailwind/react";
+import { Button, Typography } from "@material-tailwind/react";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/outline";
 import { BLEContext } from "../context/BLEContext";
 import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
@@ -158,36 +158,6 @@ export default function LiveCapture() {
     }
 
 
-    // // When the input is a result of an IME non-composition event, it contains NEW data
-    // const handleOnBeforeInput = (event) => {
-    //     console.log("Touch input event handled in beforeInput: ", event.data);
-    //     isIMERef.current = true; // Set IME flag on beforeinput
-        
-    //     // Ignore any intermediate composition events
-    //     if (isComposingRef.current) {
-    //         return;
-    //     }
-        
-    //     // Send the new data 
-    //     updateBufferAndSend(bufferRef.current + event.data)
-    //     isIMERef.current = false; // Reset IME flag on afterinput
-
-    //     // -> This will fire an onChange event for the input div 
-    // };
-
-    // function handleOnChange(event) {
-    //     console.log("Input changed: ", event.target.value);
-    //     console.log("Last input value: ", lastInputRef.current);
-
-    //     // If the onChange event is fired but input size has shrunk, backspace was pressed
-    //     if (lastInputRef.current.length > event.target.value.length) {
-    //         console.log("Handling backspace for input change");
-    //         handleSpecialKey({key:"Backspace"}, buffer);
-    //     }
-
-    //     lastInputRef.current = event.target.value; // Update last input value to the current input
-    // }
-
     // Toggle capturing and sending mouse data
     function CaptureMouseButton() {
         const handleToggle = () => setCaptureMouse((prev) => !prev);
@@ -290,12 +260,15 @@ export default function LiveCapture() {
 
                 <input
                     ref={inputRef}
-                    autoCapitalize="off"
+                    autoCapitalize="none"
                     type="text"
-                    //name="username"
-                    autoComplete="disableAutoCompleteOnlySuggest"
+                    inputMode="text"
+                    name="user_input"
+                    autoComplete="off"
+                    spellCheck="false"
                     data-lpignore="true"
-                    
+                    //{...{ autocapitalize: "none" }} // forces lowercase HTML attribute
+
                     // Keyboard event handlers
                     onKeyDown={handleKeyDown}
                     onKeyUp={handleKeyUp}
