@@ -5,9 +5,9 @@ import React, {
     useRef,
     useEffect,
 } from "react";
-import { keyExists, loadBase64 } from "./Storage";
+import { keyExists, loadBase64 } from "../controllers/Storage";
 import { ECDHContext } from "./ECDHContext";
-import { Packet } from "./PacketFunctions";
+import { Packet } from "../controllers/PacketFunctions";
 
 export const BLEContext = createContext();
 export const useBLEContext = () => useContext(BLEContext);
@@ -64,7 +64,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
         }
     };
 
-    // Send an encrypted send string as a byte array with a random IV and GCM tag
+    // Encrypt and send untyped data stream (string, array, etc.) with a random IV and GCM tag added, chunk data if too large
     const sendEncrypted = async (inputArray) => {
         if (!pktCharacteristic) return;
 
@@ -164,7 +164,11 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             });
 
             // Try to connect
-            const server = await device.gatt.connect();
+            if (!device.gatt.connected) {
+                await device.gatt.connect();
+            }
+            const server = device.gatt;
+            await new Promise(r => setTimeout(r, 200)); // Wait a bit before getting any GATT information
 
             // Get device info
             const service = await getServiceWithRetry(server, serviceUUID);

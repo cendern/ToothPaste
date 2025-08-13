@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useRef } from "react";
-import { saveBase64, loadBase64 } from "./Storage";
+import { saveBase64, loadBase64 } from "../controllers/Storage";
 import { ec as EC } from "elliptic";
-import { Packet } from "./PacketFunctions";
+import { Packet } from "../controllers/PacketFunctions";
 
 const ec = new EC("p256");
 
