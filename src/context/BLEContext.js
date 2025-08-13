@@ -27,8 +27,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
 
     const serviceUUID = "19b10000-e8f2-537e-4f6c-d104768a1214"; // ClipBoard service UUID from example
     const packetCharacteristicUUID = "6856e119-2c7b-455a-bf42-cf7ddd2c5907"; // String pktCharacteristic UUID
-    const hidSemaphorepktCharacteristicUUID =
-        "6856e119-2c7b-455a-bf42-cf7ddd2c5908"; // String pktCharacteristic UUID
+    const hidSemaphorepktCharacteristicUUID = "6856e119-2c7b-455a-bf42-cf7ddd2c5908"; // String pktCharacteristic UUID
 
     // Keep track of the overlay visibility
     useEffect(() => {
@@ -65,14 +64,14 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
     };
 
     // Encrypt and send untyped data stream (string, array, etc.) with a random IV and GCM tag added, chunk data if too large
-    const sendEncrypted = async (inputArray) => {
+    const sendEncrypted = async (inputArray, prefix=0) => {
         if (!pktCharacteristic) return;
 
         try {
             var count = 0;
             console.log("Send starting....", inputArray);
 
-            for await (const packet of createEncryptedPackets(0, inputArray)) {
+            for await (const packet of createEncryptedPackets(0, inputArray, true, prefix)) {
                 console.log("Sending packet ", count);
                 await pktCharacteristic.writeValueWithoutResponse(
                     packet.serialize()
@@ -146,7 +145,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
     // Connecting to a clipboard device using WEB BLE
     const connectToDevice = async () => {
         try {
-            // Look for device whose name starts with 'Clip' (change this later)
+            // Look for devices advertising the toothpaste service uuid
             const device = await navigator.bluetooth.requestDevice({
                 //acceptAllDevices: true,
                 filters: [{ services: [serviceUUID] }],

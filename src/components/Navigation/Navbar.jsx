@@ -51,13 +51,7 @@ export function useClickOrLongPress(longPressTime = 2000) {
     return { start, cancel, end, longPressed };
 }
 
-function EditableDeviceName({ device, isEditing, setIsEditing }) {
-    const [name, setName] = useState(device?.name || "Connect to Device");
-    // Sync name when device changes
-    useEffect(() => {
-        setName(device?.name || "Connect to Device");
-    }, [device]);
-
+function EditableDeviceName({ name, setName, isEditing, setIsEditing}) {
     // Once user unfocuses from editing
     const handleBlur = () => {
         setIsEditing(false);
@@ -100,12 +94,19 @@ function EditableDeviceName({ device, isEditing, setIsEditing }) {
 // Status icon for a given device
 function ConnectionButton() {
     const LONG_PRESS_DURATION = 2000;
-    const { connectToDevice, status, device } = useBLEContext();
+    const { connectToDevice, status, device, sendEncrypted } = useBLEContext();
     const { start, end, cancel, longPressed } = useClickOrLongPress(LONG_PRESS_DURATION);
     const [progress, setProgress] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
     const intervalRef = useRef(null); // track interval across renders
     const longPressTriggered = useRef(false);
+
+
+    const [name, setName] = useState(device?.name || "Connect to Device");
+    // Sync name when device changes
+    useEffect(() => {
+        setName(device?.name || "Connect to Device");
+    }, [device]);
 
     const borderClass =
         {
@@ -113,6 +114,21 @@ function ConnectionButton() {
             1: "border-primary",
             2: "border-orange", // make sure you defined `border-tertiary` in Tailwind config
         }[status] || "border-orange"; // fallback if undefined
+    
+
+
+    // Once isEditing becmes false, if the device name was changed by the user, notify the device
+    useEffect(() => {
+        if (isEditing === false) {
+            // This runs only when isEditing becomes false
+            console.log("Editing finished!");
+            if(device?.name !== name){
+                console.log("Renaming Device");
+                setName(name+'\0')
+                sendEncrypted(name, 3) // 3 indicated a rename packet
+            }
+        }
+    }, [isEditing]); // Trigger whenever isEditing changes
 
     // Wrapper for start that also increments progress
     const handleStart = (callback) => {
@@ -152,13 +168,10 @@ function ConnectionButton() {
     return (
         <div className="flex justify-left w-full">
             <Button
+                title="Click to connect to a device, hold to rename it."
                 className={`flex-row items-center justify-between w-full p-4 border-2 ${borderClass} bg-transparent hover:border-text`}
-                onMouseDown={() => {
-                    if (device) handleStart(() => setIsEditing(true));
-                }}
-                onMouseLeave={() => {
-                    handleEnd(cancel);
-                }}
+                onMouseDown={() => {if (device && status === 1) handleStart(() => setIsEditing(true));}}
+                onMouseLeave={() => {handleEnd(cancel);}}
                 onMouseUp={() => handleEnd(() => connectToDevice())}
             >
                 <div className="flex items-center justify-between w-full">
@@ -170,6 +183,8 @@ function ConnectionButton() {
                             device={device}
                             isEditing={isEditing}
                             setIsEditing={setIsEditing}
+                            name={name}
+                            setName={setName}
                         ></EditableDeviceName>
                     </div>
                     {/* Change the icon for connected and disconnected states */}

@@ -192,7 +192,7 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // create and encrypt packet -> returns an iterator of one or more packets where payload size < max_data_size
-    const createEncryptedPackets = async function* (id, payload, slowMode = true) {
+    const createEncryptedPackets = async function* (id, payload, slowMode = true, packetPrefix=0) {
         const encoder = new TextEncoder();
         var stringData = false;
         var data;
@@ -202,7 +202,7 @@ export const ECDHProvider = ({ children }) => {
         }
 
         else{
-            data = encoder.encode(payload); // If data is a string, every packet is 0 prepended
+            data = encoder.encode(payload); // If data is a string, manually define the prefix byte (packet type)
             stringData = true;
         }
 
@@ -216,7 +216,7 @@ export const ECDHProvider = ({ children }) => {
             var outputArray = data;
             if(stringData){
                 outputArray = new Uint8Array(chunkData.length + 1);
-                outputArray[0] = 0;
+                outputArray[0] = packetPrefix;
                 outputArray.set(chunkData, 1);
             }
 
