@@ -297,7 +297,7 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
       sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
     }
 
-    // The first byte indicates the keys are supposed to be all pressed at once then released after a delay
+    // The first byte indicates the keys are supposed to be all pressed at once then released after a delay (TODO: This implementation doesnt allow holding keys)
     else if(plaintext[0] == 1){
       std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen);
       sendKeycode(keycode.data(), true);
@@ -378,7 +378,8 @@ void packetTask(void* params)
                     packet.totalPackets
                 );
                 DEBUG_SERIAL_PRINTLN();
-
+                
+                // Handle different types of packets
                 if (packet.packetId == 0) {
                     decryptSendString(&packet, session);
                 }

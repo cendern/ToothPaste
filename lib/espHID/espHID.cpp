@@ -110,7 +110,7 @@ void smoothMoveMouse(int dx, int dy, int steps, int interval) {
       accumulatedY -= moveY;
     }
 
-    delay(SLOWMODE_DELAY_MS);
+    //delay(SLOWMODE_DELAY_MS);
   }
 }
 
