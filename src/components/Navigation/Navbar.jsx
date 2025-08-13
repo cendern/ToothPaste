@@ -1,20 +1,5 @@
-import React, { useState } from "react";
-import {
-    IconButton,
-    Badge,
-    Card,
-    Typography,
-    List,
-    ListItem,
-    ListItemPrefix,
-    ListItemSuffix,
-    Chip,
-    Accordion,
-    AccordionHeader,
-    AccordionBody,
-    Alert,
-    Button,
-} from "@material-tailwind/react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { IconButton, Badge, Card, Typography, Input, Progress, Button } from "@material-tailwind/react";
 import {
     HomeIcon,
     ChevronRightIcon,
@@ -31,32 +16,167 @@ import {
 import { useBLEContext } from "../../context/BLEContext";
 import ToothPaste from "../../assets/ToothPaste.png";
 
+export function useClickOrLongPress(longPressTime = 2000) {
+    const timerRef = useRef(null);
+    const [longPressed, setLongPressed] = useState(false);
+
+    const start = useCallback(
+        (onLongPress) => {
+            setLongPressed(false);
+            // Start a timeout for long press
+            timerRef.current = setTimeout(() => {
+                setLongPressed(true);
+                if (onLongPress) onLongPress();
+            }, longPressTime);
+        },
+        [longPressTime]
+    );
+
+    const cancel = useCallback(() => {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+    }, []);
+
+    const end = useCallback(
+        (onClick) => {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+            if (!longPressed && onClick) {
+                onClick();
+            }
+        },
+        [longPressed]
+    );
+
+    return { start, cancel, end, longPressed };
+}
+
+function EditableDeviceName({ device, isEditing, setIsEditing }) {
+    const [name, setName] = useState(device?.name || "Connect to Device");
+    // Sync name when device changes
+    useEffect(() => {
+        setName(device?.name || "Connect to Device");
+    }, [device]);
+
+    // Once user unfocuses from editing
+    const handleBlur = () => {
+        setIsEditing(false);
+    };
+
+    // Once user presses "Enter" while editing
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            setIsEditing(false);
+        }
+    };
+
+    return (
+        <>
+            {isEditing ? (
+                <Input
+                    label={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyPress}
+                    className="text-text font-sans font-medium normal-case"
+                    color="white"
+                    size="md"
+                    autoFocus
+                />
+            ) : (
+                <Typography
+                    variant="h6"
+                    color="text"
+                    className="text-lg font-sans font-medium normal-case"
+                    style={{ cursor: "pointer" }}
+                >
+                    {name}
+                </Typography>
+            )}
+        </>
+    );
+}
+
 // Status icon for a given device
 function ConnectionButton() {
+    const LONG_PRESS_DURATION = 2000;
     const { connectToDevice, status, device } = useBLEContext();
+    const { start, end, cancel, longPressed } = useClickOrLongPress(LONG_PRESS_DURATION);
+    const [progress, setProgress] = useState(0);
+    const [isEditing, setIsEditing] = useState(false);
+    const intervalRef = useRef(null); // track interval across renders
+    const longPressTriggered = useRef(false);
 
     const borderClass =
         {
             0: "border-secondary",
             1: "border-primary",
             2: "border-orange", // make sure you defined `border-tertiary` in Tailwind config
-
         }[status] || "border-orange"; // fallback if undefined
+
+    // Wrapper for start that also increments progress
+    const handleStart = (callback) => {
+        if (!device) return;
+
+        setProgress(0);
+        longPressTriggered.current = false;
+        const startTime = Date.now();
+
+        intervalRef.current = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const percentage = Math.min((elapsed / LONG_PRESS_DURATION) * 100, 100);
+            setProgress(percentage);
+
+            if (elapsed >= LONG_PRESS_DURATION) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+                longPressTriggered.current = true;
+                callback(); // long press action
+            }
+        }, 16);
+    };
+
+    // On cancel or end
+    const handleEnd = (clickFn) => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+        setProgress(0);
+
+        if (!longPressTriggered.current) {
+            clickFn?.(); // only run click if long press didn’t trigger
+        }
+    };
 
     return (
         <div className="flex justify-left w-full">
             <Button
-                className={`flex items-center justify-between w-full p-4 border-2 ${borderClass} bg-transparent hover:border-text`}
-                onClick={connectToDevice}
+                className={`flex-row items-center justify-between w-full p-4 border-2 ${borderClass} bg-transparent hover:border-text`}
+                onMouseDown={() => {
+                    if (device) handleStart(() => setIsEditing(true));
+                }}
+                onMouseLeave={() => {
+                    handleEnd(cancel);
+                }}
+                onMouseUp={() => handleEnd(() => connectToDevice())}
             >
-                {/* If a device is connected get its name */}
-                <Typography variant="h6" color="text" className="text-lg font-sans font-medium normal-case mr-6">
-                    {device ? device.name : "Connect to Device"}
-                </Typography>
-                
-                {/* Change the icon for connected and disconnected states */}
-                {(status !== 0 && <SignalIcon className="h-5 y-5"/>)}
-                {(status === 0 && <SignalSlashIcon className="h-5 y-5"/>)}
+                <div className="flex items-center justify-between w-full">
+                    <div className="mr-10">
+                        {/* If a device is connected get its name */}
+                        <EditableDeviceName
+                            variant="h6"
+                            color="text"
+                            device={device}
+                            isEditing={isEditing}
+                            setIsEditing={setIsEditing}
+                        ></EditableDeviceName>
+                    </div>
+                    {/* Change the icon for connected and disconnected states */}
+                    {status !== 0 && <SignalIcon className="h-5 y-5" />}
+                    {status === 0 && <SignalSlashIcon className="h-5 y-5" />}
+                </div>
+                <Progress value={progress} size="sm" className="bg-shelf" />
             </Button>
         </div>
     );
@@ -67,13 +187,11 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
     const [isOpen, setIsOpen] = useState(false);
     const { status, device } = useBLEContext();
 
-
     const borderClass =
         {
             0: "border-secondary",
             1: "border-primary",
             2: "border-orange", // make sure you defined `border-tertiary` in Tailwind config
-
         }[status] || "border-orange"; // fallback if undefined
 
     console.log("Status is: ", status);
@@ -90,9 +208,8 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
 
                 {/* Center: Desktop menu */}
                 <div className="hidden lg:flex flex-1 justify-center space-x-5">
-
                     <button
-                        disabled={status===2}
+                        disabled={status === 2}
                         className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
                             activeView === "live" ? "disabled:border-hover border border-text" : "hover:bg-hover"
                         }`}
@@ -101,9 +218,9 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                         <PlayIcon className="h-5 w-5" />
                         <Typography variant="h4">Live Capture</Typography>
                     </button>
-                    
+
                     <button
-                        disabled={status===2}
+                        disabled={status === 2}
                         className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
                             activeView === "paste" ? "disabled:border-hover border border-text" : "hover:bg-hover"
                         }`}
@@ -119,7 +236,9 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                             onClick={onOpenPairing}
                         >
                             <LinkIcon className="h-5 w-5" />
-                            <Typography variant="h4" className="">Pair Device</Typography>
+                            <Typography variant="h4" className="">
+                                Pair Device
+                            </Typography>
                         </button>
                     )}
                 </div>
@@ -147,9 +266,8 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
             {/* Mobile Dropdown Menu */}
             {isOpen && (
                 <div className="lg:hidden flex flex-col space-y-2 px-4 pb-4">
-
                     <button
-                        disabled={status===2}
+                        disabled={status === 2}
                         className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
                             activeView === "live" ? "bg-hover" : "hover:bg-hover"
                         }`}
@@ -161,9 +279,9 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                         <PlayIcon className="h-5 w-5" />
                         <span>Live Capture</span>
                     </button>
-                    
-                     <button
-                        disabled={status===2}
+
+                    <button
+                        disabled={status === 2}
                         className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded hover:bg-hover disabled:text-hover disabled:hover:bg-transparent ${
                             activeView === "paste" ? "bg-hover" : "hover:bg-hover"
                         }`}
@@ -195,4 +313,3 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
         </div>
     );
 }
-

@@ -148,8 +148,9 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
         try {
             // Look for device whose name starts with 'Clip' (change this later)
             const device = await navigator.bluetooth.requestDevice({
-                filters: [{ namePrefix: "Clip" }],
-                optionalServices: [serviceUUID],
+                //acceptAllDevices: true,
+                filters: [{ services: [serviceUUID] }],
+                //optionalServices: [serviceUUID],
             });
 
             // Set an on disconnect listener
