@@ -407,7 +407,7 @@ String SecureSession::hashKey(const char* longKey) {
 
 // Get the device name from storage
 bool SecureSession::getDeviceName(String &deviceNameBuffer){
-    preferences.begin("security", true);
+    preferences.begin("identity", true);
     bool ret = preferences.isKey("blename"); // Check if the AES key for the given public key exists
     // If the name string exists return it
     if(ret){
@@ -420,7 +420,7 @@ bool SecureSession::getDeviceName(String &deviceNameBuffer){
 
 // Set the device name
 bool SecureSession::setDeviceName(const char* deviceName){
-    preferences.begin("security", false);
+    preferences.begin("identity", false);
 
     bool ret = preferences.isKey("blename"); // Check if the AES key for the given key exists
     // If the name string exists return it
