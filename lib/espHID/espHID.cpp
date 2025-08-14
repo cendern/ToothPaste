@@ -70,7 +70,8 @@ void moveMouse(int32_t x, int32_t y, bool LClick, bool RClick){
   }
   
 
-  smoothMoveMouse(x, y, 20, 5); // Move the mouse by dx and dy over 20 steps and SLOWMODE_DELAY_MS ms between each step
+  //smoothMoveMouse(x, y, 20, 5); // Move the mouse by dx and dy over 20 steps and SLOWMODE_DELAY_MS ms between each step
+  mouse.move(x, y);
 
   // Release after moving the mouse
   if (mouse.isPressed(MOUSE_LEFT)) {
@@ -90,25 +91,12 @@ void moveMouse(uint8_t* mousePacket){ // mousePacket is an array of int32_t valu
 
 // Smooth the mouse movement between its current position and dx dy
 void smoothMoveMouse(int dx, int dy, int steps, int interval) {
-  float stepX = (float)dx / steps;
-  float stepY = (float)dy / steps;
-  
-  float accumulatedX = 0;
-  float accumulatedY = 0;
+  int stepX = dx / steps; // Smallest unit of X movement
+  int stepY = dy / steps; // Smallest unit of Y movement
 
   for (int i = 0; i < steps; i++) {
-    accumulatedX += stepX;
-    accumulatedY += stepY;
-
     // Convert accumulated float deltas to int and move only if non-zero
-    int moveX = round(accumulatedX);
-    int moveY = round(accumulatedY);
-
-    if (moveX != 0 || moveY != 0) {
-      mouse.move(moveX, moveY);
-      accumulatedX -= moveX;
-      accumulatedY -= moveY;
-    }
+      mouse.move(stepX, stepY);
 
     //delay(SLOWMODE_DELAY_MS);
   }
