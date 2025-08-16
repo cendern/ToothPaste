@@ -17,7 +17,7 @@ void sendStringDelay(void *arg, int delay);
 void sendKeycode(uint8_t* keys, bool slowMode);
 
 //Mouse functions
-void moveMouse(int32_t x, int32_t y, bool LClick, bool RClick);
+void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick);
 void moveMouse(uint8_t* mousePacket);
 void smoothMoveMouse(int dx, int dy, int steps, int interval);
 

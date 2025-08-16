@@ -58,14 +58,14 @@ void sendKeycode(uint8_t* keys, bool slowMode) {
     keyboard.releaseAll();
 }
 
-void moveMouse(int32_t x, int32_t y, bool LClick, bool RClick){
+void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
   
   // Click before moving if the click is in the same report
-  if(LClick){
+  if(!(mouse.isPressed(MOUSE_LEFT)) && LClick == 1){
     mouse.press(MOUSE_LEFT);
   }
 
-  if(RClick){
+  if(!(mouse.isPressed(MOUSE_RIGHT)) && RClick == 1){
     mouse.press(MOUSE_RIGHT);
   }
   
@@ -74,11 +74,11 @@ void moveMouse(int32_t x, int32_t y, bool LClick, bool RClick){
   mouse.move(x, y);
 
   // Release after moving the mouse
-  if (mouse.isPressed(MOUSE_LEFT)) {
+  if (mouse.isPressed(MOUSE_LEFT) && LClick == 2) {
       mouse.release(MOUSE_LEFT);
   }
   
-  if (mouse.isPressed(MOUSE_RIGHT)) {
+  if (mouse.isPressed(MOUSE_RIGHT) && RClick == 2) {
       mouse.release(MOUSE_RIGHT);
   }
   
