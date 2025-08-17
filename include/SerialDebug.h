@@ -9,6 +9,6 @@
   #define DEBUG_SERIAL_BEGIN(...)
   #define DEBUG_SERIAL_PRINT(...)
   #define DEBUG_SERIAL_PRINTLN(...)
-#define DEBUG_SERIAL_PRINTF(...)
+  #define DEBUG_SERIAL_PRINTF(...)
 
 #endif

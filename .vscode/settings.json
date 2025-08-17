@@ -46,6 +46,10 @@
         "cstring": "cpp",
         "ctime": "cpp",
         "unordered_set": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "tusb_option.h": "c",
+        "usbd.h": "c",
+        "usbd_pvt.h": "c",
+        "hid_device.h": "c"
     }
 }

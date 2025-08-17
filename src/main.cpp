@@ -111,4 +111,5 @@ void loop() {
     stateManager->setState(PAIRING);
     enterPairingMode(); // Enter pairing mode on hold
   }
+
 }

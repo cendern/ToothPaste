@@ -1,14 +1,17 @@
 #include <Arduino.h>
-#include <USBHIDKeyboard.h>
-#include <USBHIDMouse.h>
-#include <USBHIDConsumerControl.h>
-#include <USBHIDSystemControl.h>
+#include <SerialDebug.h>
 
+// #define CFG_TUD_CDC        
+// #define CONFIG_TINYUSB_CDC_ENABLED
+#define USB_MANUFACTURER   "Brisk4t"
+#define USB_PRODUCT        "ToothPaste Receiver"
+#define USB_SERIAL         "" // Empty string for MAC adddress
 
 #define SLOWMODE_DELAY_MS 5
 
 #ifndef HID_H
 #define HID_H
+
 
 void hidSetup();
 void sendString(const char* str, bool slowMode = true);

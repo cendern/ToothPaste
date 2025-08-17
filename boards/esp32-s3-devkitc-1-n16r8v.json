@@ -1,5 +1,6 @@
 {
-    "build": {
+  "Comments": {"Arduino JSONs don't support comments": "The NAME and VENDOR fields control the USB manufacturer and product name strings"},  
+  "build": {
       "arduino":{
         "ldscript": "esp32s3_out.ld",
         "partitions": "default_16MB.csv",
@@ -17,6 +18,14 @@
       "flash_mode": "qio",
       "psram_type": "opi",
       "hwids": [
+        [
+          "0x303A",
+          "0x1001"
+        ],
+        [
+          "0x303A",
+          "0x1001"
+        ],
         [
           "0x303A",
           "0x1001"
@@ -40,7 +49,7 @@
       "arduino",
       "espidf"
     ],
-    "name": "Espressif ESP32-S3-DevKitC-1-N16R8V (16 MB QD, 8MB PSRAM)",
+    "name": "Toothpaste Receiver", 
     "upload": {
       "flash_size": "16MB",
       "maximum_ram_size": 327680,
@@ -49,5 +58,5 @@
       "speed": 921600
     },
     "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html",
-    "vendor": "Espressif"
+    "vendor": "Brisk4t"
   }

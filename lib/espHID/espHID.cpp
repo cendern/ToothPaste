@@ -1,19 +1,44 @@
 #include <espHID.h>
 #include <USB.h>
 
-USBHIDKeyboard keyboard;
+#include <USBHIDKeyboard.h>
+#include <USBHIDMouse.h>
+#include <USBHIDConsumerControl.h>
+#include <USBHIDSystemControl.h>
+
+// Needed to enable CDC if defined
+#if ARDUINO_USB_CDC_ON_BOOT
+    #include <USBCDC.h>
+    USBCDC USBSerial; 
+#endif
+
+
+
+USBHIDKeyboard keyboard; // Non-boot Keyboard
 USBHIDMouse mouse;
 USBHIDConsumerControl control;
 USBHIDSystemControl syscontrol;
 
+
+uint8_t const desc_hid_report[] = {
+    TUD_HID_REPORT_DESC_KEYBOARD()
+};
+
 // Start the hid keyboard
 void hidSetup()
-{
+{ 
+  if(ARDUINO_USB_CDC_ON_BOOT) USBSerial.begin(); 
   keyboard.begin();
   mouse.begin();
   control.begin();
   syscontrol.begin();
+
+  // Ideally these shouldn't be needed since they're already defined in the header, but i have no idea why they don't work consistently
+  USB.manufacturerName(USB_MANUFACTURER);
+  USB.productName(USB_PRODUCT);
+
   USB.begin();
+  DEBUG_SERIAL_PRINTLN(tud_hid_get_protocol());
 }
 
 // Send a string with a delay between each character (crude implementation of alternative polling rates since ESPHID doesn't expose this)
@@ -60,7 +85,7 @@ void sendKeycode(uint8_t* keys, bool slowMode) {
 
 void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
   
-  // Click before moving if the click is in the same report
+  //Click before moving if the click is in the same report
   if(!(mouse.isPressed(MOUSE_LEFT)) && LClick == 1){
     mouse.press(MOUSE_LEFT);
   }
@@ -89,18 +114,6 @@ void moveMouse(uint8_t* mousePacket){ // mousePacket is an array of int32_t valu
   moveMouse(ints[0], ints[1], ints[2], ints[3]);
 }
 
-// Smooth the mouse movement between its current position and dx dy
-void smoothMoveMouse(int dx, int dy, int steps, int interval) {
-  int stepX = dx / steps; // Smallest unit of X movement
-  int stepY = dy / steps; // Smallest unit of Y movement
-
-  for (int i = 0; i < steps; i++) {
-    // Convert accumulated float deltas to int and move only if non-zero
-      mouse.move(stepX, stepY);
-
-    //delay(SLOWMODE_DELAY_MS);
-  }
-}
 
 // ##################### Delay Functions #################### //
 // Timer callback must match `void (*)(void *)`
