@@ -52,18 +52,31 @@ export default function LiveCapture() {
     }, 50)
 
     // On click logic
-    function onPointerDown(e) {
-        e.target.setPointerCapture(e.pointerId);
+    function onMouseDown(e) {
+        //e.target.setPointerCapture(e.pointerId);
+        console.log("Mousedown fired with button: ", e.button)
         isTracking.current = true;
         lastPos.current = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+
+
         
         if(captureMouse) {
-            sendMouseReport(0,0, true, false); // Send left click
+            if(e.button == 0) sendMouseReport(0,0, true, false); // Send left click
+            if(e.button == 2) {
+                e.preventDefault();
+                sendMouseReport(0,0, false, true);
+            }
         }
     }
 
-    function onPointerUp(e) {
-        // isTracking.current = false;
+    function onMouseUp(e) {
+        console.log("Mouseup fired with button: ", e.button)
+
+        if(e.button == 0) sendMouseReport(0,0, 2, false); // Send left click
+        if(e.button == 2) {
+            e.preventDefault();
+            sendMouseReport(0,0, false, 2);
+        }
     }
 
     function onPointerCancel() {
@@ -127,7 +140,7 @@ export default function LiveCapture() {
         
 
         //console.log("Last position: ", lastPos.current);
-        //onsole.log("Mouse moved by: ", accelDeltaX, accelDeltaY);
+        //console.log("Mouse moved by: ", accelDeltaX, accelDeltaY);
 
             
 
@@ -295,12 +308,14 @@ export default function LiveCapture() {
                     onPaste={handlePaste}
 
                     // Mouse event handlers
-                    onPointerDown={onPointerDown}
+                    onMouseDown={onMouseDown} // When a mouse button is pressed
+                    onMouseUp={onMouseUp} // When a mouse button is released
+
                     onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
                     onPointerCancel={onPointerCancel}
                     onPointerEnter={onPointerEnter}
                     onBeforeInput={handleOnBeforeInput}
+                    onContextMenu={(e) => e.preventDefault()} // Prevent right-clicks from opening the default context menu inside this input
                     
                     // IME event handlers 
                     onChange={handleOnChange}
