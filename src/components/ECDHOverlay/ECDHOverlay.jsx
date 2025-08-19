@@ -53,15 +53,15 @@ const ECDHOverlay = ({ showOverlay, setShowOverlay }) => {
 
             // Save the uncompressed peer public key in the database as base64
             await crypto.subtle.exportKey('raw', peerPublicKeyObject).then((rawKey) => {
-                savePeerPublicKey(rawKey, device.id);
+                savePeerPublicKey(rawKey, device.macAddress);
             });
 
             // Compress our public key and turn it into Base64 to send to the peer
             const rawPublicKey = await crypto.subtle.exportKey('raw', publicKey);
             const b64SelfPublic = arrayBufferToBase64(rawPublicKey);
 
-            // Store all keys in DB under WEB BLE device.id
-            await saveSelfKeys(device.id); 
+            // Store all keys in DB under WEB BLE device.macAddress
+            await saveSelfKeys(device.macAddress); 
             setpkey(b64SelfPublic);
 
 

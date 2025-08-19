@@ -14,28 +14,31 @@ export const useBLEContext = () => useContext(BLEContext);
 
 export function BLEProvider({ children, showOverlay, setShowOverlay }) {
 
-
+    // Constants
     const connectionStatus = {
         disconnected: 0,
         ready: 1,
         connected: 2
     };
-
-    const [status, setStatus] = React.useState(connectionStatus.disconnected); // 0 = disconnected, 1 = connected & paired, 2 = connected & not paired
-    const [device, setDevice] = useState(null);
-    const [server, setServer] = useState(null);
-
-    const showOverlayRef = useRef(showOverlay);
-    const { loadKeys, createEncryptedPackets } = useContext(ECDHContext);
-
-    const [pktCharacteristic, setpktCharacteristic] = useState(null);
-    const pktCharRef = useRef(null);
-
-    const readyToReceive = useRef({ promise: null, resolve: null });
-
     const serviceUUID = "19b10000-e8f2-537e-4f6c-d104768a1214"; // ClipBoard service UUID from example
     const packetCharacteristicUUID = "6856e119-2c7b-455a-bf42-cf7ddd2c5907"; // String pktCharacteristic UUID
     const hidSemaphorepktCharacteristicUUID = "6856e119-2c7b-455a-bf42-cf7ddd2c5908"; // String pktCharacteristic UUID
+    const macAddressCharacteristicUUID = "19b10002-e8f2-537e-4f6c-d104768a1214"
+
+    // BLE Connection Variables
+    const [status, setStatus] = React.useState(connectionStatus.disconnected); // 0 = disconnected, 1 = connected & paired, 2 = connected & not paired
+    const [device, setDevice] = useState(null);
+    const [server, setServer] = useState(null);
+    const MACAddress = useRef(null);
+    const [pktCharacteristic, setpktCharacteristic] = useState(null);
+    const pktCharRef = useRef(null);
+
+    
+    const showOverlayRef = useRef(showOverlay);
+    const { loadKeys, createEncryptedPackets } = useContext(ECDHContext);
+    const readyToReceive = useRef({ promise: null, resolve: null });
+
+
 
     // Keep track of the overlay visibility
     useEffect(() => {
@@ -100,7 +103,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
         if (!pktCharRef.current) return;
 
         try {
-            const selfpkey = await loadBase64(device.id, "SelfPublicKey");
+            const selfpkey = await loadBase64(device.macAddress, "SelfPublicKey");
             console.log("Send starting....");
             console.log(selfpkey);
 
@@ -188,7 +191,16 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             const service = await getServiceWithRetry(server, serviceUUID);
             pktCharRef.current = await getCharacteristicWithRetry(service, packetCharacteristicUUID);
             const semChar = await getCharacteristicWithRetry(service, hidSemaphorepktCharacteristicUUID);
-
+            const MACChar = await getCharacteristicWithRetry(service, macAddressCharacteristicUUID);
+            
+            // Get the MAC address for the newly connected device
+            const dataView = await MACChar.readValue();
+            let macStr = '';
+            for (let i = 0; i < dataView.byteLength; i++) {
+                macStr += dataView.getUint8(i).toString(16).padStart(2, '0');
+            }
+            device.macAddress = macStr;
+            console.log("MAC Address string:", macStr);
 
             setServer(server);
             setpktCharacteristic(pktCharRef.current);
@@ -197,14 +209,14 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             await subscribeToSemaphore(semChar); // Subscribe to the BLE characteristic that notifies when a HID message has finished sending
 
             // If we don't know the public key of the device, we need to pair before sending
-            if (!(await keyExists(device.id))) {
-                console.error("ECDH keys not found for device", device.id);
+            if (!(await keyExists(device.macAddress))) {
+                console.error("ECDH keys not found for device", device.macAddress);
                 setStatus(connectionStatus.connected);
             }
 
             // Else we can send
             else {
-                await loadKeys(device.id);
+                await loadKeys(device.macAddress);
                 await sendAuth(device);
             }
         } catch (error) {
