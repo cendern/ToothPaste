@@ -11,9 +11,10 @@
 
 #define BLE_DEVICE_DEFAULT_NAME     "Toothpaste"
 #define SERVICE_UUID        "19b10000-e8f2-537e-4f6c-d104768a1214"
+
 #define INPUT_STRING_CHARACTERISTIC "6856e119-2c7b-455a-bf42-cf7ddd2c5907"
 #define HID_SEMAPHORE_CHARCTERISTIC "6856e119-2c7b-455a-bf42-cf7ddd2c5908"
-#define LED_CHARACTERISTIC_UUID "19b10002-e8f2-537e-4f6c-d104768a1214"
+#define MAC_CHARACTERISTIC_UUID "19b10002-e8f2-537e-4f6c-d104768a1214"
 
 enum NotificationType : uint8_t {
     KEEPALIVE,
@@ -58,7 +59,7 @@ void generateSharedSecret(SecureSession::rawDataPacket* packet, SecureSession* s
 void disconnect();
 void enablePairingMode();
 void packetTask(void *sessionParams);
-void notifyClient(const uint8_t data);
+void notifyClient(const uint8_t* data, int length);
 void packetTask(void* params);
 void queuenotify();
 

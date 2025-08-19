@@ -1,10 +1,12 @@
 #include "ble.h"
 #include "NeoPixelRMT.h"
 #include "StateManager.h"
+#include "esp_bt_device.h"
 
 BLEServer* bluServer = NULL;                      // Pointer to the BLE Server instance
 BLECharacteristic* inputCharacteristic = NULL;    // Characteristic for sensor data
 BLECharacteristic* semaphoreCharacteristic = NULL; // Characteristic for LED control
+BLECharacteristic* macCharacteristic = NULL;
 
 QueueHandle_t packetQueue = xQueueCreate(50, sizeof(SharedSecretTaskParams*)); // Queue to manage RTOS task parameters
 
@@ -36,13 +38,11 @@ void createPacketTask(SecureSession* sec){
 void DeviceServerCallbacks::onConnect(BLEServer* bluServer)
 {
   int connectedCount = bluServer->getConnectedCount();
-  
+
   // If a device is not already connected
   if (connectedCount == 0) {
     stateManager->setState(UNPAIRED);
   }
-
-  // If a device is already connected, no new connections are possible until the current one disconnects 
   // (since WEB-BLE does not auto connect this means the device can be restarted for new connections)
   // TODO: This will need to be improved later
   else {
@@ -110,7 +110,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
 void bleSetup(SecureSession* session)
 {
   createPacketTask(session);
-  
+
   // Get the device name and start advertising 
   String deviceName;
   session->getDeviceName(deviceName); // Get the device name
@@ -138,41 +138,55 @@ void bleSetup(SecureSession* session)
     BLECharacteristic::PROPERTY_WRITE_NR |  // Client can Write without Response
     BLECharacteristic::PROPERTY_NOTIFY |    // Server can async notify
     BLECharacteristic::PROPERTY_INDICATE);  // Server can notify with ACK
-
+  
+  // Register the callback for the input data characteristic
+  inputCharacteristic->setCallbacks(new InputCharacteristicCallbacks(session));
+  
   // Create the HID Ready Semaphore Characteristic
   semaphoreCharacteristic = pService->createCharacteristic(
     HID_SEMAPHORE_CHARCTERISTIC,
     BLECharacteristic::PROPERTY_NOTIFY);
 
-  // Register the callback for the ON button characteristic
-  inputCharacteristic->setCallbacks(new InputCharacteristicCallbacks(session));
+  // Create a MAC address characteristic
+  macCharacteristic = pService->createCharacteristic(
+    MAC_CHARACTERISTIC_UUID,
+    BLECharacteristic::PROPERTY_READ   |
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+
+  // Initialize with 8 bytes (all zeros here)
+  const uint8_t* macAddr = esp_bt_dev_get_address();
+  uint8_t initialValue[6] = {0};
+  memcpy(initialValue, macAddr, 6);
+  macCharacteristic->setValue(initialValue, 6);
+
+
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
   inputCharacteristic->addDescriptor(new BLE2902());
   semaphoreCharacteristic->addDescriptor(new BLE2902());
+  macCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();
-
-  // Start advertising
-  BLEAdvertisementData advertisementData;
-  advertisementData.setManufacturerData("uniquename");
 
 
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
 
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true); // Advertise the SERVICE_UUID, i.e. devices don't need to connect to find services
-  pAdvertising->setScanResponseData(advertisementData); // Unique identifier BEFORE connection, used as key in indexdb persistent pairing for web BLE
   pAdvertising->setMinPreferred(0x0); // set value to 0x00 to not advertise this parameter
   BLEDevice::startAdvertising();
 }
 
 // Notify the semaphore characteristic
-void notifyClient(const uint8_t data) {
-  semaphoreCharacteristic->setValue((uint8_t*)&data, 1);  // Set the data to be notified
-  semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
+void notifyClient(const uint8_t* data, int length) {
+  DEBUG_SERIAL_PRINTF("Semaphore Data: %s, Data Length: %d\n", data, length);
+  if(length > 32) return; // Can't send too much data through this channel
+
+  semaphoreCharacteristic->setValue((uint8_t*) data, length);  // Set the data to be notified
+  semaphoreCharacteristic->notify();                           // Notify the semaphor characteristic
 }
 
 // Notify the semaphore characteristic
@@ -237,8 +251,7 @@ void generateSharedSecret(SecureSession::rawDataPacket* packet, SecureSession* s
 
       // Notify once pairing is successful
       notificationPacket.authStatus = AUTH_SUCCESS;
-      uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
-      notifyClient(packed);
+      notifyClient();
     }
     // If the AES key derivation fails
     else
