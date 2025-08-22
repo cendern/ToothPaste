@@ -184,9 +184,12 @@ const Keyboard = ({ keyhistoryref, deviceStatus }) => {
             {/* Command History Container Styling */}
             <div className="rounded-lg bg-shelf px-2 py-2 mt-4 min-h-12 w-full max-w-full overflow-x-hidden">
                 {/* Command History Container Function*/}
-                <div className="flex flex-nowrap space-x-2">
+                <div className="flex flex-nowrap space-x-2 items-center">
+                <div className="shrink-0">
                     <ShowKeyboardButton />
-                    {(keyhistoryref ? keyhistoryref.split(",") : []).map((keyStr, i) => (
+                </div>
+                    <div className="flex flex-nowrap overflow-x-hidden space-x-2">
+                        {(keyhistoryref ? keyhistoryref.split(",") : []).map((keyStr, i) => (
                         <div
                             key={i}
                             className={`px-2 py-1 flex items-center justify-center text-sm font-bold rounded ${backgroundColor} animate-fadeout`}
@@ -194,7 +197,8 @@ const Keyboard = ({ keyhistoryref, deviceStatus }) => {
                         >
                             {keyStr.trim()}
                         </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
