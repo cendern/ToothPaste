@@ -59,7 +59,7 @@ void DeviceServerCallbacks::onDisconnect(BLEServer* bluServer)
     if (manualDisconnect)
     {
       manualDisconnect = false;             // Reset the flag if the disconnection was manual
-      led.set(Colors::Orange);              // LED back to unpaired ready state
+      stateManager->setState(NOT_CONNECTED);
       return;                               // Do not blink if the disconnection was manual
     }
 
@@ -89,7 +89,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
     // Handle bad packets
     if (rawValue.length() < SecureSession::IV_SIZE + SecureSession::TAG_SIZE + SecureSession::HEADER_SIZE) {
       Serial.println("Characteristic too short!");
-      led.blinkStart(500, Colors::Blue);
+      stateManager->setState(DROP);
       return;
     }
 
@@ -97,7 +97,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
     if (xQueueSend(packetQueue, &taskParams, 0) != pdTRUE) {
             // Queue full, drop packet or handle error
             Serial.println("Packet queue full! Dropping packet.");
-            led.blinkStart(500, Colors::Blue);
+            stateManager->setState(DROP);
             delete taskParams->rawValue;
             delete taskParams;
     }
@@ -319,6 +319,8 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
+    // Reset the state so that we don't blink forever in an error state
+    stateManager->setState(READY);
     // The first byte indicates the keys are pressed sequentially
     if(plaintext[0] == 0){
       // Need to create an object on the heap since TinyUSB queues data and the calling function might return before the queue is emptied
@@ -337,7 +339,7 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
     // The first byte indicates the data is mouse data
     else if(plaintext[0] == 2){
       DEBUG_SERIAL_PRINTLN("Mouse Packet Detected");
-      std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen);
+      std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen); // Does not guarantee uint32_t alignment
       moveMouse(keycode.data());
     }
 
@@ -361,8 +363,8 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
     DEBUG_SERIAL_PRINT("Decryption failed with error code: ");
     DEBUG_SERIAL_PRINTLN(ret);
 
-    led.blinkStart(500, Colors::Blue);
-    //stateManager->setState(ERROR);
+    //led.blinkStart(500, Colors::Blue);
+    stateManager->setState(DROP);
   }
   
   delete[] plaintext;

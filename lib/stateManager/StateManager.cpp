@@ -61,6 +61,10 @@ static void changeLed(DeviceState state) {
     case DISCONNECTED:
         led.blinkStart(500, Colors::Red);
         break;
+    
+    case DROP:
+        led.blinkStart(500, Colors::Blue);
+        break;
 
     case ERROR:
     {

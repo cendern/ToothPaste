@@ -109,11 +109,60 @@ void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
   
 }
 
-void moveMouse(uint8_t* mousePacket){ // mousePacket is an array of int32_t values sent over a uint8_t stream
-  int32_t* ints = reinterpret_cast<int32_t*>(mousePacket); // Safely cast uint8_t* to uint32_t*
-  moveMouse(ints[0], ints[1], ints[2], ints[3]);
+// void moveMouse(uint8_t* mousePacket){ // mousePacket is an array of int32_t values sent over a uint8_t stream
+//   int32_t* ints = reinterpret_cast<int32_t*>(mousePacket); // Safely cast uint8_t* to uint32_t*
+//   moveMouse(ints[0], ints[1], ints[2], ints[3]);
+// }
+
+
+void moveMouse(uint8_t* mousePacket) {
+    if(!mousePacket) return;
+
+    // First byte = numFrames
+    uint8_t numFrames = std::min(mousePacket[0], uint8_t(10));
+
+    // int32 frames start at offset 4 (because of JS padding)
+    int32_t* ints = reinterpret_cast<int32_t*>(mousePacket + 3);
+
+    // Move mouse for each frame
+    for(uint8_t i = 0; i < numFrames; i++){
+        int32_t x = ints[i*2];
+        int32_t y = ints[i*2 + 1];
+        moveMouse(x, y, 0, 0);
+    }
+
+    // Left/right click states come after the frames
+    int32_t* clicks = ints + numFrames * 2;
+    int32_t LClick = clicks[0];
+    int32_t RClick = clicks[1];
+
+    // Handle Click
+    DEBUG_SERIAL_PRINTF("LClick: %d, RClick: %d\n", LClick, RClick);
+    moveMouse(0, 0, LClick, RClick); 
 }
 
+// void moveMouse(uint8_t* mousePacket) {
+//     uint8_t numFrames = min(mousePacket[0], uint8_t(10)); // second byte = number of frames
+
+//     uint32_t x, y;
+
+//     uint8_t* ptr = mousePacket + 1; // start of frame data
+
+//     for(uint8_t i = 0; i < numFrames; i++) {
+//         memcpy(&x, ptr, sizeof(x));
+//         ptr += 4;
+//         memcpy(&y, ptr, sizeof(y));
+//         ptr += 4;
+
+//         moveMouse(x, y, false, false);
+//     }
+
+//     // Optional: read clicks
+//     int32_t LClick, RClick;
+//     memcpy(&LClick, ptr, 4);
+//     ptr += 4;
+//     memcpy(&RClick, ptr, 4);
+// }
 
 // ##################### Delay Functions #################### //
 // Timer callback must match `void (*)(void *)`

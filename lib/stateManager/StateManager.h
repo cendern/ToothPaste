@@ -15,8 +15,8 @@ enum DeviceState {
     PAIRING,            // Waiting for client public key                                | 2
     READY,              // Connected and ready to receive                               | 3
     DISCONNECTED,       // Previously connected device triggered onDisconnect callback  | 4
-    ERROR,              // Transition state to print errors and return to prior state   | 5
-
+    ERROR,              // Terminate and reset device                                   | 5
+    DROP,               // Transition to normal state after indicating error            | 6
 };
 
 
