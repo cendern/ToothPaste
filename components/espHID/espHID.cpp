@@ -1,6 +1,7 @@
 #include <espHID.h>
-#include "tinyusb.h"
 
+#include "tinyusb.h"
+#include "tudconfig.c"
 
 
 // Needed to enable CDC if defined
@@ -24,6 +25,7 @@ uint8_t const desc_hid_report[] = {
 // Start the hid keyboard
 void hidSetup()
 { 
+  tudsetup();
   // if(ARDUINO_USB_CDC_ON_BOOT) USBSerial.begin(); 
   // keyboard.begin();
   // mouse.begin();
@@ -59,7 +61,7 @@ void sendString(const char *str, bool slowMode)
 {
   // if(!slowMode)
   //   keyboard.print(str);
-    
+  tud_hid_send_string(str);
   // else
   //   sendStringSlow(str, SLOWMODE_DELAY_MS);
 }
