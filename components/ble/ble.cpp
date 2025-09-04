@@ -41,6 +41,8 @@ void DeviceServerCallbacks::onConnect(BLEServer* bluServer)
 
   // If a device is not already connected
   if (connectedCount == 0) {
+    esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_CONN_HDL0, ESP_PWR_LVL_P9); // Max power once connected (as per IDF API standard)
+
     stateManager->setState(UNPAIRED);
   }
   // (since WEB-BLE does not auto connect this means the device can be restarted for new connections)
@@ -110,7 +112,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
 void bleSetup(SecureSession* session)
 {
   createPacketTask(session);
-
+  
   // Get the device name and start advertising 
   String deviceName;
   session->getDeviceName(deviceName); // Get the device name

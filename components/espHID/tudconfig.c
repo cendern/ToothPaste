@@ -18,11 +18,17 @@ typedef struct {
 static hid_key_t ascii_to_hid[128];
 
 
-
-const uint8_t hid_report_descriptor[] = {
-    TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_ITF_PROTOCOL_KEYBOARD)),
-    TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(HID_ITF_PROTOCOL_MOUSE))
+uint8_t const desc_hid_report1[] =
+{
+  TUD_HID_REPORT_DESC_KEYBOARD()
 };
+
+uint8_t const desc_hid_report2[] =
+{
+  TUD_HID_REPORT_DESC_MOUSE()
+};
+
+
 
 /**
  * @brief String descriptor
@@ -38,10 +44,11 @@ const char *hid_string_descriptor[5] = {
 
 static const uint8_t hid_configuration_descriptor[] = {
     // Configuration number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, 1, 0, TUSB_DESC_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+    TUD_CONFIG_DESCRIPTOR(1, 2, 0, TUSB_DESC_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 500),
 
     // Interface number, string index, boot protocol, report descriptor len, EP In address, size & polling interval
-    TUD_HID_DESCRIPTOR(0, 4, false, sizeof(hid_report_descriptor), 0x81, 16, 10),
+    TUD_HID_DESCRIPTOR(0, 4, true, sizeof(desc_hid_report1), 0x81, 16, 1),
+    TUD_HID_DESCRIPTOR(1, 4, true, sizeof(desc_hid_report2), 0x82, 16, 1),
 };
 
 // Initialize the mapping
@@ -159,11 +166,11 @@ void tudsetup()
 
 // Invoked when received GET HID REPORT DESCRIPTOR request
 // Application return pointer to descriptor, whose contents must exist long enough for transfer to complete
-uint8_t const *tud_hid_descriptor_report_cb(uint8_t instance)
-{
-    // We use only one interface and one HID report descriptor, so we can ignore parameter 'instance'
-    return hid_report_descriptor;
-}
+// uint8_t const * tud_descriptor_configuration_cb(uint8_t instance)
+// {
+//   (void) instance; // for multiple configurations
+//   return hid_configuration_descriptor;
+// }
 
 // Invoked when received GET_REPORT control request
 // Application must fill buffer report's content and return its length.
@@ -177,6 +184,20 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
     (void) reqlen;
 
     return 0;
+}
+
+uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
+{
+  if (itf == 0)
+  {
+    return desc_hid_report1;
+  }
+  else if (itf == 1)
+  {
+    return desc_hid_report2;
+  }
+
+  return NULL;
 }
 
 // Invoked when received SET_REPORT control request or
