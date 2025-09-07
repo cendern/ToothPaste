@@ -1,7 +1,7 @@
 #include <espHID.h>
 
 #include "tinyusb.h"
-#include "tudconfig.c"
+#include "tudconfig.cpp"
 
 
 // Needed to enable CDC if defined
@@ -47,7 +47,7 @@ size_t sendStringSlow(const char *str, int delayms) {
   for (size_t i = 0; str[i] != '\0'; i++) {
     char ch = str[i];
 
-    //keyboard.print(ch);  // Send single character
+    sendKey(ch);  // Send single character
     sentCount++;
 
     delay(delayms);  // Blocking delay between characters
@@ -61,9 +61,9 @@ void sendString(const char *str, bool slowMode)
 {
   // if(!slowMode)
   //   keyboard.print(str);
-  tud_hid_send_string(str);
+  //tud_hid_send_string(str);
   // else
-  //   sendStringSlow(str, SLOWMODE_DELAY_MS);
+  sendStringSlow(str, SLOWMODE_DELAY_MS);
 }
 
 // Cast a pointer to a string pointer and send the string 

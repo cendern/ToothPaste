@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 
+
 #define TUSB_DESC_TOTAL_LEN      (TUD_CONFIG_DESC_LEN + CFG_TUD_HID * TUD_HID_DESC_LEN)
 
 static const char *TAG = "hid_keyboard";
@@ -13,6 +14,16 @@ typedef struct {
     uint8_t keycode;
     bool shift;
 } hid_key_t;
+
+
+//  Low level key report: up to 6 keys and shift, ctrl etc at once
+typedef struct {
+  uint8_t modifier;
+  uint8_t reserved;
+  uint8_t keycode[6];
+} KeyReport;
+
+KeyReport _report;
 
 // Define ascii_to_hid array
 static hid_key_t ascii_to_hid[128];
@@ -27,6 +38,52 @@ uint8_t const desc_hid_report2[] =
 {
   TUD_HID_REPORT_DESC_MOUSE()
 };
+
+uint8_t keyCode(const uint8_t c)
+{
+    uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
+    return conv_table[c][1];
+}
+
+bool sendReport()
+{
+    if (tud_hid_n_ready(0))
+    {
+        return tud_hid_n_keyboard_report(0, 0, _report.modifier, _report.keycode);
+    }
+    return false;
+}
+
+
+bool sendchar(uint8_t key1 = 0) {
+    _report.keycode[0] = key1;
+    _report.keycode[1] = 0;
+    _report.keycode[2] = 0;
+    _report.keycode[3] = 0;
+    _report.keycode[4] = 0;
+    _report.keycode[5] = 0;
+    return sendReport();
+}
+
+bool sendKey(uint8_t mod, uint8_t key1, uint8_t key2 = 0, uint8_t key3 = 0, uint8_t key4 = 0, uint8_t key5 = 0, uint8_t key6 = 0)
+{
+    _report.modifier = mod;
+    _report.keycode[0] = key1;
+    _report.keycode[1] = key2;
+    _report.keycode[2] = key3;
+    _report.keycode[3] = key4;
+    _report.keycode[4] = key5;
+    _report.keycode[5] = key6;
+    return sendReport();
+}
+
+bool sendKey(const uint8_t c)
+{
+    uint8_t const conv_table[128][2] =  { HID_ASCII_TO_KEYCODE };
+    if ( conv_table[c][0] ) _report.modifier = KEYBOARD_MODIFIER_LEFTSHIFT;
+    _report.keycode[0] = conv_table[c][1];
+    return sendReport();
+}
 
 
 
@@ -122,20 +179,11 @@ static void init_ascii_to_hid(void) {
 void tud_hid_send_string(const char *str)
 {
     while (*str) {
-        char c = *str++;
-        if ((uint8_t)c >= 128) continue;
 
-        hid_key_t hk = ascii_to_hid[(uint8_t)c];
-
-        uint8_t modifier = hk.shift ? KEYBOARD_MODIFIER_LEFTSHIFT : 0;
-        uint8_t keycode[6] = {hk.keycode};
-        
-        // Send key press
-        tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, modifier, keycode);
+        sendKey(*str++);
         vTaskDelay(pdMS_TO_TICKS(50));
 
-        // Send key release
-        tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
+        sendchar(0); // release all keys
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 }
@@ -143,19 +191,12 @@ void tud_hid_send_string(const char *str)
 void tudsetup()
 { 
   init_ascii_to_hid();
-  const tinyusb_config_t tusb_cfg = {
-        .device_descriptor = NULL,
-        .string_descriptor = hid_string_descriptor,
-        .string_descriptor_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]),
-        .external_phy = false,
-#if (TUD_OPT_HIGH_SPEED)
-        .fs_configuration_descriptor = hid_configuration_descriptor, // HID configuration descriptor for full-speed and high-speed are the same
-        .hs_configuration_descriptor = hid_configuration_descriptor,
-        .qualifier_descriptor = NULL,
-#else
-        .configuration_descriptor = hid_configuration_descriptor,
-#endif // TUD_OPT_HIGH_SPEED
-    };
+  tinyusb_config_t tusb_cfg = {};
+    tusb_cfg.device_descriptor = NULL;
+    tusb_cfg.string_descriptor = hid_string_descriptor;
+    tusb_cfg.string_descriptor_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]);
+    tusb_cfg.external_phy = false;
+    tusb_cfg.configuration_descriptor = hid_configuration_descriptor;
 
     ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
     ESP_LOGI(TAG, "USB initialization DONE");
@@ -205,3 +246,7 @@ uint8_t const * tud_hid_descriptor_report_cb(uint8_t itf)
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const *buffer, uint16_t bufsize)
 {
 }
+
+
+
+
