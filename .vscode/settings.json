@@ -18,6 +18,8 @@
   ],
   "idf.flashType": "UART",
   "files.associations": {
-    "hid_device.h": "c"
+    "hid_device.h": "c",
+    "usbd_pvt.h": "c",
+    "usbd.h": "c"
   }
 }

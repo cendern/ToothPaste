@@ -2,7 +2,10 @@
 
 #include "tinyusb.h"
 #include "tudconfig.cpp"
+#include "IDFHID.h"
+#include "IDFHIDKeyboard.h"
 
+using namespace idfusb;
 
 // Needed to enable CDC if defined
 #if ARDUINO_USB_CDC_ON_BOOT
@@ -11,23 +14,23 @@
 #endif
 
 
+// IDFHIDKeyboard keyboard0(0); // Boot Keyboard
+IDFHIDKeyboard keyboard1(1); // Non-boot Keyboard
 
-// USBHIDKeyboard keyboard; // Non-boot Keyboard
 // USBHIDMouse mouse;
 // USBHIDConsumerControl control;
 // USBHIDSystemControl syscontrol;
 
 
-uint8_t const desc_hid_report[] = {
-    TUD_HID_REPORT_DESC_KEYBOARD()
-};
-
 // Start the hid keyboard
 void hidSetup()
 { 
   tudsetup();
+  
+
   // if(ARDUINO_USB_CDC_ON_BOOT) USBSerial.begin(); 
-  // keyboard.begin();
+  // keyboard0.begin();
+  keyboard1.begin();
   // mouse.begin();
   // control.begin();
   // syscontrol.begin();
@@ -47,7 +50,8 @@ size_t sendStringSlow(const char *str, int delayms) {
   for (size_t i = 0; str[i] != '\0'; i++) {
     char ch = str[i];
 
-    sendKey(ch);  // Send single character
+    // keyboard0.print(ch);  // Send single character
+    keyboard1.print(ch);  // Send single character
     sentCount++;
 
     delay(delayms);  // Blocking delay between characters
@@ -59,11 +63,12 @@ size_t sendStringSlow(const char *str, int delayms) {
 // Send a string
 void sendString(const char *str, bool slowMode)
 {
-  // if(!slowMode)
-  //   keyboard.print(str);
-  //tud_hid_send_string(str);
-  // else
-  sendStringSlow(str, SLOWMODE_DELAY_MS);
+  if(!slowMode){
+    // keyboard0.print(str);
+    keyboard1.print(str);
+  }
+  else
+    sendStringSlow(str, SLOWMODE_DELAY_MS);
 }
 
 // Cast a pointer to a string pointer and send the string 
@@ -76,10 +81,12 @@ void sendString(void *arg, bool slowMode)
 // Press all the keys in the array together and release them after 50ms (max 6)
 void sendKeycode(uint8_t* keys, bool slowMode) {
     for(int i=0; i<7; i++){
-      //keyboard.press(keys[i]);
+      // keyboard0.press(keys[i]);
+      keyboard1.press(keys[i]);
     }
     delay(50); // optionally slower delay if slowMode
-    //keyboard.releaseAll();
+    // keyboard0.releaseAll();
+    keyboard1.releaseAll();
 }
 
 void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
