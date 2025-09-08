@@ -80,7 +80,7 @@ InputCharacteristicCallbacks::InputCharacteristicCallbacks(SecureSession* sessio
 
 // Callback handler for BLE Input Characteristic onWrite events
 void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristic)
-{
+{    
   std::string rawValue = std::string(inputCharacteristic->getValue().c_str(), inputCharacteristic->getLength()); // Convert to std::string for easier handling
   // Receive base64 encoded value
   if (!rawValue.empty() && session != nullptr)
@@ -173,9 +173,9 @@ void bleSetup(SecureSession* session)
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
-  // inputCharacteristic->addDescriptor(new BLE2902());
-  // semaphoreCharacteristic->addDescriptor(new BLE2902());
-  // macCharacteristic->addDescriptor(new BLE2902());
+  inputCharacteristic->addDescriptor(new BLE2902());
+  semaphoreCharacteristic->addDescriptor(new BLE2902());
+  macCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();

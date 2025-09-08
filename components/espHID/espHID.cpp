@@ -51,7 +51,7 @@ size_t sendStringSlow(const char *str, int delayms) {
     char ch = str[i];
 
     keyboard0.print(ch);  // Send single character
-    keyboard1.print(ch);  // Send single character
+    //keyboard1.print(ch);  // Send single character
     sentCount++;
 
     delay(delayms);  // Blocking delay between characters
@@ -64,8 +64,8 @@ size_t sendStringSlow(const char *str, int delayms) {
 void sendString(const char *str, bool slowMode)
 {
   if(!slowMode){
-    //keyboard0.print(str);
-    keyboard1.print(str);
+    keyboard0.print(str);
+    //keyboard1.print(str);
   }
   else
     sendStringSlow(str, SLOWMODE_DELAY_MS);
@@ -85,12 +85,12 @@ void stringTest(){
 // Press all the keys in the array together and release them after 50ms (max 6)
 void sendKeycode(uint8_t* keys, bool slowMode) {
     for(int i=0; i<7; i++){
-      // keyboard0.press(keys[i]);
-      keyboard1.press(keys[i]);
+      keyboard0.press(keys[i]);
+      //keyboard1.press(keys[i]);
     }
-    delay(5); // optionally slower delay if slowMode
-    // keyboard0.releaseAll();
-    keyboard1.releaseAll();
+    vTaskDelay(pdMS_TO_TICKS(5));
+    keyboard0.releaseAll();
+    //keyboard1.releaseAll();
 }
 
 void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){

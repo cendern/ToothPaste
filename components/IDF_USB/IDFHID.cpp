@@ -80,6 +80,7 @@ bool IDFHID::SendReport(uint8_t id, const void *data, size_t len, uint32_t timeo
   // sending of report ID, by passing report ID of 0 to tud_hid_n_report().
   uint8_t effective_id = ((tinyusb_interface_protocol != HID_ITF_PROTOCOL_NONE) && (tud_hid_n_get_protocol(itf) == HID_PROTOCOL_BOOT)) ? 0 : id;
   printf("Effective ID: %d %d\n\r", effective_id, itf);
+  
   // This does not guarantee that the HOST is ready to poll the device again
   while (!ready()) { // If the TinyUSB queue is ready to accept more reports 
         tud_task();

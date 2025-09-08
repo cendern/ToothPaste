@@ -112,12 +112,12 @@ extern "C" void app_main() {
           }
         } 
         else if (buttonEvent == 2) { // Hold
-          // printf("Button held!");
-          // stateManager->setState(PAIRING);
-          // enterPairingMode();
+          printf("Button held!");
+          stateManager->setState(PAIRING);
+          enterPairingMode();
           
-          printf("Running stringTest");
-          stringTest();
+          // printf("Running stringTest");
+          // stringTest();
         }
 
         // Delay to allow FreeRTOS task switching
