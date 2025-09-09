@@ -5,6 +5,7 @@
 #include <BLE2902.h>
 #include <esp_timer.h>
 #include <nvs_flash.h>
+
 // ClipBoard libraries
 #include <SerialDebug.h>
 #include "espHID.h"
@@ -125,43 +126,3 @@ extern "C" void app_main() {
         vTaskDelay(10 / portTICK_PERIOD_MS); // ~10ms loop
     }
 }
-
-// void setup() {
-//   DEBUG_SERIAL_BEGIN(115200); // Initialize Serial for debugging
-  
-//   led.begin();    // Intialize the RMT LED Driver
-
-//   //Initialize the global device state manager
-//   stateManager = new StateManager();
-//   stateManager->registerLedCallbacks();
-//   stateManager->setState(NOT_CONNECTED);
-
-//   hidSetup(); // Initialize the HID device
-//   bleSetup(&sec); // Initialize the BLE device with the secure session
-//   sec.init(); // Initialize the secure session
-// }
-
-// // The loop is only used for gpio polling
-// void loop() {
-//   led.blinkUpdate(); // The blink state is updated in the loop and notifies the RMT thread
-  
-//   // Poll the button state (interrupts would cause issues with RTOS)
-//   int buttonEvent = checkButton();
-//   uint8_t keycode[7] = { 0x80, 'a', 0, 0, 0, 0, 0 }; 
-  
-//   if (buttonEvent == 1) { // Single click event
-//     if(stateManager->getState() == PAIRING){
-//       sendString(base64pubKey);
-//     }
-//     else
-//       sendKeycode(keycode, true);
-//   } 
-
-
-//   else if (buttonEvent == 2) { // Hold event
-//     DEBUG_SERIAL_PRINTLN("Button held!");
-//     stateManager->setState(PAIRING);
-//     enterPairingMode(); // Enter pairing mode on hold
-//   }
-
-// }

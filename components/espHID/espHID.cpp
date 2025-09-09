@@ -82,8 +82,9 @@ void stringTest(){
 
 // Press all the keys in the array together and release them after 50ms (max 6)
 void sendKeycode(uint8_t* keys, bool slowMode) {
-    for(int i=0; i<7; i++){
+    for(int i=0; i<6; i++){
       keyboard0.press(keys[i]);
+      vTaskDelay(pdMS_TO_TICKS(5));
       //keyboard1.press(keys[i]);
     }
     vTaskDelay(pdMS_TO_TICKS(5));
