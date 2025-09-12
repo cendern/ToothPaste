@@ -152,6 +152,8 @@ public:
   void releaseAll(void);
   void sendReport(KeyReport *keys);
   void setShiftKeyReports(bool set);
+  bool lock();
+  bool unlock();
 
   //raw functions work with TinyUSB's HID_KEY_* macros
   size_t pressRaw(uint8_t k);

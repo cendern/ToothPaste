@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package toothpaste;
+
+// Total permissible size of DataPacket must be < 253 bytes
+message DataPacket{
+
+    // 1 byte
+
+
+    // Packet.data
+    message EncryptedData{
+        // 1 byte
+        enum packetType{
+            KEYBOARD_STRING = 0;
+            KEYBOARD_KEYCODE = 1;
+            MOUSE = 2;
+            RENAME = 3;
+        }
+
+
+    }
+
+}
+
+
+
+message NotificationPacket{
+    enum NotificationType{
+        KEEPALIVE = 0;
+        RECV_READY = 1;
+        RECV_NOT_READY =2;
+    }
+
+}

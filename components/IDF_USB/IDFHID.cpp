@@ -25,9 +25,7 @@ typedef struct {
 
 
 static SemaphoreHandle_t tinyusb_hid_device_input_sem = NULL;
-static SemaphoreHandle_t tinyusb_hid_device_input_mutex = NULL;
-
-static bool tinyusb_hid_is_initialized = false;
+bool tinyusb_hid_is_initialized = false;
 static hid_interface_protocol_enum_t tinyusb_interface_protocol = HID_ITF_PROTOCOL_NONE;
 #if ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_DEBUG
 static const char *tinyusb_hid_device_report_types[4] = {"INVALID", "INPUT", "OUTPUT", "FEATURE"};
@@ -42,13 +40,20 @@ IDFHID::IDFHID(uint8_t itf) {
   }
 }
 
+bool IDFHID::lock(){
+  while(!ready() && (xSemaphoreTake(tinyusb_hid_device_input_sem, pdMS_TO_TICKS(5) != pdTRUE))){
+    tud_task();
+  }
+  return true;
+}
+
+bool IDFHID::unlock(){
+  return xSemaphoreGive(tinyusb_hid_device_input_sem);
+}
 
 void IDFHID::begin() {
   if (tinyusb_hid_device_input_sem == NULL) {
     tinyusb_hid_device_input_sem = xSemaphoreCreateBinary();
-  }
-  if (tinyusb_hid_device_input_mutex == NULL) {
-    tinyusb_hid_device_input_mutex = xSemaphoreCreateMutex();
   }
 }
 
@@ -57,34 +62,20 @@ void IDFHID::end() {
     vSemaphoreDelete(tinyusb_hid_device_input_sem);
     tinyusb_hid_device_input_sem = NULL;
   }
-  if (tinyusb_hid_device_input_mutex != NULL) {
-    vSemaphoreDelete(tinyusb_hid_device_input_mutex);
-    tinyusb_hid_device_input_mutex = NULL;
-  }
 }
 
 bool IDFHID::ready() {
   return tud_hid_n_ready(itf);
 }
 
-// Callback triggered by TinyUSB once the HOST consumes the current report
-void tud_hid_report_complete_cb(uint8_t instance, uint8_t const *report, size_t len) {
-  if (tinyusb_hid_device_input_sem) {
-    xSemaphoreGive(tinyusb_hid_device_input_sem);
-  }
-}
 
 bool IDFHID::SendReport(uint8_t id, const void *data, size_t len, uint32_t timeout_ms) {  
   // If we're configured to support boot protocol, and the host has requested boot protocol, prevent
   // sending of report ID, by passing report ID of 0 to tud_hid_n_report().
+  lock(); // Lock the semaphore until notified of report completion
   uint8_t effective_id = ((tinyusb_interface_protocol != HID_ITF_PROTOCOL_NONE) && (tud_hid_n_get_protocol(itf) == HID_PROTOCOL_BOOT)) ? 0 : id;
   printf("Effective ID: %d %d\n\r", effective_id, itf);
   
-  // This does not guarantee that the HOST is ready to poll the device again
-  while (!ready()) { // If the TinyUSB queue is ready to accept more reports 
-        tud_task();
-        vTaskDelay(pdMS_TO_TICKS(1));
-  }
   return tud_hid_n_report(itf, 0, data, len);
 
 }

@@ -44,6 +44,14 @@ void IDFHIDMouseBase::begin() {
   hid.begin();
 }
 
+bool IDFHIDMouseBase::lock(){
+  return hid.lock();
+}
+
+bool IDFHIDMouseBase::unlock(){
+  return hid.unlock();
+}
+
 void IDFHIDMouseBase::end() {}
 
 void IDFHIDMouseBase::press(uint8_t b) {

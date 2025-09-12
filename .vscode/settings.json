@@ -21,6 +21,8 @@
     "hid_device.h": "c",
     "usbd_pvt.h": "c",
     "usbd.h": "c",
-    "ostream": "cpp"
+    "ostream": "cpp",
+    "string": "cpp",
+    "bleclient.h": "c"
   }
 }

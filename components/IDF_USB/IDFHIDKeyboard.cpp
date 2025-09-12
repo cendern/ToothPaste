@@ -39,6 +39,7 @@ void IDFHIDKeyboard::begin(const uint8_t *layout) {
   hid.begin();
 }
 
+
 void IDFHIDKeyboard::end() {}
 
 
@@ -184,9 +185,6 @@ void IDFHIDKeyboard::releaseAll(void) {
 
 size_t IDFHIDKeyboard::write(uint8_t c) {
   uint8_t p = press(c);  // Keydown
-  
-  vTaskDelay(pdMS_TO_TICKS(5)); // Delay between reports
-  
   release(c);            // Keyup
   return p;              // just return the result of press() since release() almost always returns 1
 }

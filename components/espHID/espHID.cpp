@@ -84,10 +84,10 @@ void stringTest(){
 void sendKeycode(uint8_t* keys, bool slowMode) {
     for(int i=0; i<6; i++){
       keyboard0.press(keys[i]);
-      vTaskDelay(pdMS_TO_TICKS(5));
+      // vTaskDelay(pdMS_TO_TICKS(5));
       //keyboard1.press(keys[i]);
     }
-    vTaskDelay(pdMS_TO_TICKS(5));
+    // vTaskDelay(pdMS_TO_TICKS(5));
     keyboard0.releaseAll();
     //keyboard1.releaseAll();
 }
@@ -103,10 +103,10 @@ void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
     mouse.press(MOUSE_RIGHT);
   }
   
-  vTaskDelay(pdMS_TO_TICKS(5));
+  // vTaskDelay(pdMS_TO_TICKS(5));
   //smoothMoveMouse(x, y, 20, 5); // Move the mouse by dx and dy over 20 steps and SLOWMODE_DELAY_MS ms between each step
   mouse.move(x, y);
-  vTaskDelay(pdMS_TO_TICKS(5));
+  // vTaskDelay(pdMS_TO_TICKS(5));
 
   // Release after moving the mouse
   if (mouse.isPressed(MOUSE_LEFT) && LClick == 2) {
@@ -117,7 +117,7 @@ void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
       mouse.release(MOUSE_RIGHT);
   }
   
-  vTaskDelay(pdMS_TO_TICKS(5));
+  // vTaskDelay(pdMS_TO_TICKS(5));
 }
 
 // void moveMouse(uint8_t* mousePacket){ // mousePacket is an array of int32_t values sent over a uint8_t stream
@@ -171,4 +171,23 @@ void sendStringDelay(void *arg, int delayms){
     esp_timer_handle_t oneShotTimer;
     esp_timer_create(&timer_args, &oneShotTimer);
     esp_timer_start_once(oneShotTimer, delayms*1000); // Delay uses ms
+}
+
+//------------------------TINYUSB Callbacks------------------------------//
+
+// Callback triggered by TinyUSB once the HOST consumes the current report
+void tud_hid_report_complete_cb(uint8_t instance, uint8_t const *report, size_t len) {
+  DEBUG_SERIAL_PRINTLN("Report complete callback entered");
+  switch(instance){
+    case 0:
+      keyboard0.unlock();
+      break;
+
+    case 1:
+      mouse.unlock();
+      break;
+
+    default:
+      break;
+  }
 }

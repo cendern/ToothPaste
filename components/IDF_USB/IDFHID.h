@@ -62,6 +62,8 @@ public:
   IDFHID(uint8_t itf = 0);
   void begin(void);
   void end(void);
+  bool lock();
+  bool unlock();
   bool ready(void);
   bool SendReport(uint8_t report_id, const void *data, size_t len, uint32_t timeout_ms = 100);
   static bool addDevice(IDFHIDDevice *device, uint16_t descriptor_len);
