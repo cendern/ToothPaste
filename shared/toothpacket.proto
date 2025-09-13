@@ -5,31 +5,77 @@ package toothpaste;
 // Total permissible size of DataPacket must be < 253 bytes
 message DataPacket{
 
-    // 1 byte
-
+    // Packet.Header
+    uint32 packetNumber = 1;
+    uint32 totalPackets = 2;
+    bool slowMode = 3;
+    
 
     // Packet.data
-    message EncryptedData{
-        // 1 byte
-        enum packetType{
-            KEYBOARD_STRING = 0;
-            KEYBOARD_KEYCODE = 1;
-            MOUSE = 2;
-            RENAME = 3;
-        }
+    EncryptedData encryptedData = 4;
 
+}
 
+message EncryptedData{
+    // 1 byte
+    enum packetType{
+        KEYBOARD_STRING = 0;
+        KEYBOARD_KEYCODE = 1;
+        MOUSE = 2;
+        RENAME = 3;
+        CONSUMER_CONTROL = 4;
+        COMPOSITE = 5;
+    }
+    
+    oneof PacketType{
+        StringPacket stringPacket = 1;
+        KeycodePacket  keycodePacket = 2;
+        MousePacket  mousePacket = 3;
     }
 
 }
 
+// Arbitrary String Data (processed based on packet type byte)
+message StringPacket{
+    string message = 1;
+    uint32 length = 2;
+}
+
+// Arbitrary keycode data (each uint32 is a keycode, <length> codes in 1 message)
+message KeycodePacket{
+    repeated uint32 code = 1;
+    uint32 length = 2;
+}
+
+// Represents a single unit of mouse movement
+message Frame {
+  int32 x = 1;
+  int32 y = 2;
+}
+
+// Packet with multiple units of mouse movement frames that define a curve
+message MousePacket {
+  uint32 num_frames = 1;   // how many frames (max 10)
+  repeated Frame frames = 2; // sequence of (x, y) positions
+  int32 l_click = 3;       // left click state
+  int32 r_click = 4;       // right click state
+}
 
 
+// Packet Sent by receiver to indicate state
 message NotificationPacket{
+    
+    // Indicate the notification type
     enum NotificationType{
         KEEPALIVE = 0;
         RECV_READY = 1;
         RECV_NOT_READY =2;
+    }
+
+    // Indicate if the transmitter is authorized to send any packets (failure in auth = packet ignored)
+    enum AuthStatus{
+        AUTH_FAILED = 0;
+        AUTH_SUCCESS = 1;
     }
 
 }
