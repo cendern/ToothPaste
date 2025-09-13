@@ -287,15 +287,15 @@ int SecureSession::decrypt(
 }
 
 // Decrypt a rawDataPacket
-int SecureSession::decrypt(struct rawDataPacket* packet, uint8_t* plaintext_out, const char* base64pubKey)
+int SecureSession::decrypt(toothpaste_DataPacket* packet, uint8_t* decrypted_out, const char* base64pubKey)
 {   
     // Decrypt the packet data
     int ret = decrypt(
         packet->IV,
         packet->dataLen,
-        packet->data,
+        packet->encryptedData,
         packet->TAG,
-        plaintext_out,
+        decrypted_out,
         base64pubKey
     ); 
     return ret;

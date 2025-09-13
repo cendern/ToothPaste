@@ -8,7 +8,6 @@
 #include "IDFHIDConsumerControl.h"
 #include "SerialDebug.h"
 
-
 // Needed to enable CDC if defined
 #if ARDUINO_USB_CDC_ON_BOOT
     #include <USBCDC.h>

@@ -3,7 +3,6 @@
 #include "StateManager.h"
 #include "esp_system.h"
 #include "esp_log.h"
-#include "toothpacket.pb.h"
 
 BLEServer* bluServer = NULL;                      // Pointer to the BLE Server instance
 BLECharacteristic* inputCharacteristic = NULL;    // Characteristic for sensor data
@@ -321,63 +320,71 @@ SecureSession::rawDataPacket unpack(void* rawPacketBytes) {
 }
 
 // Decrypt a data packet and type the text content as a string
-void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* session) {
+void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
   // Allocate plaintext buffer and decrypt
-  uint8_t* plaintext = new uint8_t[SecureSession::MAX_DATA_LEN];
-  int ret = session->decrypt(packet, plaintext, clientPubKey.c_str());
+  //uint8_t* plaintext = new uint8_t[SecureSession::MAX_DATA_LEN];
+  
+  std::vector<uint8_t> decrypted_bytes;
+  toothpaste_EncryptedData decrypted = toothpaste_EncryptedData_init_default;
+
+  
+  int ret = session->decrypt(packet, decrypted_bytes, clientPubKey.c_str());
+
+  // Deserialize the decrypted data into a protobuf packet
+  pb_istream_t stream = pb_istream_from_buffer(decrypted_bytes.data(), decrypted_bytes.size()); 
+  if (!pb_decode(&stream, toothpaste_EncryptedData_fields, &decrypted)) {
+    printf("Decoding failed: %s\n", PB_GET_ERROR(&stream));
+    return;
+  }
+
 
   // If the decryption succeeds type the plaintext over HID    
   if (ret == 0)
   {
     // Reset the state so that we don't blink forever in an error state
     stateManager->setState(READY);
-    // The first byte indicates the keys are pressed sequentially
-    if(plaintext[0] == 0){
-      // Need to create an object on the heap since TinyUSB queues data and the calling function might return before the queue is emptied
-      std::string textString((const char*)plaintext+1, (packet->dataLen)-1);
-      DEBUG_SERIAL_PRINTF("Decryption successful: %s\n\r\n\r", textString.c_str());
+    switch(decrypted.which_packetData){
+      case toothpaste_EncryptedData_keyboardPacket_tag: {
+        std::string textString(decrypted.packetData.keyboardPacket.message, decrypted.packetData.keyboardPacket.length);
+        sendString(textString.data(), packet->slowMode);
+        break;
+      }
+
+      case toothpaste_EncryptedData_keycodePacket_tag: {
+        std::vector<uint8_t> keycode(decrypted.packetData.keycodePacket.code, decrypted.packetData.keycodePacket.code_count);
+        sendKeycode(keycode.data(), packet->slowMode);
+        break;
+      }
+
+      case toothpaste_EncryptedData_mousePacket_tag: {
+        //std::vector<uint8_t> mouseCode(decrypted.packetData.mousePacket);
+        moveMouse(mouseCode);
+        break;
+      }
       
-      sendString(textString.c_str(), packet->slowmode); // Send the decrypted data over HID
-    }
+      case toothpaste_EncryptedData_renamePacket_tag: {
+        std::string textString(decrypted.packetData.keyboardPacket.message, decrypted.packetData.keyboardPacket.length);
+        int ret = session->setDeviceName(textString.c_str()); // Set the device name in preferences
+        DEBUG_SERIAL_PRINTF("Device rename status code: %d\n", ret);
+        DEBUG_SERIAL_PRINTLN("Rebooting Toothpaste...");
+        esp_restart();
+        break;  
+      }
 
-    // The first byte indicates the keys are supposed to be all pressed at once then released after a delay (TODO: This implementation doesnt allow holding keys)
-    else if(plaintext[0] == 1){
-      std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen);
-      sendKeycode(keycode.data(), true);
+      default:
+        DEBUG_SERIAL_PRINTF("Unknown Packet Type: %d", decrypted.which_packetData);
+        break;
     }
-    
-    // The first byte indicates the data is mouse data
-    else if(plaintext[0] == 2){
-      DEBUG_SERIAL_PRINTLN("Mouse Packet Detected");
-      std::vector<uint8_t> keycode(plaintext + 1, plaintext + packet->dataLen); // Does not guarantee uint32_t alignment
-      moveMouse(keycode.data());
-    }
-
-    // Rename data
-    else if(plaintext[0] == 3){
-      std::string textString((const char*)plaintext+1, (packet->dataLen)-1);
-      
-      int ret = session->setDeviceName(textString.c_str()); // Set the device name in preferences
-      DEBUG_SERIAL_PRINTF("Device rename status code: %d\n", ret);
-      DEBUG_SERIAL_PRINTLN("Rebooting Toothpaste...");
-
-      
-      esp_restart();// Restart the device after rename to clear any stale memory and force the transmitter to reconnect
-    }
-
     notificationPacket.packetType = RECV_READY;
   }
+
   // If the decryption fails
   else
   {
     DEBUG_SERIAL_PRINT("Decryption failed with error code: ");
     DEBUG_SERIAL_PRINTLN(ret);
-
-    //led.blinkStart(500, Colors::Blue);
     stateManager->setState(DROP);
   }
-  
-  delete[] plaintext;
 }
 
 // Read an AUTH packet and check if the client public key and AES key are known
@@ -426,28 +433,49 @@ void packetTask(void* params)
                 std::string* rawValue = taskParams->rawValue;
 
                 SecureSession::rawDataPacket packet = unpack(rawValue);
+
+                // Decode protobuf
+                toothpaste_DataPacket toothPacket = toothpaste_DataPacket_init_default;
+                pb_istream_t istream = pb_istream_from_buffer(rawValue->data(), rawValue->length());
+                if(!pb_decode(&istream, toothpaste_DataPacket_fields, &toothPacket)) {
+                    printf("Decoding failed: %s\n", PB_GET_ERROR(&istream));
+                    return;
+                }
+
                 delete rawValue; // Free string memory
 
                 // Debug prints...
                 DEBUG_SERIAL_PRINTLN("BLE Data Received.");
-                DEBUG_SERIAL_PRINTF("Data length: %d\r\n", packet.dataLen);
+                DEBUG_SERIAL_PRINTF("Data length: %d\r\n", toothPacket.dataLen);
                 DEBUG_SERIAL_PRINTF("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
-                    packet.packetId,
-                    packet.slowmode,
-                    packet.packetNumber,
-                    packet.totalPackets
+                    toothPacket.packetId,
+                    toothPacket.slowmode,
+                    toothPacket.packetNumber,
+                    toothPacket.totalPackets
                 );
                 DEBUG_SERIAL_PRINTLN();
                 
+
+                // Debug prints...
+                // DEBUG_SERIAL_PRINTLN("BLE Data Received.");
+                // DEBUG_SERIAL_PRINTF("Data length: %d\r\n", packet.dataLen);
+                // DEBUG_SERIAL_PRINTF("ID: %d\r\nSlowMode: %d\r\nPacket Number: %d\r\nTotal Packets: %d\r\n",
+                //     packet.packetId,
+                //     packet.slowmode,
+                //     packet.packetNumber,
+                //     packet.totalPackets
+                // );
+                // DEBUG_SERIAL_PRINTLN();
+                
                 // Handle different types of packets
-                if (packet.packetId == 0) {
-                    decryptSendString(&packet, session);
+                if (toothPacket.packetId == toothpaste_DataPacket_packetID_DATA_PACKET) {
+                    decryptSendString(&toothPacket, session);
                 }
-                else if (packet.packetId == 1) {
+                else if (toothPacket.packetId == toothpaste_DataPacket_packetID_AUTH_PACKET) {
                     if (stateManager->getState() == PAIRING) {
-                        generateSharedSecret(&packet, session);
+                        generateSharedSecret(&toothPacket, session);
                     } else {
-                        authenticateClient(&packet, session);
+                        authenticateClient(&toothPacket, session);
                     }
                 }
 

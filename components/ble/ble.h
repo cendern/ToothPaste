@@ -8,6 +8,7 @@
 #include "SerialDebug.h"
 #include "espHID.h"
 #include "secureSession.h"
+#include "toothpacket.pb.h"
 
 #define BLE_DEVICE_DEFAULT_NAME     "Toothpaste"
 #define SERVICE_UUID        "19b10000-e8f2-537e-4f6c-d104768a1214"

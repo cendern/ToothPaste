@@ -12,7 +12,10 @@ PB_BIND(toothpaste_DataPacket, toothpaste_DataPacket, AUTO)
 PB_BIND(toothpaste_EncryptedData, toothpaste_EncryptedData, AUTO)
 
 
-PB_BIND(toothpaste_StringPacket, toothpaste_StringPacket, AUTO)
+PB_BIND(toothpaste_KeyboardPacket, toothpaste_KeyboardPacket, AUTO)
+
+
+PB_BIND(toothpaste_RenamePacket, toothpaste_RenamePacket, AUTO)
 
 
 PB_BIND(toothpaste_KeycodePacket, toothpaste_KeycodePacket, AUTO)
@@ -25,6 +28,8 @@ PB_BIND(toothpaste_MousePacket, toothpaste_MousePacket, AUTO)
 
 
 PB_BIND(toothpaste_NotificationPacket, toothpaste_NotificationPacket, AUTO)
+
+
 
 
 

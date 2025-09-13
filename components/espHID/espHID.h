@@ -14,12 +14,18 @@
 
 
 void hidSetup();
+
+// Keyboard String Functions
 void sendString(const char* str, bool slowMode = true);
 void sendString(void* arg, bool slowMode = true);
 void sendStringDelay(void *arg, int delay);
+
+// Keycode Functions
 void sendKeycode(uint8_t* keys, bool slowMode);
+
 void stringTest();
 void genericInput();
+
 //Mouse functions
 void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick);
 void moveMouse(uint8_t* mousePacket);

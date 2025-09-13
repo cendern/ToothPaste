@@ -6,13 +6,20 @@ package toothpaste;
 message DataPacket{
 
     // Packet.Header
-    uint32 packetNumber = 1;
-    uint32 totalPackets = 2;
-    bool slowMode = 3;
+    enum packetID {
+        DATA_PACKET = 0;
+        AUTH_PACKET = 1;
+    }
+    uint32 packetNumber = 2;
+    uint32 totalPackets = 3;
+    bool slowMode = 4;
     
 
     // Packet.data
-    EncryptedData encryptedData = 4;
+    bytes IV = 5;
+    uint32 dataLen = 6;
+    EncryptedData encryptedData = 7;
+    bytes TAG = 8;
 
 }
 
@@ -27,23 +34,29 @@ message EncryptedData{
         COMPOSITE = 5;
     }
     
-    oneof PacketType{
-        StringPacket stringPacket = 1;
+    oneof packetData{
+        KeyboardPacket keyboardPacket = 1;
         KeycodePacket  keycodePacket = 2;
         MousePacket  mousePacket = 3;
+        RenamePacket  renamePacket = 4;
     }
 
 }
 
 // Arbitrary String Data (processed based on packet type byte)
-message StringPacket{
+message KeyboardPacket{
+    string message = 1;
+    uint32 length = 2;
+}
+
+message RenamePacket{
     string message = 1;
     uint32 length = 2;
 }
 
 // Arbitrary keycode data (each uint32 is a keycode, <length> codes in 1 message)
 message KeycodePacket{
-    repeated uint32 code = 1;
+    repeated uint32 code = 1; // max_count = 6 (set in toothpacket.options)
     uint32 length = 2;
 }
 
