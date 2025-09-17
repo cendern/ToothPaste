@@ -51,7 +51,7 @@ export default function LiveCapture() {
             //sendMouseReport(tDisplacement.current.x, tDisplacement.current.y, false, false);
             sendMouseReport(false, false);
         }
-    }, 200);
+    }, REPORT_INTERVAL_MS);
 
     // On click logic
     function onMouseDown(e) {
@@ -258,16 +258,12 @@ export default function LiveCapture() {
 
             <div className="flex flex-col flex-1 my-4 rounded-xl transition-all border border-hover focus:border-shelf relative group ">
                 <div className="absolute top-2 right-2">
-                    <CommandPassthroughButton />
-
-                </div>
-                {/* <div className="absolute top-2 right-2">
                     <CaptureMouseButton />
-                </div> */}
+                </div>
 
-                {/* <div className="absolute top-14 right-2">
+                <div className="absolute top-14 right-2">
                     <CommandPassthroughButton />
-                </div> */}
+                </div>
 
                 <Typography
                     variant="h1"
