@@ -330,6 +330,7 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
   {
     // Reset the state so that we don't blink forever in an error state
     stateManager->setState(READY);
+
     // The first byte indicates the keys are pressed sequentially
     if(plaintext[0] == 0){
       // Need to create an object on the heap since TinyUSB queues data and the calling function might return before the queue is emptied
@@ -362,6 +363,18 @@ void decryptSendString(SecureSession::rawDataPacket* packet, SecureSession* sess
 
       
       esp_restart();// Restart the device after rename to clear any stale memory and force the transmitter to reconnect
+    }
+
+    // Consumer Control Data
+    else if(plaintext[0] == 4){
+      std::vector<uint16_t> keycode(plaintext + 1, plaintext + packet->dataLen);
+      if(keycode[0] != 0) {
+        DEBUG_SERIAL_PRINTLN("Consumer Control Packet Detected");
+        DEBUG_SERIAL_PRINTF("Keycode: %d\n", keycode[0]);
+        consumerControlPress(keycode[0]);
+        consumerControlRelease();
+      }
+      else consumerControlRelease();
     }
 
     notificationPacket.packetType = RECV_READY;

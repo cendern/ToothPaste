@@ -20,11 +20,6 @@ IDFHIDKeyboard keyboard0(0); // Boot Keyboard
 IDFHIDMouse mouse(1);
 IDFHIDConsumerControl control(2);
 
-// USBHIDMouse mouse;
-// USBHIDSystemControl syscontrol;
-
-
-// Start the hid keyboard
 void hidSetup()
 { 
   tudsetup();
@@ -115,6 +110,17 @@ void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
   }
   
   // vTaskDelay(pdMS_TO_TICKS(5));
+}
+
+// Press a consumer control key
+void consumerControlPress(uint16_t key){
+  control.press(key);
+  vTaskDelay(pdMS_TO_TICKS(10));
+}
+
+// Release all consumer control keys
+void consumerControlRelease(){
+  control.release();
 }
 
 void genericInput(){
