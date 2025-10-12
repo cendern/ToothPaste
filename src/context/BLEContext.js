@@ -75,7 +75,8 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
         }
     };
 
-    // Encrypt and send untyped data stream (string, array, etc.) with a random IV and GCM tag added, chunk data if too large
+    // Encrypt and send untyped data stream (string, array, etc.) with a random IV and GCM tag added, 
+    // chunk data if too large
     const sendEncrypted = async (inputArray, prefix=0) => {
         if (!pktCharacteristic) return;
 
@@ -164,7 +165,6 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             const device = await navigator.bluetooth.requestDevice({
                 //acceptAllDevices: true,
                 filters: [{ services: [serviceUUID] }],
-                //optionalServices: [serviceUUID],
             });
 
             // Set an on disconnect listener
@@ -173,8 +173,8 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
                 if (showOverlayRef.current) {
                     setShowOverlay(false);
                 }
-                setStatus(connectionStatus.disconnected);
                 
+                setStatus(connectionStatus.disconnected); // Set status to disconnected
                 setDevice(null); // Clear the device object, not doing this causes inconsistent connections when trying to reconnect
 
                 console.log("Clipboard Disconnected");
@@ -194,7 +194,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             const semChar = await getCharacteristicWithRetry(service, hidSemaphorepktCharacteristicUUID);
             const MACChar = await getCharacteristicWithRetry(service, macAddressCharacteristicUUID);
             
-            // Get the MAC address for the newly connected device
+            // Get the MAC address for the newly connected device (bypass mac obfuscation in WEB BLE)
             const dataView = await MACChar.readValue();
             let macStr = '';
             for (let i = 0; i < dataView.byteLength; i++) {
@@ -209,7 +209,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
 
             await subscribeToSemaphore(semChar); // Subscribe to the BLE characteristic that notifies when a HID message has finished sending
 
-            // If we don't know the public key of the device, we need to pair before sending
+            // Get the MAC : PubKey mapping from storage, if we don't have it we need to pair first
             if (!(await keyExists(device.macAddress))) {
                 console.error("ECDH keys not found for device", device.macAddress);
                 setStatus(connectionStatus.connected);
@@ -231,14 +231,14 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
         }
     };
 
-    // Retry service query to prevent "ghost connections" where BLE is connected but the service query returns too quickly
-    const getServiceWithRetry = async (server, uuid, attempts = 3) => {
+    // Generic retry wrapper for async BLE calls
+    const retryAsyncCall = async (fn, param, attempts = 3, warnMsg = "Retrying...") => {
         for (let i = 0; i < attempts; i++) {
             try {
-                return await server.getPrimaryService(uuid);
+                return await fn(param);
             } catch (err) {
                 if (i < attempts - 1) {
-                    console.warn("Retrying service discovery...", err);
+                    console.warn(warnMsg, err);
                     await new Promise((r) => setTimeout(r, 300));
                 } else {
                     throw err;
@@ -246,22 +246,14 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             }
         }
     };
-    
-    // Retry service query to prevent "ghost connections" where BLE is connected but the service query returns too quickly
-    const getCharacteristicWithRetry = async (service, characteristicUUID, attempts = 3) => {
-        for (let i = 0; i < attempts; i++) {
-            try {
-                return await service.getCharacteristic(characteristicUUID);
-            } catch (err) {
-                if (i < attempts - 1) {
-                    console.warn("Retrying characteristic discovery...", err);
-                    await new Promise((r) => setTimeout(r, 300));
-                } else {
-                    throw err;
-                }
-            }
-        }
-    };
+
+    // Get service details, retry on fail
+    const getServiceWithRetry = async (server, uuid, attempts = 3) =>
+        retryAsyncCall((uuid) => server.getPrimaryService(uuid), uuid, attempts, "Retrying service discovery...");
+
+    // Get characteristic details, retry on fail
+    const getCharacteristicWithRetry = async (service, characteristicUUID, attempts = 3) =>
+        retryAsyncCall((characteristicUUID) => service.getCharacteristic(characteristicUUID), characteristicUUID, attempts, "Retrying characteristic discovery...");
 
     return (
         <BLEContext.Provider
