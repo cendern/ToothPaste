@@ -34,4 +34,8 @@ void moveMouse(uint8_t* mousePacket);
 void moveMouse(toothpaste_MousePacket&);
 void smoothMoveMouse(int dx, int dy, int steps, int interval);
 
+//Consumer Control functions
+void consumerControlPress(uint16_t key);
+void consumerControlRelease();
+
 #endif
