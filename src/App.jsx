@@ -6,6 +6,7 @@ import BulkSend from "./views/BulkSend";
 import LiveCapture from "./views/LiveCapture";
 import { BLEProvider } from "./context/BLEContext";
 import ECDHOverlay from "./components/ECDHOverlay/ECDHOverlay";
+import UpdateController from "./components/UpdateComponent/UpdateController";
 import { ECDHContext, ECDHProvider } from "./context/ECDHContext";
 
 import ToothPaste from "./assets/ToothPaste.png";
@@ -37,6 +38,8 @@ function App() {
                 return <BulkSend />;
             case "live":
                 return <LiveCapture />;
+            case "update":
+                return <UpdateController />;
             default:
                 return <BulkSend />;
         }
