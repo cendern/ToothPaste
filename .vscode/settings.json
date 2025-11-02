@@ -24,6 +24,7 @@
     "ostream": "cpp",
     "string": "cpp",
     "bleclient.h": "c",
-    "mutex": "cpp"
+    "mutex": "cpp",
+    "format": "cpp"
   }
 }
