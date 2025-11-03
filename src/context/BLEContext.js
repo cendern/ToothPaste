@@ -8,7 +8,7 @@ import React, {
 import { keyExists, loadBase64 } from "../controllers/Storage";
 import { ECDHContext } from "./ECDHContext";
 import { Packet } from "../controllers/PacketFunctions";
-import { toothpaste } from '../controllers/toothpacket/toothpacket_pb.js';
+import { toothpaste, DataPacket } from '../controllers/toothpacket/toothpacket_pb.js';
 
 export const BLEContext = createContext();
 export const useBLEContext = () => useContext(BLEContext);
@@ -58,21 +58,21 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
         return readyToReceive.current.promise;
     };
 
-    // Send a text string as a byte array without encrypting it padded with 0 where necessary
+    // Send a text string as a byte array without encryption
     const sendUnencrypted = async (inputString) => {
         try {
             const encoder = new TextEncoder();
             const textData = encoder.encode(inputString); // Encode the input string into a byte array
 
-            const dataPadded = new Uint8Array(16 + 12 + textData.length); // Offset the data by IV length
-            dataPadded.set(textData, 12);
-
-            const packet = new Packet(1, dataPadded, 0, 1, 1);
-            const packetData = packet.serialize();
-
             // protobuf packets
-            const unencryptedPacket = new toothpaste.DataPacket();
-            unencryptedPacket.setEncryptedData(textData);
+            const unencryptedPacket = new DataPacket();
+            unencryptedPacket.setEncrypteddata(textData);
+            unencryptedPacket.setPacketid(1);
+            unencryptedPacket.setSlowmode(true);
+            unencryptedPacket.setPacketnumber(1);
+            unencryptedPacket.setDatalen(textData.length);
+            unencryptedPacket.setTag(new Uint8Array(16)); // Empty tag for unencrypted packet
+            unencryptedPacket.setIv(new Uint8Array(12)); // Empty IV for unencrypted packet
 
             await pktCharRef.current.writeValueWithoutResponse(unencryptedPacket.serializeBinary());
             //await pktCharRef.current.writeValueWithoutResponse(packetData);
@@ -92,7 +92,8 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
             for await (const packet of createEncryptedPackets(0, inputArray, true, prefix)) {
                 console.log("Sending packet ", count);
                 await pktCharacteristic.writeValueWithoutResponse(
-                    packet.serialize()
+                    //packet.serialize()
+                    packet.serializeBinary()
                 );
 
                 await waitForReady(); // Attach a promise to the ref

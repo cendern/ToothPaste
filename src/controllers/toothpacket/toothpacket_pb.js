@@ -1,4 +1,4 @@
-// source: toothpacket.proto
+// source: shared/toothpacket.proto
 /**
  * @fileoverview
  * @enhanceable
@@ -24,8 +24,8 @@ var global =
 goog.exportSymbol('proto.toothpaste.DataPacket', null, global);
 goog.exportSymbol('proto.toothpaste.DataPacket.PacketID', null, global);
 goog.exportSymbol('proto.toothpaste.EncryptedData', null, global);
+goog.exportSymbol('proto.toothpaste.EncryptedData.PacketType', null, global);
 goog.exportSymbol('proto.toothpaste.EncryptedData.PacketdataCase', null, global);
-goog.exportSymbol('proto.toothpaste.EncryptedData.packetType', null, global);
 goog.exportSymbol('proto.toothpaste.Frame', null, global);
 goog.exportSymbol('proto.toothpaste.KeyboardPacket', null, global);
 goog.exportSymbol('proto.toothpaste.KeycodePacket', null, global);
@@ -631,17 +631,17 @@ proto.toothpaste.DataPacket.prototype.setTag = function(value) {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.toothpaste.EncryptedData.oneofGroups_ = [[1,2,3,4]];
+proto.toothpaste.EncryptedData.oneofGroups_ = [[2,3,4,5]];
 
 /**
  * @enum {number}
  */
 proto.toothpaste.EncryptedData.PacketdataCase = {
   PACKETDATA_NOT_SET: 0,
-  KEYBOARDPACKET: 1,
-  KEYCODEPACKET: 2,
-  MOUSEPACKET: 3,
-  RENAMEPACKET: 4
+  KEYBOARDPACKET: 2,
+  KEYCODEPACKET: 3,
+  MOUSEPACKET: 4,
+  RENAMEPACKET: 5
 };
 
 /**
@@ -682,6 +682,7 @@ proto.toothpaste.EncryptedData.prototype.toObject = function(opt_includeInstance
  */
 proto.toothpaste.EncryptedData.toObject = function(includeInstance, msg) {
   var f, obj = {
+packettype: jspb.Message.getFieldWithDefault(msg, 1, 0),
 keyboardpacket: (f = msg.getKeyboardpacket()) && proto.toothpaste.KeyboardPacket.toObject(includeInstance, f),
 keycodepacket: (f = msg.getKeycodepacket()) && proto.toothpaste.KeycodePacket.toObject(includeInstance, f),
 mousepacket: (f = msg.getMousepacket()) && proto.toothpaste.MousePacket.toObject(includeInstance, f),
@@ -723,21 +724,25 @@ proto.toothpaste.EncryptedData.deserializeBinaryFromReader = function(msg, reade
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
+      var value = /** @type {!proto.toothpaste.EncryptedData.PacketType} */ (reader.readEnum());
+      msg.setPackettype(value);
+      break;
+    case 2:
       var value = new proto.toothpaste.KeyboardPacket;
       reader.readMessage(value,proto.toothpaste.KeyboardPacket.deserializeBinaryFromReader);
       msg.setKeyboardpacket(value);
       break;
-    case 2:
+    case 3:
       var value = new proto.toothpaste.KeycodePacket;
       reader.readMessage(value,proto.toothpaste.KeycodePacket.deserializeBinaryFromReader);
       msg.setKeycodepacket(value);
       break;
-    case 3:
+    case 4:
       var value = new proto.toothpaste.MousePacket;
       reader.readMessage(value,proto.toothpaste.MousePacket.deserializeBinaryFromReader);
       msg.setMousepacket(value);
       break;
-    case 4:
+    case 5:
       var value = new proto.toothpaste.RenamePacket;
       reader.readMessage(value,proto.toothpaste.RenamePacket.deserializeBinaryFromReader);
       msg.setRenamepacket(value);
@@ -771,10 +776,17 @@ proto.toothpaste.EncryptedData.prototype.serializeBinary = function() {
  */
 proto.toothpaste.EncryptedData.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getPackettype();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      1,
+      f
+    );
+  }
   f = message.getKeyboardpacket();
   if (f != null) {
     writer.writeMessage(
-      1,
+      2,
       f,
       proto.toothpaste.KeyboardPacket.serializeBinaryToWriter
     );
@@ -782,7 +794,7 @@ proto.toothpaste.EncryptedData.serializeBinaryToWriter = function(message, write
   f = message.getKeycodepacket();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto.toothpaste.KeycodePacket.serializeBinaryToWriter
     );
@@ -790,7 +802,7 @@ proto.toothpaste.EncryptedData.serializeBinaryToWriter = function(message, write
   f = message.getMousepacket();
   if (f != null) {
     writer.writeMessage(
-      3,
+      4,
       f,
       proto.toothpaste.MousePacket.serializeBinaryToWriter
     );
@@ -798,7 +810,7 @@ proto.toothpaste.EncryptedData.serializeBinaryToWriter = function(message, write
   f = message.getRenamepacket();
   if (f != null) {
     writer.writeMessage(
-      4,
+      5,
       f,
       proto.toothpaste.RenamePacket.serializeBinaryToWriter
     );
@@ -809,7 +821,7 @@ proto.toothpaste.EncryptedData.serializeBinaryToWriter = function(message, write
 /**
  * @enum {number}
  */
-proto.toothpaste.EncryptedData.packetType = {
+proto.toothpaste.EncryptedData.PacketType = {
   KEYBOARD_STRING: 0,
   KEYBOARD_KEYCODE: 1,
   MOUSE: 2,
@@ -819,12 +831,30 @@ proto.toothpaste.EncryptedData.packetType = {
 };
 
 /**
- * optional KeyboardPacket keyboardPacket = 1;
+ * optional PacketType packetType = 1;
+ * @return {!proto.toothpaste.EncryptedData.PacketType}
+ */
+proto.toothpaste.EncryptedData.prototype.getPackettype = function() {
+  return /** @type {!proto.toothpaste.EncryptedData.PacketType} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {!proto.toothpaste.EncryptedData.PacketType} value
+ * @return {!proto.toothpaste.EncryptedData} returns this
+ */
+proto.toothpaste.EncryptedData.prototype.setPackettype = function(value) {
+  return jspb.Message.setProto3EnumField(this, 1, value);
+};
+
+
+/**
+ * optional KeyboardPacket keyboardPacket = 2;
  * @return {?proto.toothpaste.KeyboardPacket}
  */
 proto.toothpaste.EncryptedData.prototype.getKeyboardpacket = function() {
   return /** @type{?proto.toothpaste.KeyboardPacket} */ (
-    jspb.Message.getWrapperField(this, proto.toothpaste.KeyboardPacket, 1));
+    jspb.Message.getWrapperField(this, proto.toothpaste.KeyboardPacket, 2));
 };
 
 
@@ -833,7 +863,7 @@ proto.toothpaste.EncryptedData.prototype.getKeyboardpacket = function() {
  * @return {!proto.toothpaste.EncryptedData} returns this
 */
 proto.toothpaste.EncryptedData.prototype.setKeyboardpacket = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 1, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 2, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
 };
 
 
@@ -851,17 +881,17 @@ proto.toothpaste.EncryptedData.prototype.clearKeyboardpacket = function() {
  * @return {boolean}
  */
 proto.toothpaste.EncryptedData.prototype.hasKeyboardpacket = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.getField(this, 2) != null;
 };
 
 
 /**
- * optional KeycodePacket keycodePacket = 2;
+ * optional KeycodePacket keycodePacket = 3;
  * @return {?proto.toothpaste.KeycodePacket}
  */
 proto.toothpaste.EncryptedData.prototype.getKeycodepacket = function() {
   return /** @type{?proto.toothpaste.KeycodePacket} */ (
-    jspb.Message.getWrapperField(this, proto.toothpaste.KeycodePacket, 2));
+    jspb.Message.getWrapperField(this, proto.toothpaste.KeycodePacket, 3));
 };
 
 
@@ -870,7 +900,7 @@ proto.toothpaste.EncryptedData.prototype.getKeycodepacket = function() {
  * @return {!proto.toothpaste.EncryptedData} returns this
 */
 proto.toothpaste.EncryptedData.prototype.setKeycodepacket = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 2, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 3, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
 };
 
 
@@ -888,17 +918,17 @@ proto.toothpaste.EncryptedData.prototype.clearKeycodepacket = function() {
  * @return {boolean}
  */
 proto.toothpaste.EncryptedData.prototype.hasKeycodepacket = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
 /**
- * optional MousePacket mousePacket = 3;
+ * optional MousePacket mousePacket = 4;
  * @return {?proto.toothpaste.MousePacket}
  */
 proto.toothpaste.EncryptedData.prototype.getMousepacket = function() {
   return /** @type{?proto.toothpaste.MousePacket} */ (
-    jspb.Message.getWrapperField(this, proto.toothpaste.MousePacket, 3));
+    jspb.Message.getWrapperField(this, proto.toothpaste.MousePacket, 4));
 };
 
 
@@ -907,7 +937,7 @@ proto.toothpaste.EncryptedData.prototype.getMousepacket = function() {
  * @return {!proto.toothpaste.EncryptedData} returns this
 */
 proto.toothpaste.EncryptedData.prototype.setMousepacket = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 3, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 4, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
 };
 
 
@@ -925,17 +955,17 @@ proto.toothpaste.EncryptedData.prototype.clearMousepacket = function() {
  * @return {boolean}
  */
 proto.toothpaste.EncryptedData.prototype.hasMousepacket = function() {
-  return jspb.Message.getField(this, 3) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional RenamePacket renamePacket = 4;
+ * optional RenamePacket renamePacket = 5;
  * @return {?proto.toothpaste.RenamePacket}
  */
 proto.toothpaste.EncryptedData.prototype.getRenamepacket = function() {
   return /** @type{?proto.toothpaste.RenamePacket} */ (
-    jspb.Message.getWrapperField(this, proto.toothpaste.RenamePacket, 4));
+    jspb.Message.getWrapperField(this, proto.toothpaste.RenamePacket, 5));
 };
 
 
@@ -944,7 +974,7 @@ proto.toothpaste.EncryptedData.prototype.getRenamepacket = function() {
  * @return {!proto.toothpaste.EncryptedData} returns this
 */
 proto.toothpaste.EncryptedData.prototype.setRenamepacket = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 4, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 5, proto.toothpaste.EncryptedData.oneofGroups_[0], value);
 };
 
 
@@ -962,7 +992,7 @@ proto.toothpaste.EncryptedData.prototype.clearRenamepacket = function() {
  * @return {boolean}
  */
 proto.toothpaste.EncryptedData.prototype.hasRenamepacket = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 

@@ -26,7 +26,7 @@ message DataPacket{
 
 message EncryptedData{
     // 1 byte
-    enum packetType{
+    enum PacketType{
         KEYBOARD_STRING = 0;
         KEYBOARD_KEYCODE = 1;
         MOUSE = 2;
@@ -35,11 +35,13 @@ message EncryptedData{
         COMPOSITE = 5;
     }
     
+    PacketType packetType = 1;
+
     oneof packetData{
-        KeyboardPacket keyboardPacket = 1;
-        KeycodePacket  keycodePacket = 2;
-        MousePacket  mousePacket = 3;
-        RenamePacket  renamePacket = 4;
+        KeyboardPacket keyboardPacket = 2;
+        KeycodePacket  keycodePacket = 3;
+        MousePacket  mousePacket = 4;
+        RenamePacket  renamePacket = 5;
     }
 
 }

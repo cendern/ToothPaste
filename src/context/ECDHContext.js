@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect, useRef } from "react";
 import { saveBase64, loadBase64 } from "../controllers/Storage";
 import { ec as EC } from "elliptic";
 import { Packet } from "../controllers/PacketFunctions";
+import { toothpaste, DataPacket } from '../controllers/toothpacket/toothpacket_pb.js';
+import { enc } from "crypto-js";
 
 const ec = new EC("p256");
 
@@ -168,17 +170,19 @@ export const ECDHProvider = ({ children }) => {
             data
         );
 
-        const encryptedBytes = new Uint8Array(encrypted); // encryptedBytes contains data + 16 byte tag
+        const encryptedBytes = new Uint8Array(encrypted); // encryptedBytes contains ciphertext + 16 byte tag
+        const tagLength = 16;
+        const ciphertextLength = encryptedBytes.length - tagLength;
+        const ciphertext = encryptedBytes.slice(0, ciphertextLength);
+        const tag = encryptedBytes.slice(ciphertextLength);
 
-        // Return base64 string with IV prepended (IV + ciphertext)
-        //const combined = new Uint8Array(4 + iv.length + encryptedBytes.length);
-        const combined = new Uint8Array(iv.length + encryptedBytes.length);
+        var encryptedPacket = new DataPacket();
+        encryptedPacket.setEncrypteddata(ciphertext);
+        encryptedPacket.setDatalen(ciphertext.length);
+        encryptedPacket.setIv(iv);
+        encryptedPacket.setTag(tag);
 
-        // combined.set(iv, 4); // The iv is byte 5+12 bytes
-        // combined.set(encryptedBytes, 4 + iv.length); // The rest of the packet
-        combined.set(iv);
-        combined.set(encryptedBytes, iv.length);
-        return combined;
+        return encryptedPacket;
     };
 
     // Decrypt ciphertext (base64 string with IV prepended)
@@ -220,9 +224,18 @@ export const ECDHProvider = ({ children }) => {
                 outputArray.set(chunkData, 1);
             }
 
+            //var toothPacket = new DataPacket();
+
             const aad = new Uint8Array([chunkNumber, totalChunks]);
-            const encrypted = await encryptText(outputArray, aad);
-            yield new Packet(id, encrypted, chunkNumber, totalChunks, slowMode);
+            const encryptedPacket = await encryptText(outputArray, aad); // Packet with cipherText, iv, tag and datalen
+            
+            encryptedPacket.setPacketid(id);
+            encryptedPacket.setSlowmode(slowMode);
+            encryptedPacket.setPacketnumber(chunkNumber);
+            
+            yield encryptedPacket;
+            // TAG and IV are included in the encrypted data
+            //yield new Packet(id, encrypted, chunkNumber, totalChunks, slowMode);
         }
     };
 
