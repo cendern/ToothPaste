@@ -110,7 +110,7 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
             // Queue full, drop packet or handle error
             DEBUG_SERIAL_PRINTLN("Packet queue full! Dropping packet.");
             stateManager->setState(DROP);
-            delete taskParams->rawValue;
+            //delete taskParams->rawValue;
             delete taskParams;
     }
   }
@@ -347,7 +347,7 @@ void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
   DEBUG_SERIAL_PRINTLN("");
   
   // Deserialize the decrypted data into a protobuf packet
-  pb_istream_t stream = pb_istream_from_buffer(decrypted_bytes.data(), decrypted_bytes.size()); 
+  pb_istream_t stream = pb_istream_from_buffer(decrypted_bytes.data(), decrypted_bytes.size()-2); 
   if (!pb_decode(&stream, toothpaste_EncryptedData_fields, &decrypted)) {
     printf("Decoding encrypted data failed: %s\n", PB_GET_ERROR(&stream));
     return;
