@@ -110,8 +110,8 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
             // Queue full, drop packet or handle error
             DEBUG_SERIAL_PRINTLN("Packet queue full! Dropping packet.");
             stateManager->setState(DROP);
-            //delete taskParams->rawValue;
-            //delete taskParams;
+            delete taskParams->rawValue;
+            delete taskParams;
     }
   }
 
@@ -497,7 +497,7 @@ void packetTask(void* params)
                     }
                 }
 
-                //delete taskParams; // Free the parameter struct
+                delete taskParams; // Free the parameter struct
             }
           
           queuenotify(); // Trigger the notification now that a spot in the queue is freed
