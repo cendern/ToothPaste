@@ -9,6 +9,7 @@ import { useInputController } from "../controllers/LiveCaptureInput";
 
 import { ReactComponent as AppleLogo } from "../assets/appleLogo.svg";
 import { ReactComponent as WindowsLogo } from "../assets/windowsLogo.svg";
+import { createMouseStream } from "../controllers/PacketFunctions";
 
 export default function LiveCapture() {
     // Input controller hooks
@@ -153,39 +154,46 @@ export default function LiveCapture() {
         const mouseFrames = displacementList.current.slice(0, 8);
         const numFrames = mouseFrames.length;
 
-        // Add 2 padding bytes to align int32 frames on 4-byte boundary
-        const headerSize = 2; // flag + numFrames
-        const padding = (4 - (headerSize % 4)) % 4; // padding to next multiple of 4
-        const buffer = new ArrayBuffer(headerSize + padding + numFrames * 2 * 4 + 8);
-        const view = new DataView(buffer);
+        var mousePacket = createMouseStream(mouseFrames, LClick, RClick);
+        sendEncrypted(mousePacket);
 
-        let offset = 0;
+        console.log("Mouse packet to send: ", mousePacket);
 
-        view.setUint8(offset++, flag); // first byte = flag
-        view.setUint8(offset++, numFrames); // second byte = frame count
+        ///////////
 
-        // insert padding
-        offset += padding;
+        // // Add 2 padding bytes to align int32 frames on 4-byte boundary
+        // const headerSize = 2; // flag + numFrames
+        // const padding = (4 - (headerSize % 4)) % 4; // padding to next multiple of 4
+        // const buffer = new ArrayBuffer(headerSize + padding + numFrames * 2 * 4 + 8);
+        // const view = new DataView(buffer);
 
-        console.log("Mouse frames to send: ", mouseFrames);
+        // let offset = 0;
 
-        // Set int32 x/y frames
-        for (let i = 0; i < numFrames; i++) {
-            view.setInt32(offset, mouseFrames[i].x, true);
-            offset += 4;
-            view.setInt32(offset, mouseFrames[i].y, true);
-            offset += 4;
-        }
+        // view.setUint8(offset++, flag); // first byte = flag
+        // view.setUint8(offset++, numFrames); // second byte = frame count
 
-        // Set left/right clicks
-        view.setInt32(offset, LClick, true);
-        offset += 4;
-        view.setInt32(offset, RClick, true);
+        // // insert padding
+        // offset += padding;
 
-        const keycode = new Uint8Array(buffer);
-        console.log("Mouse packet as uint8: ", keycode);
+        // console.log("Mouse frames to send: ", mouseFrames);
 
-        sendEncrypted(keycode);
+        // // Set int32 x/y frames
+        // for (let i = 0; i < numFrames; i++) {
+        //     view.setInt32(offset, mouseFrames[i].x, true);
+        //     offset += 4;
+        //     view.setInt32(offset, mouseFrames[i].y, true);
+        //     offset += 4;
+        // }
+
+        // // Set left/right clicks
+        // view.setInt32(offset, LClick, true);
+        // offset += 4;
+        // view.setInt32(offset, RClick, true);
+
+        // const keycode = new Uint8Array(buffer);
+        // console.log("Mouse packet as uint8: ", keycode);
+
+        // sendEncrypted(keycode);
         displacementList.current = []; // reset list
     }
 

@@ -3,6 +3,7 @@ import { BLEContext } from "../context/BLEContext";
 import { ECDHContext } from "../context/ECDHContext";
 import { KeyboardPacket } from '../controllers/toothpacket/toothpacket_pb.js';
 import {HIDMap} from "./HIDMap.js"
+import { createKeyboardPacket } from './PacketFunctions.js';
 
 
 export function useInputController() {
@@ -97,13 +98,14 @@ export function useInputController() {
         // Update lastSentBuffer early to avoid duplicate sends
         lastSentBuffer.current = current;
 
-        var keyboardPayload = new KeyboardPacket();
-        keyboardPayload.setMessage(payload);
-        keyboardPayload.setLength(payload.length);
+        // var keyboardPayload = new KeyboardPacket();
+        // keyboardPayload.setMessage(payload);
+        // keyboardPayload.setLength(payload.length);
 
-        sendEncrypted(keyboardPayload); // Send the final payload
 
-        
+        var packet = createKeyboardPacket(payload);
+        sendEncrypted(packet); // Send the final payload
+
 
         console.log("Current:", current);
         console.log("Previous:", previous);

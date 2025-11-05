@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useRef } from "react";
 import { saveBase64, loadBase64 } from "../controllers/Storage";
 import { ec as EC } from "elliptic";
 import { Packet } from "../controllers/PacketFunctions";
-import { toothpaste, DataPacket } from '../controllers/toothpacket/toothpacket_pb.js';
+import { toothpaste, DataPacket, EncryptedData } from '../controllers/toothpacket/toothpacket_pb.js';
 import { enc } from "crypto-js";
 
 const ec = new EC("p256");
@@ -154,10 +154,10 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // Encrypt plaintext using AES-GCM with shared secret key
-    const encryptText = async (encryptedData, aad) => {
+    const encryptText = async (unEncryptedData, aad) => {
         const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 byte IV
         const encoder = new TextEncoder();
-        const data = encryptedData instanceof Uint8Array ? encryptedData : encoder.encode(encryptedData);
+        const data = unEncryptedData instanceof Uint8Array ? unEncryptedData : encoder.encode(unEncryptedData);
 
         // Encrypt the data with the AES key from storage
         const encrypted = await crypto.subtle.encrypt(
@@ -176,13 +176,13 @@ export const ECDHProvider = ({ children }) => {
         const ciphertext = encryptedBytes.slice(0, ciphertextLength);
         const tag = encryptedBytes.slice(ciphertextLength);
 
-        var encryptedPacket = new DataPacket();
-        encryptedPacket.setEncrypteddata(ciphertext);
-        encryptedPacket.setDatalen(ciphertextLength);
-        encryptedPacket.setIv(iv);
-        encryptedPacket.setTag(tag);
+        var dataPacket = new DataPacket();
+        dataPacket.setEncrypteddata(ciphertext);
+        dataPacket.setDatalen(ciphertextLength);
+        dataPacket.setIv(iv);
+        dataPacket.setTag(tag);
 
-        return encryptedPacket;
+        return dataPacket;
     };
 
     // Decrypt ciphertext (base64 string with IV prepended)
@@ -197,52 +197,42 @@ export const ECDHProvider = ({ children }) => {
 
     // create and encrypt packet -> returns an iterator of one or more packets where payload size < max_data_size
     const createEncryptedPackets = async function* (id, payload, slowMode = true, packetPrefix=0) {
-        const encoder = new TextEncoder();
-        var stringData = false;
-        var data;
+        // Ensure payload is EncryptedData instance
+        if(!(payload instanceof EncryptedData)){
+            throw new Error("Payload is not an EncryptedData instance");
+        }
         
-        if(payload instanceof Uint8Array){ // If data is already uint8array, we dont modify it
-            data = payload;
-        }
+        // Serialize payload to Uint8Array
+        const byteArray = payload.serializeBinary();
+        var data = new Uint8Array(byteArray);
+        
+        //const aad = new Uint8Array([chunkNumber, totalChunks]);
+        const encryptedPacket = await encryptText(data, null); // Encrypt the encryptedData component of a ToothPacket and get DataPacket
+        
+        // Set packet metadata
+        encryptedPacket.setPacketid(id);
+        encryptedPacket.setSlowmode(slowMode);
+        encryptedPacket.setPacketnumber(1);
+        encryptedPacket.setTotalpackets(1);
 
-        else if(payload instanceof String){
-            data = encoder.encode(payload); // If data is a string, manually define the prefix byte (packet type)
-            stringData = true;
-        }
+        yield encryptedPacket;
 
-        else {
-            // Assume payload is a protobuf object, serialize to Uint8Array
-            const byteArray = payload.serializeBinary();
-            data = new Uint8Array(byteArray);
-        }
+        // const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
+        // if (totalChunks > 254) return;
 
-        const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
-        if (totalChunks > 254) return;
+        // for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+        //     const chunkData = data.slice(chunkNumber * Packet.MAX_DATA_SIZE, (chunkNumber + 1) * Packet.MAX_DATA_SIZE);
 
-        for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
-            const chunkData = data.slice(chunkNumber * Packet.MAX_DATA_SIZE, (chunkNumber + 1) * Packet.MAX_DATA_SIZE);
+        //     // Prepend a 0 byte to ensure all encrypted chunks start with 0 if string data
+        //     var outputArray = data;
+        //     if(stringData){
+        //         outputArray = new Uint8Array(chunkData.length + 1);
+        //         outputArray[0] = packetPrefix;
+        //         outputArray.set(chunkData, 1);
+        //     }
 
-            // Prepend a 0 byte to ensure all encrypted chunks start with 0 if string data
-            var outputArray = data;
-            if(stringData){
-                outputArray = new Uint8Array(chunkData.length + 1);
-                outputArray[0] = packetPrefix;
-                outputArray.set(chunkData, 1);
-            }
-
-            //var toothPacket = new DataPacket();
-
-            const aad = new Uint8Array([chunkNumber, totalChunks]);
-            const encryptedPacket = await encryptText(outputArray, aad); // Encrypt the encryptedData component of a ToothPacket
-            
-            encryptedPacket.setPacketid(id);
-            encryptedPacket.setSlowmode(slowMode);
-            encryptedPacket.setPacketnumber(chunkNumber);
-            
-            yield encryptedPacket;
-            // TAG and IV are included in the encrypted data
-            //yield new Packet(id, encrypted, chunkNumber, totalChunks, slowMode);
-        }
+        //     //var toothPacket = new DataPacket();
+        // }
     };
 
     const loadKeys = async (clientID) => {

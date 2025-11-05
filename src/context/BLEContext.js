@@ -86,34 +86,17 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
     const sendEncrypted = async (inputPayload, prefix=0) => {
         if (!pktCharacteristic) return;
 
-        var encryptedToothPacket = new EncryptedData();
-
-        if (inputPayload instanceof KeyboardPacket) {
-            encryptedToothPacket.setKeyboardpacket(inputPayload);
-        } 
-        
-        else if (inputPayload instanceof KeycodePacket) {
-            encryptedToothPacket.setKeycodepacket(inputPayload);
-        } 
-        
-        else if (inputPayload instanceof MousePacket) {
-            encryptedToothPacket.setMousepacket(inputPayload);
-        } 
-        
-        else if (inputPayload instanceof RenamePacket) {
-            encryptedToothPacket.setRenamepacket(inputPayload);
-        } 
-        
-        else {
-            console.error("Unknown payload type:", inputPayload.constructor.name);
+        if (!(inputPayload instanceof EncryptedData)) {
+            console.error("Input payload is not an EncryptedData packet");
             return;
         }
 
         try {
             var count = 0;
-            console.log("Encrypt starting....", encryptedToothPacket);
+            console.log("Encrypt starting....");
 
-            for await (const packet of createEncryptedPackets(0, encryptedToothPacket, true, prefix)) {
+            for await (const packet of createEncryptedPackets(0, inputPayload, true, prefix)) {
+                // Each packet is a ToothPaste DataPacket object with encryptedData component
                 console.log("Sending packet ", count);
                 await pktCharacteristic.writeValueWithoutResponse(
                     //packet.serialize()
@@ -125,6 +108,7 @@ export function BLEProvider({ children, showOverlay, setShowOverlay }) {
                 count++;
             }
         } catch (error) {
+            console.error("Error sending encrypted packet", error);
             console.error(error);
         }
     };

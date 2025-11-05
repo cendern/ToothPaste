@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import { toothpaste, DataPacket, EncryptedData, KeyboardPacket, MousePacket, RenamePacket, KeycodePacket, Frame } from '../controllers/toothpacket/toothpacket_pb.js';
 
 // Base class for all packets (optional, for shared logic)
 export class Packet {
@@ -42,14 +43,93 @@ export class HandshakePacket extends Packet {
     }
 }
 
-export class DataPacket extends Packet {
-    constructor(payload, sequence) {
-        super("DataPacket");
-        this.payload = payload; // e.g., encrypted message
-        this.sequence = sequence; // for ordering
+// Return an EncryptedData packet containing a MousePacket
+export function createMousePacket(x, y, leftClick = false, rightClick = false) {
+    const frame = new Frame();
+    frame.setX(x);
+    frame.setY(y);
+
+    const mousePacket = new MousePacket();
+    
+    mousePacket.setFramesList([frame]);
+    mousePacket.setNumFrames(1);
+    mousePacket.setLClick(leftClick);
+    mousePacket.setRClick(rightClick);
+
+
+    const encryptedPacket = new EncryptedData();
+    encryptedPacket.setPackettype(EncryptedData.PacketType.MOUSE);
+    encryptedPacket.setMousepacket(mousePacket);
+
+    return encryptedPacket
+}
+
+// Return an EncryptedData packet containing a MousePacket
+export function createMouseStream(frames, leftClick = false, rightClick = false) {
+    
+    
+    console.log("List of frames to create mouse packet:", frames);
+
+    const mousePacket = new MousePacket();
+    
+    for (let frame of frames) {
+        const pbFrame = new Frame();
+        pbFrame.setX(Math.round(frame.x));
+        pbFrame.setY(Math.round(frame.y));
+        mousePacket.addFrames(pbFrame);
     }
 
-    static fromObject(obj) {
-        return new DataPacket(obj.payload, obj.sequence);
-    }
+    mousePacket.setNumFrames(frames.length);
+    mousePacket.setLClick(Number(leftClick));
+    mousePacket.setRClick(Number(rightClick));
+
+    console.log("Creating mouse packet with frames:", mousePacket);
+
+    const encryptedPacket = new EncryptedData();
+    encryptedPacket.setPackettype(EncryptedData.PacketType.MOUSE);
+    encryptedPacket.setMousepacket(mousePacket);
+
+    return encryptedPacket
+}
+
+// Return an EncryptedData packet containing a KeyboardPacket
+export function createKeyboardPacket(keyString) {
+
+    // Chunk long keyString into manageable pieces 
+
+    const keyboardPacket = new KeyboardPacket();
+    keyboardPacket.setMessage(keyString);
+    keyboardPacket.setLength(keyString.length);
+
+    const encryptedPacket = new EncryptedData();
+    encryptedPacket.setPackettype(EncryptedData.PacketType.KEYBOARD_STRING);
+    encryptedPacket.setKeyboardpacket(keyboardPacket);
+
+    return encryptedPacket
+}
+
+// Return an EncryptedData packet containing a KeycodePacket
+export function createKeyCodePacket(keycode) {
+    const keycodePacket = new KeycodePacket();
+    keycodePacket.setKeycode(keycode);
+    keycodePacket.setLength(1);
+
+    const encryptedPacket = new EncryptedData();
+    encryptedPacket.setPackettype(EncryptedData.PacketType.KEYBOARD_KEYCODE);
+    encryptedPacket.setKeycodepacket(keycodePacket);
+
+    return encryptedPacket
+}
+
+// Return an EncryptedData packet containing a RenamePacket
+export function createRenamePacket(newName) {
+    const renamePacket = new RenamePacket();
+    renamePacket.setMessage(newName);
+    renamePacket.setLength(newName.length);
+
+    const encryptedPacket = new EncryptedData();
+    encryptedPacket.setPackettype(EncryptedData.PacketType.RENAME);
+    encryptedPacket.setRenamepacket(renamePacket);
+
+    return encryptedPacket;
 }
