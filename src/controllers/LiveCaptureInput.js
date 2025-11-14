@@ -3,7 +3,7 @@ import { BLEContext } from "../context/BLEContext";
 import { ECDHContext } from "../context/ECDHContext";
 import { KeyboardPacket } from '../controllers/toothpacket/toothpacket_pb.js';
 import {HIDMap} from "./HIDMap.js"
-import { createKeyboardPacket } from './PacketFunctions.js';
+import { createKeyboardPacket, createKeyCodePacket } from './PacketFunctions.js';
 
 
 export function useInputController() {
@@ -254,15 +254,16 @@ export function useInputController() {
         if(!(modifierByte || HIDMap[e.key])) return false; // If there is no modifier and the key is not in the HIDMap command edits buffer, handle in sendDiff
 
         let keycode = new Uint8Array(8);
-        keycode[0] = 1; // First byte of sent data is a type indicator, 1 = Keycode
-        keycode[1] = modifierByte;
-        keycode[2] = anotherModifierByte;
-        keycode[3] = keypressCode;
+        keycode[0] = modifierByte;
+        keycode[1] = anotherModifierByte;
+        keycode[2] = keypressCode;
 
-        sendEncrypted(keycode);
+        console.log("Creating Packet From: ", keycode);
+        var keyCodePacket = createKeyCodePacket(keycode);
+        sendEncrypted(keyCodePacket);
+        
         return true;
     }
-
 
     // When a key is released
     const handleKeyUp = (e) => {

@@ -111,8 +111,8 @@ export function createKeyboardPacket(keyString) {
 // Return an EncryptedData packet containing a KeycodePacket
 export function createKeyCodePacket(keycode) {
     const keycodePacket = new KeycodePacket();
-    keycodePacket.setKeycode(keycode);
-    keycodePacket.setLength(1);
+    keycodePacket.setCode(keycode);
+    keycodePacket.setLength(keycode.length);
 
     const encryptedPacket = new EncryptedData();
     encryptedPacket.setPackettype(EncryptedData.PacketType.KEYBOARD_KEYCODE);
