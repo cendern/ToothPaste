@@ -27,6 +27,9 @@ PB_BIND(toothpaste_Frame, toothpaste_Frame, AUTO)
 PB_BIND(toothpaste_MousePacket, toothpaste_MousePacket, AUTO)
 
 
+PB_BIND(toothpaste_ConsumerControlPacket, toothpaste_ConsumerControlPacket, AUTO)
+
+
 PB_BIND(toothpaste_NotificationPacket, toothpaste_NotificationPacket, AUTO)
 
 

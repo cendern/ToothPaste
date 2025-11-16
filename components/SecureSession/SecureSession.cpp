@@ -304,7 +304,7 @@ int SecureSession::decrypt(toothpaste_DataPacket* packet, uint8_t* decrypted_out
 // Check if a key exists in preferences storage
 bool SecureSession::isEnrolled(const char* key){
     preferences.begin("security", true); // Open storage session in read only mode
-    String hashedKey = hashKey(key);
+    String hashedKey = hashKey(key); // Hash the key, since there is a char limit for keys in storage
     bool ret = preferences.isKey(hashedKey.c_str()); // Check if the AES key for the given public key exists
     preferences.end();
     return ret;

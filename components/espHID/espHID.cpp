@@ -118,6 +118,18 @@ void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
 void consumerControlPress(uint16_t key){
   control.press(key);
   vTaskDelay(pdMS_TO_TICKS(10));
+  consumerControlRelease();
+
+}
+
+// Press a consumer control key
+void consumerControlPress(toothpaste_ConsumerControlPacket& controlPacket){
+  for (size_t i = 0; i < controlPacket.length; i++) {
+    consumerControlPress(controlPacket.code[i]);
+  }
+  vTaskDelay(pdMS_TO_TICKS(10));
+  consumerControlRelease();
+
 }
 
 // Release all consumer control keys

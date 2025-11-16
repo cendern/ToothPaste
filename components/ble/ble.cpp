@@ -387,6 +387,12 @@ void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
         break;  
       }
 
+      case toothpaste_EncryptedData_consumerControlPacket_tag: {
+        //std::vector<uint8_t> keycode(decrypted.packetData.keycodePacket.code.bytes, decrypted.packetData.keycodePacket.code.size);
+        consumerControlPress(decrypted.packetData.consumerControlPacket);
+        break;
+      }
+
       default:
         DEBUG_SERIAL_PRINTF("Unknown Packet Type: %d", decrypted.which_packetData);
         break;
@@ -411,6 +417,7 @@ void authenticateClient(toothpaste_DataPacket* packet, SecureSession* session) {
   session->getDeviceName(deviceName);
   DEBUG_SERIAL_PRINTF("Device Name is: %s\n\r", deviceName.c_str());
 
+  // The packet's "encryptedData" field contains the unencrypted public key in an AUTH packet
   clientPubKey = std::string((const char*)packet->encryptedData.bytes, packet->encryptedData.size);
 
   DEBUG_SERIAL_PRINTF("clientPubKey: %s\n\r", clientPubKey.c_str());
