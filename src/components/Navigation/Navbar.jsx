@@ -201,7 +201,7 @@ function ConnectionButton() {
     );
 }
 
-export default function Navbar({ onChangeOverlay, onNavigate, activeView }) {
+export default function Navbar({ onChangeOverlay, onNavigate, activeView, activeOverlay }) {
     const [open, setOpen] = React.useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const { status, device } = useBLEContext();
@@ -216,6 +216,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView }) {
     console.log("Status is: ", status);
 
     useEffect(() => {
+        if(activeOverlay == "pair")
         switch(status){
             case ConnectionStatus.ready:
                 onChangeOverlay(null);

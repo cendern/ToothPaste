@@ -65,6 +65,7 @@ function App() {
             setshowNavbar={setshowNavbar}
             onNavigate={setActiveView}
             onChangeOverlay={setActiveOverlay}
+            activeOverlay={activeOverlay}
             activeView={activeView}
           />
 
