@@ -9,12 +9,14 @@ import {
     PlayIcon,
     LinkIcon,
     ArrowPathIcon,
+    CpuChipIcon,
     SignalSlashIcon,
     SignalIcon,
 } from "@heroicons/react/24/outline";
 
-import { useBLEContext } from "../../context/BLEContext";
+import { useBLEContext, ConnectionStatus } from "../../context/BLEContext";
 import ToothPaste from "../../assets/ToothPaste.png";
+import { createRenamePacket } from "../../controllers/PacketFunctions";
 
 export function useClickOrLongPress(longPressTime = 2000) {
     const timerRef = useRef(null);
@@ -125,7 +127,9 @@ function ConnectionButton() {
             if(device?.name !== name){
                 console.log("Renaming Device");
                 setName(name+'\0')
-                sendEncrypted(name, 3) // 3 indicated a rename packet
+
+                var renamePacket = createRenamePacket(name);
+                sendEncrypted(renamePacket) // 3 indicated a rename packet
             }
         }
     }, [isEditing]); // Trigger whenever isEditing changes
@@ -197,7 +201,7 @@ function ConnectionButton() {
     );
 }
 
-export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
+export default function Navbar({ onChangeOverlay, onNavigate, activeView }) {
     const [open, setOpen] = React.useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const { status, device } = useBLEContext();
@@ -210,6 +214,18 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
         }[status] || "border-orange"; // fallback if undefined
 
     console.log("Status is: ", status);
+
+    useEffect(() => {
+        switch(status){
+            case ConnectionStatus.ready:
+                onChangeOverlay(null);
+                break;
+            
+            case ConnectionStatus.disconnected:
+                onChangeOverlay(null);
+                break;
+        }
+    })
     return (
         <div className="w-full bg-shelf text-white">
             <div className="flex justify-between h-24 items-center px-4">
@@ -244,11 +260,22 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                         <ClipboardIcon className="h-5 w-5" />
                         <Typography variant="h4">Paste</Typography>
                     </button>
+                    
+                    <button
+                        disabled={status === 2}
+                        className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
+                            activeView === "update" ? "disabled:border-hover border border-text" : "hover:bg-hover"
+                        }`}
+                        onClick={() => onChangeOverlay("update")}
+                    >
+                        <CpuChipIcon className="h-5 w-5" />
+                        <Typography variant="h4">Update</Typography>
+                    </button>
 
                     {status === 2 && (
                         <button
                             className="flex items-center space-x-1 p-2 gap-2 rounded hover:bg-hover"
-                            onClick={onOpenPairing}
+                            onClick={() => onChangeOverlay("pair")}
                         >
                             <LinkIcon className="h-5 w-5" />
                             <Typography variant="h4" className="">
@@ -313,7 +340,7 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                         <button
                             className="flex items-center space-x-1 px-3 py-2 rounded hover:bg-hover"
                             onClick={() => {
-                                onOpenPairing();
+                                onChangeOverlay("pair");
                                 setIsOpen(false);
                             }}
                         >

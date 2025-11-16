@@ -2,15 +2,30 @@ import React, { createContext, useState, useEffect, useRef } from "react";
 import { saveBase64, loadBase64 } from "../controllers/Storage";
 import { ec as EC } from "elliptic";
 import { Packet } from "../controllers/PacketFunctions";
+import { toothpaste, DataPacket, EncryptedData } from '../controllers/toothpacket/toothpacket_pb.js';
+import { enc } from "crypto-js";
 
-const ec = new EC("p256");
+const ec = new EC("p256"); // Define the elliptic curve (secp256r1)
 
+/**
+ * @typedef {Object} ECDHContextType
+ * @property {() => Promise<void>} generateECDHKeyPair
+ * @property {(key: ArrayBuffer) => Promise<CryptoKey>} decompressKey
+ * @property {(key: ArrayBuffer) => Promise<void>} importPeerPublicKey
+ * @property {() => Promise<void>} saveSelfKeys
+ * @property {(peerKey: CryptoKey) => Promise<CryptoKey>} deriveKey
+ * @property {(key: CryptoKey) => Promise<void>} savePeerPublicKey
+ */
+
+
+/** @type {React.Context<ECDHContextType>} */
 export const ECDHContext = createContext(); // Shared context for ECDH operations
 
 export const ECDHProvider = ({ children }) => {
-    //const [keyPair, setKeyPair] = useState(null); // { privateKey, publicKey }
-    const aesKey = useRef(null); // Shared secret derived from ECDH
+    const aesKey = useRef(null); // AESKey cryptoKey for encrypting/decrypting messages
+    const aesKeyB64 = useRef(null); // AES JWK loaded from storage
     const keyPair = useRef(null);
+
     // Generate ECDH keypair
     const generateECDHKeyPair = async () => {
         const pair = await crypto.subtle.generateKey(
@@ -18,7 +33,7 @@ export const ECDHProvider = ({ children }) => {
                 name: "ECDH",
                 namedCurve: "P-256",
             },
-            true,
+            false, // Extractable (only applies to private key)
             ["deriveKey", "deriveBits"]
         );
         keyPair.current = pair; // Store the key pair in state
@@ -26,26 +41,32 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // Save self base64 uncompressed public and private keys
-    const saveSelfKeys = async (clientID) => {
+    const saveKeys = async (clientID) => {
         if (!keyPair.current) {
             console.log("No keypair generated before saveSelfKeys was called");
             return;
         }
+        
+        if (!aesKeyB64.current) {
+            console.log("Must call deriveKey before saveSelfKeys");
+            return;
+        }
 
         var rawPublicKey = await crypto.subtle.exportKey("raw", keyPair.current.publicKey);
-        var rawPrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.current.privateKey);
+        //var rawPrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.current.privateKey);
 
-        var publicKey = arrayBufferToBase64(rawPublicKey);
-        var privateKey = arrayBufferToBase64(rawPrivateKey);
+        var b64SelfPubkey = arrayBufferToBase64(rawPublicKey);
+        //var privateKey = arrayBufferToBase64(rawPrivateKey);
 
-        if (!publicKey || !privateKey) {
+        if (!b64SelfPubkey /*|| !privateKey*/) {
             throw new Error("Invalid key pair provided");
         }
 
-        await saveBase64(clientID, "SelfPublicKey", publicKey);
-        await saveBase64(clientID, "SelfPrivateKey", privateKey);
+        await saveBase64(clientID, "SelfPublicKey", b64SelfPubkey);
+        await saveBase64(clientID, "aesKey", aesKeyB64.current);
+        //await saveBase64(clientID, "SelfPrivateKey", privateKey);
 
-        console.log("Self public key saved:", publicKey);
+        console.log("Self public key saved:", b64SelfPubkey);
         return;
     };
 
@@ -94,6 +115,18 @@ export const ECDHProvider = ({ children }) => {
         );
     };
 
+    // Import raw AES key from bytes
+    async function importAESKeyFromBytes(keyBytes, extractable = false, usages = ["encrypt", "decrypt"]) {
+        // keyBytes: Uint8Array or ArrayBuffer
+        return await crypto.subtle.importKey(
+            "raw",
+            keyBytes,
+            { name: "AES-GCM" },
+            extractable,
+            usages
+        );
+    }
+
     // Save PeerPublicKey (Uint8Array) in base64 format to indexedDB under the clientID store
     const savePeerPublicKey = async (peerPublicKey, clientID) => {
         if (!peerPublicKey) {
@@ -106,19 +139,16 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // Derive shared secret using ECDH store it in the sharedSecret variable
-    const deriveKey = async (privateKey, peerPublicKey) => {
+    const deriveKey = async (peerPubKey) => {
         //Derive just the shared secret
         const sharedSecret = await crypto.subtle.deriveBits(
             {
                 name: "ECDH",
-                public: peerPublicKey,
+                public: peerPubKey, // Their public key (as a cryptokey object)
             },
-            privateKey,
+            keyPair.current.privateKey, // Our private key
             256
         );
-
-        console.log("Shared Secret: ")
-        console.log(arrayBufferToBase64(sharedSecret));
 
         const info = new TextEncoder().encode("aes-gcm-256");
         const keyMaterial = await crypto.subtle.importKey("raw", sharedSecret, "HKDF", false, ["deriveKey"]);
@@ -147,15 +177,15 @@ export const ECDHProvider = ({ children }) => {
 
         aesKey.current = aesKeyGen; // Set the aes key
 
-        const rawKey = await crypto.subtle.exportKey("raw", aesKey.current);
-        const keyBytes = new Uint8Array(rawKey);
+        aesKeyB64.current = await crypto.subtle.exportKey("raw", aesKeyGen) 
+                            .then((rawKey) => arrayBufferToBase64(rawKey));
     };
 
     // Encrypt plaintext using AES-GCM with shared secret key
-    const encryptText = async (plaintext, aad) => {
+    const encryptText = async (unEncryptedData, aad) => {
         const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 byte IV
         const encoder = new TextEncoder();
-        const data = plaintext instanceof Uint8Array ? plaintext : encoder.encode(plaintext);
+        const data = unEncryptedData instanceof Uint8Array ? unEncryptedData : encoder.encode(unEncryptedData);
 
         // Encrypt the data with the AES key from storage
         const encrypted = await crypto.subtle.encrypt(
@@ -168,17 +198,19 @@ export const ECDHProvider = ({ children }) => {
             data
         );
 
-        const encryptedBytes = new Uint8Array(encrypted); // encryptedBytes contains data + 16 byte tag
+        const encryptedBytes = new Uint8Array(encrypted); // encryptedBytes contains ciphertext + 16 byte tag
+        const tagLength = 16;
+        const ciphertextLength = encryptedBytes.length - tagLength;
+        const ciphertext = encryptedBytes.slice(0, ciphertextLength);
+        const tag = encryptedBytes.slice(ciphertextLength);
 
-        // Return base64 string with IV prepended (IV + ciphertext)
-        //const combined = new Uint8Array(4 + iv.length + encryptedBytes.length);
-        const combined = new Uint8Array(iv.length + encryptedBytes.length);
+        var dataPacket = new DataPacket();
+        dataPacket.setEncrypteddata(ciphertext);
+        dataPacket.setDatalen(ciphertextLength);
+        dataPacket.setIv(iv);
+        dataPacket.setTag(tag);
 
-        // combined.set(iv, 4); // The iv is byte 5+12 bytes
-        // combined.set(encryptedBytes, 4 + iv.length); // The rest of the packet
-        combined.set(iv);
-        combined.set(encryptedBytes, iv.length);
-        return combined;
+        return dataPacket;
     };
 
     // Decrypt ciphertext (base64 string with IV prepended)
@@ -193,37 +225,42 @@ export const ECDHProvider = ({ children }) => {
 
     // create and encrypt packet -> returns an iterator of one or more packets where payload size < max_data_size
     const createEncryptedPackets = async function* (id, payload, slowMode = true, packetPrefix=0) {
-        const encoder = new TextEncoder();
-        var stringData = false;
-        var data;
+        // Ensure payload is EncryptedData instance
+        if(!(payload instanceof EncryptedData)){
+            throw new Error("Payload is not an EncryptedData instance");
+        }
         
-        if(payload instanceof Uint8Array){ // If data is already uint8array, we dont modify it
-            data = payload;
-        }
+        // Serialize payload to Uint8Array
+        const byteArray = payload.serializeBinary();
+        var data = new Uint8Array(byteArray);
+        
+        //const aad = new Uint8Array([chunkNumber, totalChunks]);
+        const encryptedPacket = await encryptText(data, null); // Encrypt the encryptedData component of a ToothPacket and get DataPacket
+        
+        // Set packet metadata
+        encryptedPacket.setPacketid(id);
+        encryptedPacket.setSlowmode(slowMode);
+        encryptedPacket.setPacketnumber(1);
+        encryptedPacket.setTotalpackets(1);
 
-        else{
-            data = encoder.encode(payload); // If data is a string, manually define the prefix byte (packet type)
-            stringData = true;
-        }
+        yield encryptedPacket;
 
-        const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
-        if (totalChunks > 254) return;
+        // const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
+        // if (totalChunks > 254) return;
 
-        for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
-            const chunkData = data.slice(chunkNumber * Packet.MAX_DATA_SIZE, (chunkNumber + 1) * Packet.MAX_DATA_SIZE);
+        // for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+        //     const chunkData = data.slice(chunkNumber * Packet.MAX_DATA_SIZE, (chunkNumber + 1) * Packet.MAX_DATA_SIZE);
 
-            // Prepend a 0 byte to ensure all encrypted chunks start with 0
-            var outputArray = data;
-            if(stringData){
-                outputArray = new Uint8Array(chunkData.length + 1);
-                outputArray[0] = packetPrefix;
-                outputArray.set(chunkData, 1);
-            }
+        //     // Prepend a 0 byte to ensure all encrypted chunks start with 0 if string data
+        //     var outputArray = data;
+        //     if(stringData){
+        //         outputArray = new Uint8Array(chunkData.length + 1);
+        //         outputArray[0] = packetPrefix;
+        //         outputArray.set(chunkData, 1);
+        //     }
 
-            const aad = new Uint8Array([chunkNumber, totalChunks]);
-            const encrypted = await encryptText(outputArray, aad);
-            yield new Packet(id, encrypted, chunkNumber, totalChunks, slowMode);
-        }
+        //     //var toothPacket = new DataPacket();
+        // }
     };
 
     const loadKeys = async (clientID) => {
@@ -231,10 +268,11 @@ export const ECDHProvider = ({ children }) => {
         console.log("Peer pubkey: ", peerPubKey);
         const pubKeyObject = await importPeerPublicKey(base64ToArrayBuffer(peerPubKey));
 
-        const sprivKey = await loadBase64(clientID, "SelfPrivateKey");
-        const privKeyObject = await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
+        var aesKeyB64 = await loadBase64(clientID, "aesKey");
+        aesKey.current = await importAESKeyFromBytes(base64ToArrayBuffer(aesKeyB64));
+        //const privKeyObject = await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
 
-        await deriveKey(privKeyObject, pubKeyObject);
+        //await deriveKey(privKeyObject, pubKeyObject);
     };
 
     // Context Provider return
@@ -243,7 +281,7 @@ export const ECDHProvider = ({ children }) => {
             value={{
                 keyPair,
                 generateECDHKeyPair,
-                saveSelfKeys,
+                saveSelfKeys: saveKeys,
                 compressKey,
                 decompressKey,
                 importPeerPublicKey,
