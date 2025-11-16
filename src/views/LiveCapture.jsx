@@ -311,7 +311,7 @@ export default function LiveCapture() {
                 Send Keystrokes to the 'ToothPaste in real(ish) time
             </Typography> */}
 
-            {/* <Typography variant="h5" className="text-hover">
+            {/* <Typography variant="h 5" className="text-hover">
                 It just works.....
             </Typography> */}
 

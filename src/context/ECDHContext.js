@@ -5,14 +5,27 @@ import { Packet } from "../controllers/PacketFunctions";
 import { toothpaste, DataPacket, EncryptedData } from '../controllers/toothpacket/toothpacket_pb.js';
 import { enc } from "crypto-js";
 
-const ec = new EC("p256");
+const ec = new EC("p256"); // Define the elliptic curve (secp256r1)
 
+/**
+ * @typedef {Object} ECDHContextType
+ * @property {() => Promise<void>} generateECDHKeyPair
+ * @property {(key: ArrayBuffer) => Promise<CryptoKey>} decompressKey
+ * @property {(key: ArrayBuffer) => Promise<void>} importPeerPublicKey
+ * @property {() => Promise<void>} saveSelfKeys
+ * @property {(peerKey: CryptoKey) => Promise<CryptoKey>} deriveKey
+ * @property {(key: CryptoKey) => Promise<void>} savePeerPublicKey
+ */
+
+
+/** @type {React.Context<ECDHContextType>} */
 export const ECDHContext = createContext(); // Shared context for ECDH operations
 
 export const ECDHProvider = ({ children }) => {
-    //const [keyPair, setKeyPair] = useState(null); // { privateKey, publicKey }
-    const aesKey = useRef(null); // Shared secret derived from ECDH
+    const aesKey = useRef(null); // AESKey cryptoKey for encrypting/decrypting messages
+    const aesKeyB64 = useRef(null); // AES JWK loaded from storage
     const keyPair = useRef(null);
+
     // Generate ECDH keypair
     const generateECDHKeyPair = async () => {
         const pair = await crypto.subtle.generateKey(
@@ -20,7 +33,7 @@ export const ECDHProvider = ({ children }) => {
                 name: "ECDH",
                 namedCurve: "P-256",
             },
-            true,
+            false, // Extractable (only applies to private key)
             ["deriveKey", "deriveBits"]
         );
         keyPair.current = pair; // Store the key pair in state
@@ -28,26 +41,32 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // Save self base64 uncompressed public and private keys
-    const saveSelfKeys = async (clientID) => {
+    const saveKeys = async (clientID) => {
         if (!keyPair.current) {
             console.log("No keypair generated before saveSelfKeys was called");
             return;
         }
+        
+        if (!aesKeyB64.current) {
+            console.log("Must call deriveKey before saveSelfKeys");
+            return;
+        }
 
         var rawPublicKey = await crypto.subtle.exportKey("raw", keyPair.current.publicKey);
-        var rawPrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.current.privateKey);
+        //var rawPrivateKey = await crypto.subtle.exportKey("pkcs8", keyPair.current.privateKey);
 
-        var publicKey = arrayBufferToBase64(rawPublicKey);
-        var privateKey = arrayBufferToBase64(rawPrivateKey);
+        var b64SelfPubkey = arrayBufferToBase64(rawPublicKey);
+        //var privateKey = arrayBufferToBase64(rawPrivateKey);
 
-        if (!publicKey || !privateKey) {
+        if (!b64SelfPubkey /*|| !privateKey*/) {
             throw new Error("Invalid key pair provided");
         }
 
-        await saveBase64(clientID, "SelfPublicKey", publicKey);
-        await saveBase64(clientID, "SelfPrivateKey", privateKey);
+        await saveBase64(clientID, "SelfPublicKey", b64SelfPubkey);
+        await saveBase64(clientID, "aesKey", aesKeyB64.current);
+        //await saveBase64(clientID, "SelfPrivateKey", privateKey);
 
-        console.log("Self public key saved:", publicKey);
+        console.log("Self public key saved:", b64SelfPubkey);
         return;
     };
 
@@ -96,6 +115,18 @@ export const ECDHProvider = ({ children }) => {
         );
     };
 
+    // Import raw AES key from bytes
+    async function importAESKeyFromBytes(keyBytes, extractable = false, usages = ["encrypt", "decrypt"]) {
+        // keyBytes: Uint8Array or ArrayBuffer
+        return await crypto.subtle.importKey(
+            "raw",
+            keyBytes,
+            { name: "AES-GCM" },
+            extractable,
+            usages
+        );
+    }
+
     // Save PeerPublicKey (Uint8Array) in base64 format to indexedDB under the clientID store
     const savePeerPublicKey = async (peerPublicKey, clientID) => {
         if (!peerPublicKey) {
@@ -108,19 +139,16 @@ export const ECDHProvider = ({ children }) => {
     };
 
     // Derive shared secret using ECDH store it in the sharedSecret variable
-    const deriveKey = async (privateKey, peerPublicKey) => {
+    const deriveKey = async (peerPubKey) => {
         //Derive just the shared secret
         const sharedSecret = await crypto.subtle.deriveBits(
             {
                 name: "ECDH",
-                public: peerPublicKey,
+                public: peerPubKey, // Their public key (as a cryptokey object)
             },
-            privateKey,
+            keyPair.current.privateKey, // Our private key
             256
         );
-
-        console.log("Shared Secret: ")
-        console.log(arrayBufferToBase64(sharedSecret));
 
         const info = new TextEncoder().encode("aes-gcm-256");
         const keyMaterial = await crypto.subtle.importKey("raw", sharedSecret, "HKDF", false, ["deriveKey"]);
@@ -149,8 +177,8 @@ export const ECDHProvider = ({ children }) => {
 
         aesKey.current = aesKeyGen; // Set the aes key
 
-        const rawKey = await crypto.subtle.exportKey("raw", aesKey.current);
-        const keyBytes = new Uint8Array(rawKey);
+        aesKeyB64.current = await crypto.subtle.exportKey("raw", aesKeyGen) 
+                            .then((rawKey) => arrayBufferToBase64(rawKey));
     };
 
     // Encrypt plaintext using AES-GCM with shared secret key
@@ -240,10 +268,11 @@ export const ECDHProvider = ({ children }) => {
         console.log("Peer pubkey: ", peerPubKey);
         const pubKeyObject = await importPeerPublicKey(base64ToArrayBuffer(peerPubKey));
 
-        const sprivKey = await loadBase64(clientID, "SelfPrivateKey");
-        const privKeyObject = await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
+        var aesKeyB64 = await loadBase64(clientID, "aesKey");
+        aesKey.current = await importAESKeyFromBytes(base64ToArrayBuffer(aesKeyB64));
+        //const privKeyObject = await importSelfPrivateKey(base64ToArrayBuffer(sprivKey));
 
-        await deriveKey(privKeyObject, pubKeyObject);
+        //await deriveKey(privKeyObject, pubKeyObject);
     };
 
     // Context Provider return
@@ -252,7 +281,7 @@ export const ECDHProvider = ({ children }) => {
             value={{
                 keyPair,
                 generateECDHKeyPair,
-                saveSelfKeys,
+                saveSelfKeys: saveKeys,
                 compressKey,
                 decompressKey,
                 importPeerPublicKey,

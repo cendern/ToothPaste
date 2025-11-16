@@ -9,6 +9,7 @@ import {
     PlayIcon,
     LinkIcon,
     ArrowPathIcon,
+    CpuChipIcon,
     SignalSlashIcon,
     SignalIcon,
 } from "@heroicons/react/24/outline";
@@ -246,6 +247,17 @@ export default function Navbar({ onOpenPairing, onNavigate, activeView }) {
                     >
                         <ClipboardIcon className="h-5 w-5" />
                         <Typography variant="h4">Paste</Typography>
+                    </button>
+                    
+                    <button
+                        disabled={status === 2}
+                        className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
+                            activeView === "update" ? "disabled:border-hover border border-text" : "hover:bg-hover"
+                        }`}
+                        onClick={() => onNavigate("update")}
+                    >
+                        <CpuChipIcon className="h-5 w-5" />
+                        <Typography variant="h4">Update</Typography>
                     </button>
 
                     {status === 2 && (

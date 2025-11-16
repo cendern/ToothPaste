@@ -92,7 +92,7 @@ export function useInputController() {
         
         // If there is nothing to be printed, return
         if (payload.length === 0) {
-            return;
+            sendEncrypted(new Uint8Array(0)); // Send empty payload to ensure no reports are stuck
         }
 
         // Update lastSentBuffer early to avoid duplicate sends
