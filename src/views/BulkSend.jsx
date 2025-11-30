@@ -5,6 +5,8 @@ import { BLEContext } from '../context/BLEContext';
 import { HomeIcon, PaperAirplaneIcon, ClipboardIcon } from "@heroicons/react/24/outline";
 import CustomTyping from '../components/CustomTyping/CustomTyping';
 import RichTextArea from '../components/RichTextArea/RichTextArea';
+import { createKeyboardPacket } from '../controllers/PacketFunctions.js';
+
 
 
 export default function BulkSend() {
@@ -18,7 +20,8 @@ export default function BulkSend() {
         if (!input) return;
 
         try {
-            sendEncrypted(input);
+            var packet = createKeyboardPacket(input);
+            sendEncrypted(packet);
         } catch (error) { 
             console.error(error); 
         }
