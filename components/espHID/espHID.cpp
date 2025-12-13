@@ -47,6 +47,7 @@ size_t sendStringSlow(const char *str, int delayms) {
     sentCount++;
 
     delay(delayms);  // Blocking delay between characters
+    keyboard0.releaseAll(); // Release all keys to avoid sticky keys
   }
 
   return sentCount;
@@ -75,15 +76,23 @@ void stringTest(){
 }
 
 // Press all the keys in the array together and release them after 50ms (max 6)
-void sendKeycode(uint8_t* keys, bool slowMode) {
-    for(int i=0; i<6; i++){
-      keyboard0.press(keys[i]);
-      // vTaskDelay(pdMS_TO_TICKS(5));
-      //keyboard1.press(keys[i]);
+// void sendKeycode(uint8_t* keys, bool slowMode) {
+//     for(int i=0; i<6; i++){
+//       keyboard0.press(keys[i]);
+//       // vTaskDelay(pdMS_TO_TICKS(5));
+//       //keyboard1.press(keys[i]);
+//     }
+//     // vTaskDelay(pdMS_TO_TICKS(5));
+//     keyboard0.releaseAll();
+//     //keyboard1.releaseAll();
+// }
+
+void sendKeycode(uint8_t* encodedKeys, bool slowMode) {
+    keyboard0.sendKeycode(encodedKeys, 6);
+    //keyboard1.sendKeycode(encodedKeys, 6);
+    if(slowMode){
+      vTaskDelay(pdMS_TO_TICKS(SLOWMODE_DELAY_MS));
     }
-    // vTaskDelay(pdMS_TO_TICKS(5));
-    keyboard0.releaseAll();
-    //keyboard1.releaseAll();
 }
 
 void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
@@ -91,8 +100,8 @@ void moveMouse(int32_t x, int32_t y, int32_t LClick, int32_t RClick){
   //Click before moving if the click is in the same report
   if(!(mouse.isPressed(MOUSE_LEFT)) && LClick == 1){
     mouse.press(MOUSE_LEFT);
+    
   }
-
   if(!(mouse.isPressed(MOUSE_RIGHT)) && RClick == 1){
     mouse.press(MOUSE_RIGHT);
   }
