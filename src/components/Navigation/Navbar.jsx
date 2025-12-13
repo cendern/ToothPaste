@@ -273,6 +273,17 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                         <Typography variant="h4">Update</Typography>
                     </button>
 
+                    <button
+                        disabled={false}
+                        className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
+                            activeView === "update" ? "disabled:border-hover border border-text" : "hover:bg-hover"
+                        }`}
+                        onClick={() => onNavigate("about")}
+                    >
+                        <CpuChipIcon className="h-5 w-5" />
+                        <Typography variant="h4">About</Typography>
+                    </button>
+
                     {status === 2 && (
                         <button
                             className="flex items-center space-x-1 p-2 gap-2 rounded hover:bg-hover"

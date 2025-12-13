@@ -8,24 +8,9 @@ import { BLEProvider } from "./context/BLEContext";
 import ECDHOverlay from "./components/ECDHOverlay/ECDHOverlay";
 import UpdateController from "./components/UpdateComponent/UpdateController";
 import { ECDHContext, ECDHProvider } from "./context/ECDHContext";
+import About from "./views/About";
 
 import ToothPaste from "./assets/ToothPaste.png";
-import {
-    IconButton,
-    Badge,
-    Card,
-    Typography,
-    List,
-    ListItem,
-    ListItemPrefix,
-    ListItemSuffix,
-    Chip,
-    Accordion,
-    AccordionHeader,
-    AccordionBody,
-    Alert,
-    Button,
-} from "@material-tailwind/react";
 
 function App() {
     const [showOverlay, setShowOverlay] = useState(false);
@@ -47,6 +32,8 @@ function App() {
                 return <BulkSend />;
             case "live":
                 return <LiveCapture />;
+            case "about":
+                return <About />;
             // case "update":
             //     return <UpdateController />;
             default:
