@@ -137,8 +137,7 @@ export default function UpdateController({onChangeOverlay}) {
                 </button>
 
                 <Typography variant="h4" className="text-text font-sans normal-case font-semibold">
-                    <span className="text-hover">Connect to Device</span>
-                    <span className="text-text">'Device Name'</span>
+                    <span className="text-text">Update Your ToothPaste</span>
                 </Typography>
                             
                <Progress value={progress} className="w-full my-4" label="Medium" />
@@ -161,12 +160,14 @@ export default function UpdateController({onChangeOverlay}) {
                     onClick={flashFirmware}
                     loading={false}
                     disabled={false}
-                    className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'>
+                    className={`w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus 
+                      active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover
+                      ${!connected ? "hidden" : ""}`}>
 
                     {/* <KeyIcon className={`h-7 w-7 mr-2  ${isLoading? "hidden":""}`} /> */}
 
                     {/* Paste to Device */}
-                    <Typography variant="h6" className={`text-text font-sans normal-case font-semibold ${!connected ? "hidden" : ""}`}>Write</Typography>
+                    <Typography variant="h6" className={`text-text font-sans normal-case font-semibold`}>Write</Typography>
                 </Button>
 
                 {error && (
