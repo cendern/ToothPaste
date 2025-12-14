@@ -136,24 +136,31 @@ export default function UpdateController({onChangeOverlay}) {
                 ×
                 </button>
 
-                <Typography variant="h4" className="text-text font-sans normal-case font-semibold">
+                <Typography variant="h4" className="text-text font-sans normal-case font-semibold mb-4">
                     <span className="text-text">Update Your ToothPaste</span>
                 </Typography>
                             
-               <Progress value={progress} className="w-full my-4" label="Medium" />
+               <Progress value={progress} className="w-full my-2 border border-4 border-background bg-green" barProps={{className: "bg-primary"}} label="" />
 
                 <Button
                     // ref={keyRef}
                     onClick={connect}
                     loading={false}
                     disabled={false}
-                    className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'>
+                    className={`w-full h-10 my-4 bg-orange text-text hover:bg-primary-hover 
+                    focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover
+                    ${connected ? "hidden" : ""}`}>
 
                     {/* <KeyIcon className={`h-7 w-7 mr-2  ${isLoading? "hidden":""}`} /> */}
 
                     {/* Paste to Device */}
                     <Typography variant="h6" className={`text-text font-sans normal-case font-semibold ${connected ? "hidden" : ""}`}>Pair</Typography>
                 </Button>
+                
+                <Typography variant="h6" className={`text-grey-800 font-sans normal-case ${connected ? "hidden" : ""}`}>
+                  Hold down the button on your ToothPaste while plugging it in to a USB port to enter pairing mode
+                </Typography>
+
 
                 <Button
                     // ref={keyRef}
