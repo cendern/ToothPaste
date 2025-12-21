@@ -145,7 +145,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                 <Button
                     ref={keyRef}
                     onClick={handleSubmit}
-                    loading={isLoading}
+                    loading={isLoading.toString()}
                     disabled={keyInput.trim().length < 44 || !pktCharacteristic || isLoading}
                     className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'>
 
