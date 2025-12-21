@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useRef, useMemo } from "reac
 import { saveBase64, loadBase64 } from "../controllers/Storage.js";
 import { ec as EC } from "elliptic";
 import { Packet } from "../controllers/PacketFunctions.js";
+import { create } from "@bufbuild/protobuf";
 
 import * as ToothPacketPB from '../controllers/toothpacket/toothpacket_pb.js';
 
@@ -207,11 +208,11 @@ export const ECDHProvider = ({ children }) => {
         const ciphertext = encryptedBytes.slice(0, ciphertextLength);
         const tag = encryptedBytes.slice(ciphertextLength);
 
-        var dataPacket = new DataPacket();
-        dataPacket.setEncrypteddata(ciphertext);
-        dataPacket.setDatalen(ciphertextLength);
-        dataPacket.setIv(iv);
-        dataPacket.setTag(tag);
+        var dataPacket = create(ToothPacketPB.DataPacketSchema, {});
+        dataPacket.Encrypteddata = ciphertext;
+        dataPacket.Datalen = ciphertextLength;
+        dataPacket.Iv = iv;
+        dataPacket.Tag = tag;
 
         return dataPacket;
     };

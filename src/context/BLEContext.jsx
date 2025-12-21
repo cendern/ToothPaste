@@ -9,6 +9,9 @@ import React, {
 import { keyExists, loadBase64 } from "../controllers/Storage.js";
 import { ECDHContext } from "./ECDHContext.jsx";
 import { Packet } from "../controllers/PacketFunctions.js";
+import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
+
+
 // import { toothpaste, DataPacket, EncryptedData, KeyboardPacket, MousePacket, RenamePacket, KeycodePacket } from '../controllers/toothpacket/toothpacket_pb.js';
 
 import * as ToothPacketPB from '../controllers/toothpacket/toothpacket_pb.js';
@@ -64,16 +67,16 @@ export function BLEProvider({ children }) {
             const textData = encoder.encode(inputString); // Encode the input string into a byte array
 
             // protobuf packets
-            const unencryptedPacket = new DataPacket();
-            unencryptedPacket.setEncrypteddata(textData);
-            unencryptedPacket.setPacketid(1);
-            unencryptedPacket.setSlowmode(true);
-            unencryptedPacket.setPacketnumber(1);
-            unencryptedPacket.setDatalen(textData.length);
-            unencryptedPacket.setTag(new Uint8Array(16)); // Empty tag for unencrypted packet
-            unencryptedPacket.setIv(new Uint8Array(12)); // Empty IV for unencrypted packet
+            const unencryptedPacket = create(ToothPacketPB.DataPacketSchema, {});
+            unencryptedPacket.Encrypteddata = textData;
+            unencryptedPacket.Packetid = 1;
+            unencryptedPacket.Slowmode = true;
+            unencryptedPacket.Packetnumber = 1;
+            unencryptedPacket.Datalen = textData.length;
+            unencryptedPacket.Tag = new Uint8Array(16); // Empty tag for unencrypted packet
+            unencryptedPacket.Iv = new Uint8Array(12); // Empty IV for unencrypted packet
 
-            await pktCharRef.current.writeValueWithoutResponse(unencryptedPacket.serializeBinary());
+            await pktCharRef.current.writeValueWithoutResponse(toBinary(ToothPacketPB.DataPacketSchema, unencryptedPacket));
             //await pktCharRef.current.writeValueWithoutResponse(packetData);
         } catch (error) {
             console.error("Error sending AUTH packet", error);
@@ -99,7 +102,8 @@ export function BLEProvider({ children }) {
                 console.log("Sending packet ", count);
                 await pktCharacteristic.writeValueWithoutResponse(
                     //packet.serialize()
-                    packet.serializeBinary()
+                    // packet.serializeBinary()
+                    toBinary(ToothPacketPB.DataPacketSchema, packet)
                 );
 
                 await waitForReady(); // Attach a promise to the ref
