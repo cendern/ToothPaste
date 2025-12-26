@@ -57,9 +57,13 @@ export function createMousePacket(x, y, leftClick = false, rightClick = false) {
     mousePacket.lClick = leftClick;
     mousePacket.rClick = rightClick;
     
-    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {});
-    encryptedPacket.packetType = ToothPacketPB.EncryptedData_PacketType.MOUSE;
-    encryptedPacket.mousePacket = mousePacket;
+    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+        packetType: ToothPacketPB.EncryptedData_PacketType.MOUSE,
+        packetData: {
+        case: "mousePacket",
+        value: mousePacket,
+        },
+    });
 
     return encryptedPacket
 }
@@ -85,9 +89,13 @@ export function createMouseStream(frames, leftClick = false, rightClick = false)
 
     console.log("Creating mouse packet with frames:", mousePacket);
 
-    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {});
-    encryptedPacket.packetType = ToothPacketPB.EncryptedData_PacketType.MOUSE;
-    encryptedPacket.mousePacket = mousePacket;
+    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+        packetType: ToothPacketPB.EncryptedData_PacketType.MOUSE,
+        packetData: {
+        case: "mousePacket",
+        value: mousePacket,
+        },
+    });
 
     return encryptedPacket
 }
@@ -101,9 +109,14 @@ export function createKeyboardPacket(keyString) {
     keyboardPacket.message = keyString;
     keyboardPacket.length = keyString.length;
 
-    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {});
-    encryptedPacket.packetType = ToothPacketPB.EncryptedData_PacketType.KEYBOARD_STRING;
-    encryptedPacket.keyboardPacket = keyboardPacket;
+    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+        packetType: ToothPacketPB.EncryptedData_PacketType.KEYBOARD_STRING,
+        packetData: {
+        case: "keyboardPacket",
+        value: keyboardPacket,
+        },
+    });
+
 
     return encryptedPacket
 }
@@ -114,10 +127,15 @@ export function createKeyCodePacket(keycode) {
     keycodePacket.code = keycode;
     keycodePacket.length = keycode.length;
 
-    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {});
-    encryptedPacket.packetType = ToothPacketPB.EncryptedData_PacketType.KEYBOARD_KEYCODE;
-    encryptedPacket.keycodePacket = keycodePacket;
-    return encryptedPacket
+    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+        packetType: ToothPacketPB.EncryptedData_PacketType.KEYBOARD_KEYCODE,
+        packetData: {
+        case: "keycodePacket",
+        value: keycodePacket,
+        },
+    });
+    
+    return encryptedPacket;
 }
 
 // Return an EncryptedData packet containing a RenamePacket
@@ -126,9 +144,13 @@ export function createRenamePacket(newName) {
     renamePacket.message = newName;
     renamePacket.length = newName.length;
 
-    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {});
-    encryptedPacket.packetType = ToothPacketPB.EncryptedData_PacketType.RENAME;
-    encryptedPacket.renamePacket = renamePacket;
+    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+        packetType: ToothPacketPB.EncryptedData_PacketType.RENAME,
+        packetData: {
+        case: "renamePacket",
+        value: renamePacket,
+        },
+    });
 
     return encryptedPacket;
 }
@@ -139,8 +161,13 @@ export function createConsumerControlPacket(code) {
     controlPacket.code = code;
     controlPacket.length = 1;
 
-    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {});
-    encryptedPacket.packetType = ToothPacketPB.EncryptedData_PacketType.CONSUMER_CONTROL;
-    encryptedPacket.consumerControlPacket = controlPacket;
+    const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+        packetType: ToothPacketPB.EncryptedData_PacketType.CONSUMER_CONTROL,
+        packetData: {
+        case: "consumerControlPacket",
+        value: controlPacket,
+        },
+    });
+
     return encryptedPacket;
 }
