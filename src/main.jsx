@@ -13,9 +13,9 @@ function ErrorFallback({ error }) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary FallbackComponent={ErrorFallback}onError={(error) => console.error(error)}>
-        <ThemeProvider value={theme}>
+        {/* <ThemeProvider value={theme}> */}
             <App />
-          </ThemeProvider>
+          {/* </ThemeProvider> */}
         </ErrorBoundary>
       </React.StrictMode>
 );

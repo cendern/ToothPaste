@@ -160,7 +160,7 @@ export default function UpdateController({onChangeOverlay}) {
                     onClick={connect}
                     loading={false}
                     disabled={false}
-                    className={`w-full h-10 my-4 bg-orange text-text hover:bg-primary-hover 
+                    className={`w-full h-10 my-4 bg-orange text-text hover:bg-primary-hover border-none
                     focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover
                     ${connected ? "hidden" : ""}`}>
 

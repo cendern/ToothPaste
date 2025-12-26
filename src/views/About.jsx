@@ -91,7 +91,7 @@ export default function About() {
                         </div>
                         <Button 
                             size="lg" 
-                            className="w-fit bg-primary text-text hover:bg-primary-hover font-semibold normal-case"
+                            // className="w-fit bg-primary text-text hover:bg-primary-hover font-semibold normal-case"
                         >
                             Learn More
                         </Button>
@@ -177,15 +177,16 @@ export default function About() {
                     </Typography>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button 
-                            size="lg" 
-                            className="bg-primary text-text hover:bg-primary-hover font-semibold normal-case"
+                            className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'
+
+                            // className="bg-primary text-text hover:bg-primary-hover font-semibold normal-case"
                         >
                             Get Started
                         </Button>
                         <Button 
-                            size="lg" 
-                            variant="outlined"
-                            className="border-primary text-primary hover:bg-primary hover:text-text font-semibold normal-case"
+                            className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm disabled:bg-hover'
+
+                            // className="border-secondary text-text hover:bg-primary hover:text-text font-semibold normal-case"
                         >
                             Contact Us
                         </Button>

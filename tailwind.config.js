@@ -8,6 +8,8 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@material-tailwind/react/**/*.{js,ts,jsx,tsx}",
   ],
+
+  // Tailwind CSS Config
   theme: {
     extend: {
       fontFamily: {
@@ -16,7 +18,7 @@ export default {
       colors: {
         primary: '#00A878',
         secondary: '#DD4058',
-        accent: '#3b82f6',
+        accent: '#DE6240',
         background: '#000000',
         text: '#FFFFFF',
         shelf: '#111111',
@@ -35,11 +37,8 @@ export default {
       },
     },
   },
-  // safelist: [
-  //   'text-shelf', 'bg-shelf', 'border-shelf',
-  //   'text-hover', 'bg-hover', 'border-hover',
-  //   'text-orange', 'bg-orange', 'border-orange'
-  // ],
-  plugins: [mtConfig],
+
+  // Material Tailwind Config
+  plugins: [mtConfig]
 
 };
