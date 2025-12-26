@@ -158,7 +158,7 @@ export function createRenamePacket(newName) {
 // Return an EncryptedData packet containing a RenamePacket
 export function createConsumerControlPacket(code) {
     const controlPacket = create(ToothPacketPB.ConsumerControlPacketSchema, {});
-    controlPacket.code = code;
+    controlPacket.code.push(code);
     controlPacket.length = 1;
 
     const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {

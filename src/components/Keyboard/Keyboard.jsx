@@ -336,7 +336,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
     const isKeyActive = (eventCode) => activeKeys.has(eventCode);
 
     return (
-        <div className="bg-black text-white flex flex-col w-full items-center justify-center space-y-6 mt-4">
+        <div className="bg-background text-white flex flex-col w-full items-center justify-center space-y-6 mt-4">
             {/* Keyboard Layouts */}
             <div className={`flex flex-row justify-center space-x-8 ${showKeyboard ? "" : "hidden"}`}>
                 
@@ -351,7 +351,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
                                         width ?? "w-12"
                                     } h-12 mx-1 border-2 border-hover flex items-center justify-center text-lg rounded-lg ${
                                         rowIndex === 0 ? "mb-5" : ""
-                                    } ${isKeyActive(eventCode) ? backgroundColor : "bg-black"}`}
+                                    } ${isKeyActive(eventCode) ? backgroundColor : "bg-background"}`}
                                 >
                                     {label}
                                 </div>
@@ -370,7 +370,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
                                     className={`${
                                         width ?? "w-12"
                                     } h-12 mx-1 border-2 border-hover flex items-center justify-center text-lg rounded-lg ${
-                                        isKeyActive(eventCode) ? backgroundColor : "bg-black"
+                                        isKeyActive(eventCode) ? backgroundColor : "bg-background"
                                     }`}
                                 >
                                     {label}
@@ -390,7 +390,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
                                     className={`${
                                         width ?? "w-12"
                                     } h-12 mx-1 border-2 border-hover flex items-center justify-center text-lg rounded-lg ${
-                                        isKeyActive(eventCode) ? backgroundColor : "bg-black"
+                                        isKeyActive(eventCode) ? backgroundColor : "bg-background"
                                     }`}
                                 >
                                     {label}
