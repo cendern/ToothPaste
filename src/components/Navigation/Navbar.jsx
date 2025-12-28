@@ -153,7 +153,7 @@ function ConnectionButton() {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
                 longPressTriggered.current = true;
-                wasLongPressed(true);
+                setWasLongPressed(true);
                 callback(); // long press action
             }
         }, 16);
@@ -174,9 +174,14 @@ function ConnectionButton() {
 
     return (
         <div className="flex justify-left w-full">
-            <Button
+           <Button
                 title="Click to connect to a device, hold to rename it."
-                className={`flex-row items-center justify-between w-full p-4 border-2 ${borderClass} bg-transparent hover:border-text`}
+                className={`flex flex-col items-center justify-center w-full p-4 border-2 ${borderClass} bg-transparent hover:border-text min-h-10`}
+                style={{
+                    backgroundImage: `linear-gradient(to right, rgba(79, 172, 254, 0.2) 0%, rgba(79, 172, 254, 0.2) ${progress}%, transparent ${progress}%, transparent 100%)`,
+                    backgroundRepeat: 'no-repeat',
+                    transition: 'background-image 0.016s linear'
+                }}
                 onMouseDown={() => {if (device && status === 1) handleStart(() => setIsEditing(true));}}
                 onMouseLeave={() => {handleEnd(cancel);}}
                 onMouseUp={() => handleEnd(() => connectToDevice())}
@@ -195,10 +200,9 @@ function ConnectionButton() {
                         ></EditableDeviceName>
                     </div>
                     {/* Change the icon for connected and disconnected states */}
-                    {status !== 0 && <SignalIcon className="h-5 y-5" />}
-                    {status === 0 && <SignalSlashIcon className="h-5 y-5" />}
+                    {status !== 0 && <SignalIcon className="h-5 w-5" />}
+                    {status === 0 && <SignalSlashIcon className="h-5 w-5" />}
                 </div>
-                <Progress value={progress} size="sm" className="bg-shelf" />
             </Button>
         </div>
     );
