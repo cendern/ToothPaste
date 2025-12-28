@@ -106,46 +106,13 @@ export default function UpdateController({onChangeOverlay}) {
   };
 
   return (
-        <div style={{
-            position: 'fixed',
-            top: 0, left: 0,
-            width: '100vw', height: '100vh',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            
-            display: 'flex',
-            flexDirection:"column",
-            justifyContent: 'center',
-            alignItems:'center',
-
-            zIndex: 9999,
-        }}>
-            <div style={{
-                background: 'var(--color-shelf)',
-                padding: 20,
-                borderRadius: 8,
-                width: '90%',
-                maxWidth: 500,
-                
-                display: 'flex',
-                flexDirection:"column",
-
-                justifyContent: 'center',
-                alignItems:'center',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                position: 'relative'
-            }}>
+        <div className="fixed inset-0 bg-hover/50 flex flex-col justify-center items-center z-[9999]" onClick={() => onChangeOverlay(null)}>
+            <div className="bg-shelf p-5 rounded-lg w-11/12 max-w-md flex flex-col justify-center items-center shadow-lg relative" onClick={(e) => e.stopPropagation()}>
                 {/* Close Button*/}
                 <button
                     onClick={() => onChangeOverlay(null)}
-                    style={{
-                        position: 'absolute',
-                        top: 10,
-                        right: 10,
-                        background: 'none',
-                        border: 'none',
-                        fontSize: 20,
-                        cursor: 'pointer'
-                    }}>
+                    className="absolute top-2.5 right-2.5 bg-transparent text-text border-0 text-2xl cursor-pointer"
+                >
                 ×
                 </button>
 
@@ -153,7 +120,7 @@ export default function UpdateController({onChangeOverlay}) {
                     <span className="text-text">Update Your ToothPaste</span>
                 </Typography>
                             
-               <Progress value={progress} className="w-full my-2 bg-gray-800" barProps={{className: "bg-primary"}} label="" />
+               <Progress value={progress} className="w-full my-2 bg-hover" barProps={{className: "bg-primary"}} label="" />
 
                 <Button
                     // ref={keyRef}
