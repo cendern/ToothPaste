@@ -234,9 +234,6 @@ void stopJiggle()
     mouseJiggleEnabled = false;  // Signal task to exit
     // Task will delete itself when it sees the flag is false
     jiggleTaskHandle = nullptr;
-
-    UBaseType_t stackRemaining = uxTaskGetStackHighWaterMark(jiggleTaskHandle);
-    DEBUG_SERIAL_PRINTF("Jiggle task stack high water mark: %d bytes\n", stackRemaining);
   }
 }
 
