@@ -13,21 +13,15 @@ import {
 } from "@heroicons/react/24/outline";
 import ToothPaste_Device_V1_Front from '../assets/ToothPaste_Device_V1_Front.png';
 
-const Model = ({ url }) => {
+const Model = ({ url, scrollProgress }) => {
   const groupRef = useRef();
   const gltf = useLoader(GLTFLoader, url);
 
   useEffect(() => {
-    const handleScroll = (event) => {
-      if (!groupRef.current) return;
-      const deltaY = event.deltaY;
-      const rotationSpeed = 0.001;
-      groupRef.current.rotation.y += deltaY * rotationSpeed;
-    };
-
-    window.addEventListener('wheel', handleScroll);
-    return () => window.removeEventListener('wheel', handleScroll);
-  }, []);
+    if (!groupRef.current) return;
+    // Update rotation based on scroll progress
+    groupRef.current.rotation.y = scrollProgress * 0.001;
+  }, [scrollProgress]);
 
   return (
     <group ref={groupRef} position={[0, 0, -1]}>
@@ -54,26 +48,76 @@ const Model = ({ url }) => {
 };
 
 export default function About() {
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const containerRef = useRef(null);
+    const maxSlides = 4;
+    const scrollThreshold = useRef(0);
+    const scrollSensitivity = 700; // Adjust this value to change how many clicks required
+
+    useEffect(() => {
+      const handleWheel = (event) => {
+        event.preventDefault();
+        
+        // Accumulate scroll delta
+        scrollThreshold.current += event.deltaY;
+        
+        // Check if accumulated scroll exceeds threshold
+        if (Math.abs(scrollThreshold.current) >= scrollSensitivity) {
+          if (scrollThreshold.current > 0) {
+            setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
+          } else {
+            setCurrentSlide(prev => Math.max(prev - 1, 0));
+          }
+          scrollThreshold.current = 0;
+        }
+        
+        // Still update scrollProgress for the 3D model rotation
+        setScrollProgress(prev => {
+          const newProgress = prev + event.deltaY;
+          return Math.max(0, newProgress);
+        });
+      };
+
+      window.addEventListener('wheel', handleWheel, { passive: false });
+      return () => window.removeEventListener('wheel', handleWheel);
+    }, []);
+
+    // Calculate which section should be visible based on current slide
+    const getSectionOpacity = (sectionIndex) => {
+      return currentSlide === sectionIndex ? 1 : 0;
+    };
+
     return (
-        <div className="w-full bg-background text-text overflow-x-hidden">
-            {/* Hero Section - Image Left (60%) + Text Right (40%) */}
-            <section className="min-h-screen flex items-center justify-center px-6 md:px-12 py-5 snap-start">
+        <div ref={containerRef} className="w-full bg-background text-text overflow-hidden fixed inset-0">
+            {/* Fixed 3D Model Container */}
+            <div className="absolute inset-0 md:col-span-7 flex justify-center pointer-events-none z-0">
+                <div className="relative w-full aspect-square bg-none from-primary to-primary-hover rounded-3xl flex items-center justify-center overflow-hidden">
+                    <Canvas style={{ width: '70vw', height: '70vh' }}>
+                        <ambientLight intensity={3}/>
+                        <directionalLight
+                            position={[0, 2, 5]}  // X, Y, Z in front of the model
+                            intensity={1}       // Adjust brightness
+                            castShadow
+                        />
+                        
+                        <Model url="/ToothPaste.glb" scrollProgress={scrollProgress} />
+                    </Canvas>
+                </div>
+            </div>
+
+            {/* Hero Section - Text overlay */}
+            <section 
+                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-5 z-10"
+                style={{
+                  opacity: getSectionOpacity(0),
+                  transition: 'opacity 0.3s ease-in-out',
+                  pointerEvents: getSectionOpacity(0) > 0.5 ? 'auto' : 'none'
+                }}
+            >
                 <div className="max-w-7xl w-full grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center">
-                    {/* Image - 60% of space */}
-                    <div className="md:col-span-7 flex justify-center">
-                        <div className="relative w-full aspect-square bg-gradient-to-br from-primary to-primary-hover rounded-3xl flex items-center justify-center overflow-hidden">
-                            <Canvas style={{ width: '70vw', height: '70vh' }}>
-                                <ambientLight intensity={3}/>
-                                <directionalLight
-                                    position={[0, 2, 5]}  // X, Y, Z in front of the model
-                                    intensity={1}       // Adjust brightness
-                                    castShadow
-                                />
-                                
-                                <Model url="/ToothPaste_GLB.glb" />
-                            </Canvas>
-                        </div>
-                    </div>
+                    {/* Spacer for text placement - 60% of space */}
+                    <div className="md:col-span-7"></div>
 
                     {/* Text Blob - 40% of space */}
                     <div className="md:col-span-5 flex flex-col justify-center gap-6">
@@ -104,7 +148,14 @@ export default function About() {
             </section>
 
             {/* Feature Slide 1 */}
-            <section className="min-h-screen flex items-center justify-center px-6 md:px-12 py-12 snap-start">
+            <section 
+                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-12 z-10"
+                style={{
+                  opacity: getSectionOpacity(1),
+                  transition: 'opacity 0.3s ease-in-out',
+                  pointerEvents: getSectionOpacity(1) > 0.5 ? 'auto' : 'none'
+                }}
+            >
                 <div className="max-w-6xl w-full">
                     <div className="flex flex-col gap-8">
                         <div className="flex items-center gap-4">
@@ -130,7 +181,14 @@ export default function About() {
             </section>
 
             {/* Feature Slide 2 */}
-            <section className="min-h-screen flex items-center justify-center px-6 md:px-12 py-12 snap-start">
+            <section 
+                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-12 z-10"
+                style={{
+                  opacity: getSectionOpacity(2),
+                  transition: 'opacity 0.3s ease-in-out',
+                  pointerEvents: getSectionOpacity(2) > 0.5 ? 'auto' : 'none'
+                }}
+            >
                 <div className="max-w-5xl w-full">
                     <div className="flex flex-col gap-8">
                         <div className="flex items-start gap-6">
@@ -167,7 +225,14 @@ export default function About() {
 
 
             {/* CTA Footer Slide */}
-            <section className="min-h-screen flex items-center justify-center px-6 md:px-12 py-12 snap-start">
+            <section 
+                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-12 z-10"
+                style={{
+                  opacity: getSectionOpacity(3),
+                  transition: 'opacity 0.3s ease-in-out',
+                  pointerEvents: getSectionOpacity(3) > 0.5 ? 'auto' : 'none'
+                }}
+            >
                 <div className="max-w-3xl w-full text-center flex flex-col gap-8">
                     <Typography variant="h2" className="text-text font-bold">
                         Ready to Get Started?
