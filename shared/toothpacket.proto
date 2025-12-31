@@ -43,6 +43,7 @@ message EncryptedData{
         MousePacket  mousePacket = 4;
         RenamePacket  renamePacket = 5;
         ConsumerControlPacket consumerControlPacket = 6;
+        MouseJigglePacket mouseJigglePacket = 7;
     }
 
 }
@@ -66,22 +67,27 @@ message KeycodePacket{
 
 // Represents a single unit of mouse movement
 message Frame {
-  int32 x = 1; // 4 bytes
-  int32 y = 2; // 4 bytes
+    int32 x = 1; // 4 bytes
+    int32 y = 2; // 4 bytes
 }
 
 // Packet with multiple units of mouse movement frames that define a curve
 message MousePacket {
-  uint32 num_frames = 1;     // how many frames
-  repeated Frame frames = 2; // sequence of (x, y) positions [8 bytes each - max ]
-  int32 l_click = 3;         // left click state
-  int32 r_click = 4;         // right click state
+    uint32 num_frames = 1;     // how many frames
+    repeated Frame frames = 2; // sequence of (x, y) positions [8 bytes each - max ]
+    int32 l_click = 3;         // left click state
+    int32 r_click = 4;         // right click state
 }
 
 // Consumer Control Device Data (Volume, Playback, etc.)
 message ConsumerControlPacket{
     repeated uint32 code = 1;
     uint32 length = 2;
+}
+
+// Consumer Control Device Data (Volume, Playback, etc.)
+message MouseJigglePacket{
+    bool enable = 1;
 }
 
 

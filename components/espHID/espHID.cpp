@@ -18,7 +18,6 @@
 int syscount = 1;
 bool mouseJiggleEnabled = false;
 
-
 // Task handle for jiggle task (NULL when not running)
 TaskHandle_t jiggleTaskHandle = nullptr;
 
@@ -204,20 +203,22 @@ void moveMouse(toothpaste_MousePacket& mousePacket) {
 // Persistent RTOS task for mouse jiggle
 void jiggleTask(void* params)
 {
-  while (true) {
+  while (mouseJiggleEnabled) {
     jiggleMouse();
   }
-  // Task is deleted externally via vTaskDelete()
+  // Task exits gracefully when flag is set to false
+  vTaskDelete(NULL);  // Delete self
 }
 
 // Start the jiggle task
 void startJiggle()
 {
   if (jiggleTaskHandle == nullptr) {
+    mouseJiggleEnabled = true;  // Set flag before creating task
     xTaskCreatePinnedToCore(
       jiggleTask,
       "JiggleWorker",
-      1024,
+      3072,
       nullptr,
       1,
       &jiggleTaskHandle,
@@ -226,18 +227,22 @@ void startJiggle()
   }
 }
 
-// Stop the jiggle task
+// Stop the jiggle task (graceful shutdown)
 void stopJiggle()
 {
   if (jiggleTaskHandle != nullptr) {
-    vTaskDelete(jiggleTaskHandle);
+    mouseJiggleEnabled = false;  // Signal task to exit
+    // Task will delete itself when it sees the flag is false
     jiggleTaskHandle = nullptr;
+
+    UBaseType_t stackRemaining = uxTaskGetStackHighWaterMark(jiggleTaskHandle);
+    DEBUG_SERIAL_PRINTF("Jiggle task stack high water mark: %d bytes\n", stackRemaining);
   }
 }
 
 // Simple mouse jiggle function to prevent screen sleep
 void jiggleMouse(){
-  
+
   // Use CPU timer ticks for efficient pseudo-random values (no malloc/heavy RNG overhead)
   uint64_t ticks = esp_timer_get_time();
   
@@ -246,9 +251,9 @@ void jiggleMouse(){
   int32_t y = (int32_t)(((ticks >> 16) % 7) - 3);
   
   moveMouse(x, y, 0, 0);
-  vTaskDelay(pdMS_TO_TICKS(50));
+  vTaskDelay(pdMS_TO_TICKS(1000));
   moveMouse(-x, -y, 0, 0);
-  vTaskDelay(pdMS_TO_TICKS(50));
+  vTaskDelay(pdMS_TO_TICKS(1000));
 }
 
 // ##################### Delay Functions #################### //

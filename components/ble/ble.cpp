@@ -393,6 +393,17 @@ void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
         break;
       }
 
+      case toothpaste_EncryptedData_mouseJigglePacket_tag: {
+        bool enable = decrypted.packetData.mouseJigglePacket.enable;
+        if(enable){
+          startJiggle();
+        }
+        else{
+          stopJiggle();
+        }
+        break;
+      }
+
       default:
         DEBUG_SERIAL_PRINTF("Unknown Packet Type: %d", decrypted.which_packetData);
         break;
