@@ -197,29 +197,6 @@ export enum EncryptedData_PacketType {
 export declare const EncryptedData_PacketTypeSchema: GenEnum<EncryptedData_PacketType>;
 
 /**
- * Device Information 
- *
- * @generated from message toothpaste.InfoPacket
- */
-export declare type InfoPacket = Message<"toothpaste.InfoPacket"> & {
-  /**
-   * @generated from field: string deviceID = 1;
-   */
-  deviceID: string;
-
-  /**
-   * @generated from field: string firmwareVersion = 2;
-   */
-  firmwareVersion: string;
-};
-
-/**
- * Describes the message toothpaste.InfoPacket.
- * Use `create(InfoPacketSchema)` to create a new message.
- */
-export declare const InfoPacketSchema: GenMessage<InfoPacket>;
-
-/**
  * Arbitrary String Data (processed based on packet type byte)
  *
  * @generated from message toothpaste.KeyboardPacket
@@ -388,6 +365,24 @@ export declare type ConsumerControlPacket = Message<"toothpaste.ConsumerControlP
  * Use `create(ConsumerControlPacketSchema)` to create a new message.
  */
 export declare const ConsumerControlPacketSchema: GenMessage<ConsumerControlPacket>;
+
+/**
+ * Consumer Control Device Data (Volume, Playback, etc.)
+ *
+ * @generated from message toothpaste.MouseJigglePacket
+ */
+export declare type MouseJigglePacket = Message<"toothpaste.MouseJigglePacket"> & {
+  /**
+   * @generated from field: bool enable = 1;
+   */
+  enable: boolean;
+};
+
+/**
+ * Describes the message toothpaste.MouseJigglePacket.
+ * Use `create(MouseJigglePacketSchema)` to create a new message.
+ */
+export declare const MouseJigglePacketSchema: GenMessage<MouseJigglePacket>;
 
 /**
  * Packet Sent by receiver to indicate state

@@ -35,7 +35,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "protoc": "npx protoc --es_out=./src/controllers/toothpacket --proto_path=./shared ./shared/toothpacket.proto"
   },
   "eslintConfig": {
     "extends": [
