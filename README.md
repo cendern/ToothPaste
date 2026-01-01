@@ -31,10 +31,6 @@
 <br/>
 
 
-
-
-
-
 ## The Problem ❓
 The core idea was to eliminate the need for complicated and lengthy login flows for one-off cases where a keyboard would normally be required or is the **only device that is supported** (BIOS, air-gapped systems, shady back-alley computers where you don't want to install your password manager etc.). 
 
@@ -57,7 +53,7 @@ Once any of the above set ups is complete we move toward actually transmitting d
 Bluetooth (specifically BLE) is an odd 'standard' where over time there have been many accepted ways of implementing it but there is no unified solution. Outside of creating a native application that taps into the OS Bluetooth hardware there's only one (AFAIK) semi cross-platform solution - **Web BLE**.
 
 ### What is Web BLE?
-If you're familiar with projects like [WLED](https://kno.wled.ge/) or [VIA](https://usevia.app/) you've already interacted with the Web Device API, this is almost exclusive a chromium-only feature which is why **ToothPaste** itself doesn't work on non-chromium browsers like Firefox. 
+If you're familiar with projects like [WLED](https://kno.wled.ge/) or [VIA](https://usevia.app/) you've already interacted with the Web Device API, this is almost exclusively a chromium-only feature which is why **ToothPaste** itself doesn't work on non-chromium browsers like Firefox. 
 
 Essentially Web BLE allows us to use a system's Bluetooth hardware inside a browser, eliminating the need for custom OS-specific APIs and custom apps to use them. 
 
