@@ -53,7 +53,7 @@ export default function About() {
     const containerRef = useRef(null);
     const maxSlides = 4;
     const scrollThreshold = useRef(0);
-    const scrollSensitivity = 700; // Adjust this value to change how many clicks required
+    const scrollSensitivity = 1000; // Adjust this value to change how many clicks required
 
     useEffect(() => {
       const handleWheel = (event) => {
