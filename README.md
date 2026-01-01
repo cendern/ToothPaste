@@ -4,7 +4,7 @@
 
 <h1 style="text-align: center; margin: 10;">
   <span style="display: inline-flex; align-items: center; gap: 10px;">
-    <img src="https://www.toothpasteapp.com/static/media/ToothPaste.b25d935e801d165e44df.png" alt="drawing" width="70"/>
+    <img src="https://www.toothpasteapp.com/static/media/ToothPaste.png" alt="drawing" width="70"/>
     <span style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
       <span style="font-weight: bold; font-size: 1.5em; margin: 1 0 5 0; padding: 0; line-height: 1;">ToothPaste: </span>
       <span style="font-style: italic; font-size: 0.6em; margin: 1 0 0 0; padding: 0; line-height: 1;">The Copy-Paste We Were Promised</span>
