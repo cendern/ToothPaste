@@ -69,7 +69,7 @@ export function createMousePacket(x, y, leftClick = false, rightClick = false) {
 }
 
 // Return an EncryptedData packet containing a MousePacket
-export function createMouseStream(frames, leftClick = false, rightClick = false) {
+export function createMouseStream(frames, leftClick = false, rightClick = false, scrollDelta = 0) {
     
     
     console.log("List of frames to create mouse packet:", frames);
@@ -86,6 +86,7 @@ export function createMouseStream(frames, leftClick = false, rightClick = false)
     mousePacket.numFrames = frames.length;
     mousePacket.lClick = Number(leftClick);
     mousePacket.rClick = Number(rightClick);
+    mousePacket.wheel = scrollDelta;
 
     console.log("Creating mouse packet with frames:", mousePacket);
 

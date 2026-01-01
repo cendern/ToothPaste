@@ -22,7 +22,7 @@ const Model = ({ url, scrollDeltaRef }) => {
     // Register a callback to be called on every frame update
     useFrame(() => {
         if (!groupRef.current) return;
-        
+
         // Continuously rotate slowly + adjust based on scroll delta
         targetRotation.current += rotationSpeed * autorotationDirection.current; // Slow continuous rotation in direction of last scroll
 
@@ -34,8 +34,8 @@ const Model = ({ url, scrollDeltaRef }) => {
         }
         // Linear interpolation towards target rotation -> a + (b - a) * t
         groupRef.current.rotation.y = groupRef.current.rotation.y + // a
-                                      (targetRotation.current - groupRef.current.rotation.y) * // b 
-                                      0.05; // t: lower = smoother, higher = snappier
+            (targetRotation.current - groupRef.current.rotation.y) * // b 
+            0.05; // t: lower = smoother, higher = snappier
     });
 
     return (
@@ -86,7 +86,7 @@ export default function About() {
                 }
                 scrollThreshold.current = 0;
             }
-            
+
             // Accumulate scroll delta for model rotation - reset after each frame
             scrollDeltaRef.current += event.deltaY;
         };

@@ -153,13 +153,22 @@ export default function LiveCapture() {
         tDisplacement.current = { x: 0, y: 0 }; // Reset displacement after adding to list
     }
 
+
+    function onWheel(e) {
+        if (!captureMouse) return;  
+        e.preventDefault(); // Prevent page scrolling
+
+        var reportDelta  = -e.deltaY * 0.01; // Scale down the scroll delta
+        sendMouseReport(false, false, reportDelta);
+    }
+
     // Make a mouse packet and send it
-    function sendMouseReport(LClick, RClick) {
+    function sendMouseReport(LClick, RClick, scrollDelta=0) {
         const flag = 2; // Flag to indicate mouse packet
         const mouseFrames = displacementList.current.slice(0, 8);
         const numFrames = mouseFrames.length;
 
-        var mousePacket = createMouseStream(mouseFrames, LClick, RClick);
+        var mousePacket = createMouseStream(mouseFrames, LClick, RClick, scrollDelta);
         sendEncrypted(mousePacket);
 
         console.log("Mouse packet to send: ", mousePacket);
@@ -417,6 +426,7 @@ export default function LiveCapture() {
                     onPointerCancel={onPointerCancel}
                     onPointerEnter={onPointerEnter}
                     onBeforeInput={handleOnBeforeInput}
+                    onWheel={onWheel}
                     onContextMenu={(e) => e.preventDefault()} // Prevent right-clicks from opening the default context menu inside this input
                     // IME event handlers
                     onChange={handleOnChange}

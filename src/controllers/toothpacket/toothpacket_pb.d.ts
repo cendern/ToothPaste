@@ -341,6 +341,13 @@ export declare type MousePacket = Message<"toothpaste.MousePacket"> & {
    * @generated from field: int32 r_click = 4;
    */
   rClick: number;
+
+  /**
+   * wheel movement
+   *
+   * @generated from field: int32 wheel = 5;
+   */
+  wheel: number;
 };
 
 /**
