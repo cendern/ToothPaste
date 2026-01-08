@@ -49,8 +49,6 @@ export default function LiveCapture() {
         const intervalId = setInterval(() => {
             //if (captureMouse && (tDisplacement.current.x !== 0 || tDisplacement.current.y !== 0)) {
             if (displacementList.current.length > 0) {
-                //console.log("Sending mouse report: ", tDisplacement.current);
-                console.log("Sending mouse report: ", displacementList.current);
                 //sendMouseReport(tDisplacement.current.x, tDisplacement.current.y, false, false);
                 sendMouseReport(false, false);
             }
@@ -62,7 +60,6 @@ export default function LiveCapture() {
     // On click logic
     function onMouseDown(e) {
         //e.target.setPointerCapture(e.pointerId);
-        console.log("Mousedown fired with button: ", e.button);
         isTracking.current = true;
         lastPos.current = { x: e.clientX, y: e.clientY, t: e.timeStamp };
 
@@ -76,8 +73,6 @@ export default function LiveCapture() {
     }
 
     function onMouseUp(e) {
-        console.log("Mouseup fired with button: ", e.button);
-
         if (e.button == 0) sendMouseReport(2, 0); // Send left click
         if (e.button == 2) {
             e.preventDefault();
@@ -100,8 +95,6 @@ export default function LiveCapture() {
 
     // When a pointer moves
     function onPointerMove(e) {
-        //console.log("Pointer move event: ", e.clientX, e.clientY);
-
         if (!captureMouse) return;
 
         // Get bounding rect once (you can optimize by caching it elsewhere)
@@ -114,7 +107,6 @@ export default function LiveCapture() {
         if (!inside || ctrlPressed.current) {
             // Pointer outside div but pointer capture means we still get events
             // Stop tracking so next movement inside resets lastPos
-            console.log("Pointer outside div or ctrl pressed, stopping tracking");
             tDisplacement.current = { x: 0, y: 0 }; // Reset displacement
             isTracking.current = false;
             return;
@@ -135,16 +127,11 @@ export default function LiveCapture() {
         const velocityX = Math.abs(displacementX / dt); // Velocity in X direction
         const velocityY = Math.abs(displacementY / dt); // Velocity in Y direction
 
-        console.log("Displacement: ", displacementX, displacementY, "Time delta: ", dt);
-
         lastPos.current = { x: e.clientX, y: e.clientY, t: e.timeStamp }; // Update last position
 
         // Scale by time delta to get acceleration-like values
         const accelDeltaX = displacementX * (velocityX * SCALE_FACTOR);
         const accelDeltaY = displacementY * (velocityY * SCALE_FACTOR);
-
-        //console.log("Last position: ", lastPos.current);
-        //console.log("Mouse moved by: ", accelDeltaX, accelDeltaY);
 
         tDisplacement.current.x += accelDeltaX;
         tDisplacement.current.y += accelDeltaY;
@@ -171,7 +158,6 @@ export default function LiveCapture() {
         var mousePacket = createMouseStream(mouseFrames, LClick, RClick, scrollDelta);
         sendEncrypted(mousePacket);
 
-        console.log("Mouse packet to send: ", mousePacket);
         displacementList.current = []; // reset list
     }
 

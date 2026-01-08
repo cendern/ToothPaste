@@ -47,12 +47,10 @@ export const ECDHProvider = ({ children }) => {
     // Save self base64 uncompressed public and private keys
     const saveKeys = async (clientID) => {
         if (!keyPair.current) {
-            console.log("No keypair generated before saveSelfKeys was called");
             return;
         }
         
         if (!aesKeyB64.current) {
-            console.log("Must call deriveKey before saveSelfKeys");
             return;
         }
 
@@ -70,7 +68,6 @@ export const ECDHProvider = ({ children }) => {
         await saveBase64(clientID, "aesKey", aesKeyB64.current);
         //await saveBase64(clientID, "SelfPrivateKey", privateKey);
 
-        console.log("Self public key saved:", b64SelfPubkey);
         return;
     };
 
@@ -139,7 +136,6 @@ export const ECDHProvider = ({ children }) => {
 
         const PeerPublicKeyBase64 = await arrayBufferToBase64(peerPublicKey);
         await saveBase64(clientID, "PeerPublicKey", PeerPublicKeyBase64);
-        console.log("Peer public key saved:", PeerPublicKeyBase64);
     };
 
     // Derive shared secret using ECDH store it in the sharedSecret variable
@@ -270,7 +266,6 @@ export const ECDHProvider = ({ children }) => {
 
     const loadKeys = async (clientID) => {
         const peerPubKey = await loadBase64(clientID, "PeerPublicKey");
-        console.log("Peer pubkey: ", peerPubKey);
         const pubKeyObject = await importPeerPublicKey(base64ToArrayBuffer(peerPubKey));
 
         var aesKeyB64 = await loadBase64(clientID, "aesKey");

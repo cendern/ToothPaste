@@ -124,9 +124,7 @@ function ConnectionButton() {
     useEffect(() => {
         if (isEditing === false && wasLongPressed) {
             // This runs only when isEditing becomes false
-            console.log("Editing finished!");
             if(device?.name !== name){
-                console.log("Renaming Device");
                 setName(name+'\0')
 
                 var renamePacket = createRenamePacket(name);

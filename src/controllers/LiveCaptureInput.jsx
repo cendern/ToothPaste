@@ -86,7 +86,6 @@ export function useInputController() {
             }
             // If there are any special events that dont modify the buffer, send them as keycodes
             if (keycode[1] !== 0) {
-                console.log("Sending keycode");
                 sendEncrypted(keycode);
                 keycode[1] = 0;
             }
@@ -109,10 +108,6 @@ export function useInputController() {
 
         var packet = createKeyboardPacket(payload);
         sendEncrypted(packet); // Send the final payload
-
-
-        console.log("Current:", current);
-        console.log("Previous:", previous);
 
     }, [createEncryptedPackets, pktCharacteristic, readyToReceive]);
 
@@ -142,8 +137,6 @@ export function useInputController() {
         // TODO: 
         // Input: "", <Backspace>, "" -> "abc" 
         // Send: "abcd", Send 'Backspace', "\b"
-
-        console.log("Keydown event: ", e.key, "Code: ", e.code);
 
         // Handle inputs with modifiers (Ctrl + c, Alt + x, etc.). Don't prevent default behaviour until this point to allow selecting input modes
         if(handleCombo(e)) return;
@@ -254,7 +247,6 @@ export function useInputController() {
         let keypress = HIDMap[e.key]? HIDMap[e.key] : e.key; // Check if the key is a HIDMap character, otherwise the key is a printing character
         let keypressCode = typeof(keypress) === 'string'? keypress.charCodeAt(0) : keypress;
 
-        console.log("Keypress, modifier: ", keypress, modifierByte, anotherModifierByte);
         if(!(modifierByte || HIDMap[e.key])) return false; // If there is no modifier and the key is not in the HIDMap command edits buffer, handle in sendDiff
 
         let keycode = new Uint8Array(8);
@@ -262,7 +254,6 @@ export function useInputController() {
         keycode[1] = anotherModifierByte;
         keycode[2] = keypressCode;
 
-        console.log("Creating Packet From: ", keycode);
         var keyCodePacket = createKeyCodePacket(keycode);
         sendEncrypted(keyCodePacket);
         
@@ -271,7 +262,6 @@ export function useInputController() {
 
     // When a key is released
     const handleKeyUp = (e) => {
-        //console.log("Keyup event: ", e.key, "Code: ", e.code);
         if (e.key === "Control") {
             ctrlPressed.current = false;
         }
@@ -289,7 +279,6 @@ export function useInputController() {
 
     // When the input is a result of an IME non-composition event, it contains NEW data
     const handleOnBeforeInput = (event) => {
-        console.log("Touch input event handled in beforeInput: ", event.data);
         isIMERef.current = true; // Set IME flag on beforeinput
         
         // Ignore any intermediate composition events
@@ -307,19 +296,11 @@ export function useInputController() {
 
     // Composition event handlers
     function handleCompositionStart(event) {
-        console.log("Composition started++++++++++++++");
         isComposingRef.current = true;
-        
-        console.log("Event target value: ", event.target.value);
-        console.log("Last input value: ", lastCompositionRef.current);
- 
-
     };
 
     // When composition ends it contains a CORRECTED word, which is presumably the final word typed
-    function handleCompositionEnd(event) {
-        console.log("Composition ended with data: ", event.data);
-        
+    function handleCompositionEnd(event) {        
         var lastInput = (lastCompositionRef.current).trim(); 
         var isPartialComplete = (lastInput !== ""); // If the last input is not a character, we assume fully autofilled word
 
@@ -331,10 +312,7 @@ export function useInputController() {
                 sendKeyCode({key: "Backspace"}, 0x80); // Delete the word typed word (ctrl + backspace)
             }
             updateBufferAndSend(bufferRef.current + event.data); // Add the new word
-        }
-        
-        console.log("");
-        
+        }        
         //inputRef.current.value = " "; // Clear the input field (add a space to avoid auto capitalizing every word)
         lastCompositionRef.current = "";
         lastInputRef.current = inputRef.current.value; // Update last input value to the new word
@@ -342,12 +320,8 @@ export function useInputController() {
     };
     
     function handleOnChange(event) {
-        console.log("Input changed: ", event.target.value);
-        console.log("Last input value: ", lastInputRef.current);
-
         // If the onChange event is fired but input size has shrunk, backspace was pressed
         if (lastInputRef.current.length > event.target.value.length) {
-            console.log("Handling backspace for input change");
             handleSpecialKey({key:"Backspace"}, bufferRef.current);
             lastCompositionRef.current = lastCompositionRef.current.slice(0, -1); // Keep the lastinput buffer updated
         }

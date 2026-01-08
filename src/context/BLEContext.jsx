@@ -62,7 +62,6 @@ export function BLEProvider({ children }) {
 
     // Send a text string as a byte array without encryption
     const sendUnencrypted = async (inputString) => {
-        console.log("Sending unencrypted data:", inputString);
         try {
             const encoder = new TextEncoder();
             const textData = encoder.encode(inputString); // Encode the input string into a byte array
@@ -77,10 +76,7 @@ export function BLEProvider({ children }) {
             unencryptedPacket.tag = new Uint8Array(16); // Empty tag for unencrypted packet
             unencryptedPacket.iv = new Uint8Array(12); // Empty IV for unencrypted packet
 
-            console.log("Unencrypted Packet:", unencryptedPacket);
             const packetData = toBinary(ToothPacketPB.DataPacketSchema, unencryptedPacket);
-
-            console.log("Packet data to send:", packetData);
 
             await pktCharRef.current.writeValueWithoutResponse(packetData);
         } catch (error) {
@@ -100,11 +96,9 @@ export function BLEProvider({ children }) {
 
         try {
             var count = 0;
-            console.log("Encrypt starting....");
 
             for await (const packet of createEncryptedPackets(0, inputPayload, true, prefix)) {
                 // Each packet is a ToothPaste DataPacket object with encryptedData component
-                console.log("Sending packet ", count);
                 await pktCharacteristic.writeValueWithoutResponse(
                     //packet.serialize()
                     // packet.serializeBinary()
@@ -123,13 +117,10 @@ export function BLEProvider({ children }) {
 
     // Try to load the self public key from storage and send it unencrypted
     const sendAuth = async (device) => {
-        console.log("SendAuth entered");
         if (!pktCharRef.current) return;
 
         try {
             const selfpkey = await loadBase64(device.macAddress, "SelfPublicKey");
-            console.log("Send starting....");
-            console.log(selfpkey);
 
             // If the public key is found send it to verify auth
             if (selfpkey) {
@@ -150,9 +141,6 @@ export function BLEProvider({ children }) {
                 // Convert value (DataView) to string or bytes
                 const packetType = (packed >> 4) & 0x0f; // upper 4 bits
                 const authStatus = packed & 0x0f; // lower 4 bits
-
-                console.log("AuthStatus:", authStatus);
-                console.log("PacketType:", packetType);
 
                 // If the device isnt authenticated it needs to be paired first
                 if (authStatus === 0) {
@@ -217,7 +205,6 @@ export function BLEProvider({ children }) {
                 macStr += dataView.getUint8(i).toString(16).padStart(2, '0');
             }
             device.macAddress = macStr;
-            console.log("MAC Address string:", macStr);
 
             setServer(server);
             setpktCharacteristic(pktCharRef.current);

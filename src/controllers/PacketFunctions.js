@@ -70,10 +70,6 @@ export function createMousePacket(x, y, leftClick = false, rightClick = false) {
 
 // Return an EncryptedData packet containing a MousePacket
 export function createMouseStream(frames, leftClick = false, rightClick = false, scrollDelta = 0) {
-    
-    
-    console.log("List of frames to create mouse packet:", frames);
-
     const mousePacket = create(ToothPacketPB.MousePacketSchema, {});
     
     for (let frame of frames) {
@@ -87,8 +83,6 @@ export function createMouseStream(frames, leftClick = false, rightClick = false,
     mousePacket.lClick = Number(leftClick);
     mousePacket.rClick = Number(rightClick);
     mousePacket.wheel = scrollDelta;
-
-    console.log("Creating mouse packet with frames:", mousePacket);
 
     const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
         packetType: ToothPacketPB.EncryptedData_PacketType.MOUSE,
