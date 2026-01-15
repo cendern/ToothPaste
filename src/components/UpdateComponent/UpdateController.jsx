@@ -25,7 +25,7 @@ export default function UpdateController({onChangeOverlay}) {
   const esploaderRef = useRef(null);
   const transportRef = useRef(null);
 
-  const FIRMWARE_URL = "https://www.toothpasteapp.com/ClipBoardFirmware.bin"; // change to your URL
+  const FIRMWARE_URL = "/ClipBoardFirmware.bin"; // change to your URL
 
   // Connect to ESP32
   const connect = async () => {
