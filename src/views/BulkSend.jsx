@@ -3,8 +3,6 @@ import { Button, Typography } from "@material-tailwind/react";
 import { Textarea } from "@material-tailwind/react";
 import { BLEContext } from '../context/BLEContext';
 import { HomeIcon, PaperAirplaneIcon, ClipboardIcon } from "@heroicons/react/24/outline";
-import CustomTyping from '../components/CustomTyping/CustomTyping';
-import RichTextArea from '../components/RichTextArea/RichTextArea';
 import { createKeyboardPacket } from '../controllers/PacketFunctions.js';
 
 
@@ -77,11 +75,20 @@ export default function BulkSend() {
             <div className="flex flex-col flex-1 mt-5">
                 {/* <CustomTyping> </CustomTyping> */}
 
-                <RichTextArea onKeyDownCapture={handleShortcut} onChange={(text) => setInput(text)} />
+                {/* <RichTextArea onKeyDownCapture={handleShortcut} onChange={(text) => setInput(text)} /> */}
+                <Textarea
+                    className={`flex flex-1 resize-none bg-shelf border-2 focus:border-hover focus:ring-0 outline-none text-text ${status===1?'border-primary':'border-secondary'} `}
+                    ref={editorRef}
+                    value={input}
+                    size="lg"
+                    placeholder="Type or paste text here..."
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleShortcut}
+                />
                 <Button
                     onClick={sendString}
                     disabled={status !== 1}
-                    className='my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-lg disabled:bg-hover'>
+                    className='my-4 bg-primary disabled:bg-hover disabled:border-secondary text-text active:bg-primary-active flex items-center justify-center size-lg '>
 
                     <ClipboardIcon className="h-7 w-7 mr-2" />
 

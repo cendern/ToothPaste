@@ -711,10 +711,11 @@ function FloatingLinkEditor({ editor }) {
             <Typography
               as="a"
               variant="small"
+              color="blue"
               href={linkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mr-8 block overflow-hidden text-ellipsis whitespace-nowrap font-normal no-underline hover:underline text-blue-500"
+              className="mr-8 block overflow-hidden text-ellipsis whitespace-nowrap font-normal no-underline hover:underline"
             >
               {linkUrl}
             </Typography>
@@ -861,17 +862,18 @@ function ToolbarPlugin() {
  
   return (
     <div
-      className="m-1 flex items-center gap-0.5 rounded-lg bg-gray-100 p-1 text-gray-900"
+      className="m-1 flex items-center gap-0.5 rounded-lg bg-shelf p-1"
+      color="text"
       ref={toolbarRef}
     >
       {supportedBlockTypes.has(blockType) && (
         <>
           <Button
-            variant="text"
+            //variant="text"
             onClick={() =>
               setShowBlockOptionsDropDown(!showBlockOptionsDropDown)
             }
-            className="flex items-center gap-1 font-medium capitalize text-gray-900"
+            className="flex items-center gap-1 font-medium capitalize text-text color-text"
             aria-label="Formatting Options"
           >
             {blockTypeToBlockName[blockType]}
@@ -913,12 +915,13 @@ function ToolbarPlugin() {
       ) : (
         <>
           <IconButton
-            variant={isBold ? "filled" : "text"}
+            //variant={isBold ? "filled" : "text"}
+            variant = "solid"
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
             }}
             aria-label="Format Bold"
-            className="text-gray-900"
+            className= "text-text"
           >
             <svg
               strokeWidth="1.5"
@@ -936,12 +939,14 @@ function ToolbarPlugin() {
             </svg>
           </IconButton>
           <IconButton
-            variant={isItalic ? "filled" : "text"}
+            //variant={isItalic ? "filled" : "text"}
+            variant = "solid"
+
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
             }}
             aria-label="Format Italics"
-            className="text-gray-900"
+            className= "text-text"
           >
             <svg
               strokeWidth="1.5"
@@ -961,12 +966,13 @@ function ToolbarPlugin() {
             </svg>
           </IconButton>
           <IconButton
-            variant={isCode ? "filled" : "text"}
+            //variant={isCode ? "filled" : "text"}
+            variant = "solid"
             onClick={() => {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
             }}
             aria-label="Insert Code"
-            className="text-gray-900"
+            className= "text-text"
           >
             <svg
               strokeWidth="1.5"
@@ -1001,9 +1007,10 @@ function ToolbarPlugin() {
           </IconButton>
           <IconButton
             onClick={insertLink}
-            variant={isLink ? "filled" : "text"}
+            //variant={isLink ? "filled" : "text"}
+            variant = "solid"
             aria-label="Insert Link"
-            className="text-gray-900"
+            className= "text-text"
           >
             <svg
               strokeWidth="1.5"
@@ -1059,10 +1066,10 @@ export default function RichTextArea({onChange, onKeyDownCapture}) {
   
   return (
     <LexicalComposer initialConfig={editorConfig}>
-      <div className={`flex flex-1 flex-col overflow-hidden rounded-xl transition-all border ${isFocused? 'border-blue-500':'border-gray-300'} bg-transparent text-left font-normal leading-5 text-gray-900 overflow-hidden`}>
-        <ToolbarPlugin />
+      <div className={`flex flex-1 flex-col overflow-hidden rounded-xl transition-all border ${isFocused? 'border-hover':'border-shelf'} bg-transparent text-left font-normal leading-5 text-text overflow-hidden`}>
+        {/* <ToolbarPlugin /> */}
         
-        <div className="flex-1 relative overflow-y-auto rounded-b-lg border-opacity-5 bg-transparent">
+        <div className="flex-1 relative overflow-y-auto rounded-b-lg border-opacity-5 bg-shelf">
           <RichTextPlugin
             
             contentEditable={
