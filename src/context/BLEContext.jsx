@@ -85,29 +85,33 @@ export function BLEProvider({ children }) {
     };
 
     // Encrypt and send untyped data stream (string, array, etc.) with a random IV and GCM tag added, chunk data if too large
-    // inputarray contains the raw data to send in all packet types (encoding into protobuf must be done by the calling function)
+    // inputPayload can be a single payload or an array of payloads
+    // Encrypts all payloads first, then sends them one at a time while waiting for the connection semaphore
+    // (encoding into protobuf must be done by the calling function)
     const sendEncrypted = async (inputPayload, prefix=0) => {
         if (!pktCharacteristic) return;
 
-        // if (!(inputPayload instanceof ToothPacketPB.EncryptedDataSchema)) {
-        //     console.error("Input payload is not an EncryptedData packet");
-        //     return;
-        // }
-
         try {
-            var count = 0;
-
-            for await (const packet of createEncryptedPackets(0, inputPayload, true, prefix)) {
+            // Determine if input is an array or single payload
+            const payloads = Array.isArray(inputPayload) ? inputPayload : [inputPayload];
+            
+            // Encrypt all payloads first
+            const encryptedPackets = [];
+            for (const payload of payloads) {
+                for await (const packet of createEncryptedPackets(0, payload, true, prefix)) {
+                    encryptedPackets.push(packet);
+                }
+            }
+            
+            // Now send all encrypted packets
+            for (const packet of encryptedPackets) {
                 // Each packet is a ToothPaste DataPacket object with encryptedData component
                 await pktCharacteristic.writeValueWithoutResponse(
-                    //packet.serialize()
-                    // packet.serializeBinary()
                     toBinary(ToothPacketPB.DataPacketSchema, packet)
                 );
 
                 await waitForReady(); // Attach a promise to the ref
                 await readyToReceive.current.promise; // Wait in this iteration of the loop till the promise is consumed
-                count++;
             }
         } catch (error) {
             console.error("Error sending encrypted packet", error);

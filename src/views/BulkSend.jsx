@@ -3,7 +3,7 @@ import { Button, Typography } from "@material-tailwind/react";
 import { Textarea } from "@material-tailwind/react";
 import { BLEContext } from '../context/BLEContext';
 import { HomeIcon, PaperAirplaneIcon, ClipboardIcon } from "@heroicons/react/24/outline";
-import { createKeyboardPacket } from '../controllers/PacketFunctions.js';
+import { createKeyboardPacket, createKeyboardStream } from '../controllers/PacketFunctions.js';
 
 
 
@@ -18,9 +18,11 @@ export default function BulkSend() {
         if (!input) return;
 
         try {
-            var packet = createKeyboardPacket(input);
-            sendEncrypted(packet);
-        } catch (error) { 
+            var packets = createKeyboardStream(input);
+            sendEncrypted(packets);
+        } 
+        
+        catch (error) { 
             console.error(error); 
         }
     };
@@ -77,7 +79,8 @@ export default function BulkSend() {
 
                 {/* <RichTextArea onKeyDownCapture={handleShortcut} onChange={(text) => setInput(text)} /> */}
                 <Textarea
-                    className={`flex flex-1 resize-none bg-shelf border-2 focus:border-hover focus:ring-0 outline-none text-text ${status===1?'border-primary':'border-secondary'} `}
+                    className={`flex flex-1 resize-none bg-shelf border-2 focus:border-hover outline-none text-text 
+                        ${status===1?'hover:border-primary border-primary':'hover:border-secondary border-secondary'} `}
                     ref={editorRef}
                     value={input}
                     size="lg"

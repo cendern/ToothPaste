@@ -245,23 +245,6 @@ export const ECDHProvider = ({ children }) => {
         encryptedPacket.totalPackets = 1;
 
         yield encryptedPacket;
-
-        // const totalChunks = Math.ceil(data.length / Packet.MAX_DATA_SIZE);
-        // if (totalChunks > 254) return;
-
-        // for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
-        //     const chunkData = data.slice(chunkNumber * Packet.MAX_DATA_SIZE, (chunkNumber + 1) * Packet.MAX_DATA_SIZE);
-
-        //     // Prepend a 0 byte to ensure all encrypted chunks start with 0 if string data
-        //     var outputArray = data;
-        //     if(stringData){
-        //         outputArray = new Uint8Array(chunkData.length + 1);
-        //         outputArray[0] = packetPrefix;
-        //         outputArray.set(chunkData, 1);
-        //     }
-
-        //     //var toothPacket = new DataPacket();
-        // }
     };
 
     const loadKeys = async (clientID) => {

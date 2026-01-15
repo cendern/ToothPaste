@@ -98,8 +98,6 @@ export function createMouseStream(frames, leftClick = false, rightClick = false,
 // Return an EncryptedData packet containing a KeyboardPacket
 export function createKeyboardPacket(keyString) {
 
-    // Chunk long keyString into manageable pieces 
-
     const keyboardPacket = create(ToothPacketPB.KeyboardPacketSchema, {});
     keyboardPacket.message = keyString;
     keyboardPacket.length = keyString.length;
@@ -114,6 +112,38 @@ export function createKeyboardPacket(keyString) {
 
 
     return encryptedPacket
+}
+
+export function createKeyboardStream(keyStrings) {
+    // Handle both single string and array of strings
+    let fullString = Array.isArray(keyStrings) ? keyStrings.join('') : keyStrings;
+    
+    // Filter out emoji and non-standard characters
+    fullString = fullString.replace(/[\p{Emoji}\p{Emoji_Component}]/gu, '');
+    
+    const packets = [];
+    const chunkSize = 100; // Max characters per packet
+    
+    // Split string into chunks and create a packet for each
+    for (let i = 0; i < fullString.length; i += chunkSize) {
+        const chunk = fullString.substring(i, i + chunkSize);
+        
+        const keyboardPacket = create(ToothPacketPB.KeyboardPacketSchema, {});
+        keyboardPacket.message = chunk;
+        keyboardPacket.length = chunk.length;
+        
+        const encryptedPacket = create(ToothPacketPB.EncryptedDataSchema, {
+            packetType: ToothPacketPB.EncryptedData_PacketType.KEYBOARD_STRING,
+            packetData: {
+                case: "keyboardPacket",
+                value: keyboardPacket,
+            },
+        });
+        
+        packets.push(encryptedPacket);
+    }
+    
+    return packets;
 }
 
 // Return an EncryptedData packet containing a KeycodePacket
