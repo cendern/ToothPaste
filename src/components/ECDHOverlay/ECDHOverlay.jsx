@@ -96,7 +96,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                 </button>
 
                 <Typography variant="h4" className="text-text font-sans normal-case font-semibold">
-                    <span className="text-hover">Pair Device - </span>
+                    <span className="text-gray-500">Pair Device - </span>
                     <span className="text-text">{device.name}</span>
                 </Typography>
                             
@@ -111,7 +111,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
 
                 <Button
                     ref={keyRef}
-                    onClick={handleSubmit}
+                    onClick={computeSecret}
                     loading={isLoading.toString()}
                     disabled={keyInput.trim().length < 44 || !pktCharacteristic || isLoading}
                     className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm'>
@@ -122,19 +122,23 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                     <Typography variant="h6" className={`text-text font-sans normal-case font-semibold ${isLoading? "hidden":""}`}>Pair</Typography>
                 </Button>
 
-                <Typography variant="h6" className={`text-text text-sm text-center mb-5`}>
-                    How to Pair your ToothPaste Device:
+
+                <Typography variant="h6" className={`text-text text-sm text-center my-2`}>
+                        How to Pair your ToothPaste Device:
                 </Typography>
 
-                <Typography variant="h6" className={`text-text text-sm text-left mb-1`}> 
-                    1. Click the Pairing Key text input above to highlight it.
-                </Typography>
-
-                <Typography variant="h6" className={`text-text text-sm text-center mb-10`}>
-                    2. Hold the Button on your ToothPaste for 10 seconds until the LED starts blinking.
-                </Typography>
+                <div className="bg-hover rounded-lg p-4 my-2">
 
 
+                    <Typography variant="h6" className={`text-text text-md text-center mb-2`}> 
+                        1. Click the Pairing Key text input above to highlight it.
+                    </Typography>
+
+                    <Typography variant="h6" className={`text-text text-md text-center`}>
+                        2. Hold the Button on your ToothPaste for 10 seconds until the LED starts blinking.
+                    </Typography>
+
+                </div>
 
                 <Typography variant="h6" className={`text-primary text-sm text-center mt-2`}>     
                     The device will input the pairing key into the text box, wait for it finish and the device will be paired.  

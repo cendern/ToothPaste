@@ -154,12 +154,12 @@ export default function UpdateController({onChangeOverlay}) {
                     <Typography variant="h6" className={`text-text font-sans normal-case font-semibold`}>Write</Typography>
                 </Button>
 
-                <Typography variant="h6" className={`text-gray-700 text-sm text-center ${connected ? "hidden" : ""}`}>
+                <Typography variant="h6" className={`text-gray-300 text-sm text-center ${connected ? "hidden" : ""}`}>
                   Hold down the button on your ToothPaste while plugging it in to a USB port to enter pairing mode. 
                   Then click "Pair" and find the device in the list.
                 </Typography>
 
-                <Typography variant="h6" className={`text-gray-700 text-sm text-center ${status === UpdateStatus.COMPLETE ? "" : "hidden"}`}>
+                <Typography variant="h6" className={`text-gray-300 text-sm text-center ${status === UpdateStatus.COMPLETE ? "" : "hidden"}`}>
                   Your ToothPaste has been updated successfully! Unplug and replug it to get started.
                 </Typography>
 
