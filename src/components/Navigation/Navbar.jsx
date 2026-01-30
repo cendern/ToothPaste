@@ -281,7 +281,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <button
                         disabled={false}
                         className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
-                            activeView === "update" ? "disabled:border-hover border border-text" : "hover:bg-hover"
+                            activeView === "about" ? "disabled:border-hover border border-text" : "hover:bg-hover"
                         }`}
                         onClick={() => onNavigate("about")}
                     >
