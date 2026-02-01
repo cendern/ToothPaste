@@ -198,25 +198,36 @@ export default function About() {
                     pointerEvents: getSectionOpacity(1) > 0.5 ? 'auto' : 'none'
                 }}
             >
-                <div className="max-w-6xl w-full">
+                <div className="max-w-7xl w-full">
                     <div className="flex flex-col gap-8">
                         <div className="flex items-center gap-4">
                             <LockClosedIcon className="h-12 w-12 text-primary flex-shrink-0" />
-                            <Typography variant="h2" className="text-text font-bold">
+                            <Typography type="h2" className="text-text font-bold">
                                 Why?
                             </Typography>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="flex items-start gap-4">
-                                <Typography variant="h4" className="text-lg text-white leading-relaxed">
-                                    I built ToothPaste to solve the problem of securely transferring text like passwords, notes, and other sensitive information
-                                    between devices without relying on cloud services or complicated software installations.
+                        
+                        <Typography type="h4" className="text-3xl text-white leading-relaxed">
+                            As a student and tinkerer, I often found myself needing to paste information to devices that I didn't want to connect to the internet or install apps on.
+                        </Typography>
+                        
+                        <div className="grid grid-cols-3 gap-8">
+                            <div className="flex flex-col col-span-1 gap-4">
+                                <Typography type="h4" className="text-3xl font-extralight text-orange leading-relaxed">
+                                    MakerSpaces.
+                                </Typography>
+                                <Typography type="h4" className="text-3xl font-extralight text-orange leading-relaxed">
+                                    Libraries.
+                                </Typography>
+                                <Typography type="h4" className="text-3xl font-extralight text-orange leading-relaxed">
+                                    Vulnerable systems I'm definitely not trying to hack.
                                 </Typography>
                             </div>
-                            <Typography variant="h4" className="text-3xl text-white leading-relaxed">
-                                As a student and tinkerer, I often found myself needing to paste information to devices that I didn't want to connect to the internet or install apps on.
-                                ToothPaste provides a simple, secure, and offline solution to this problem.
-                            </Typography>
+                            <div className="flex col-span-2 items-start gap-4">
+                                <Typography type="h4" className="text-lg text-white leading-relaxed">
+                                   Usually this involves emailing myself, using cloud clipboard services, or texting myself.
+                                </Typography>
+                            </div>
                         </div>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-white mt-20">
