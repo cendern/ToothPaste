@@ -35,16 +35,15 @@ TaskHandle_t keyboardTaskHandle = nullptr;
 IDFHIDKeyboard keyboard0(0); // Boot Keyboard
 IDFHIDMouse mouse(1);
 IDFHIDConsumerControl control(2);
-//IDFHIDSystemControl syscontrol(3);
 
 void hidSetup()
 { 
   tudsetup();
   
+  keyboard0.begin(); // This creates the keyboard ascii layout instance, probably not the best way to handle it???
+  startKeyboardTask();
 
-  // if(ARDUINO_USB_CDC_ON_BOOT) USBSerial.begin(); 
-  keyboard0.begin();
-  startKeyboard();
+
   //keyboard1.begin();
   // mouse.begin();
   // control.begin();
@@ -78,6 +77,8 @@ void sendString(const char *str, bool slowMode)
   // }
   // else
   //   sendStringSlow(str, SLOWMODE_DELAY_MS);
+
+
   QueueStringItem item;
   strncpy(item.data, str, MAX_QUEUE_STRING_LEN - 1);
   item.data[MAX_QUEUE_STRING_LEN - 1] = '\0';
@@ -221,16 +222,24 @@ void moveMouse(toothpaste_MousePacket& mousePacket) {
 
 
 
-// Persistent RTOS task for mouse jiggle
-void jiggleTask(void* params)
-{
-  while (mouseJiggleEnabled) {
-    jiggleMouse();
-  }
-  // Task exits gracefully when flag is set to false
-  vTaskDelete(NULL);  // Delete self
+
+// Simple mouse jiggle function to prevent screen sleep
+void jiggleMouse(){
+
+  // Use CPU timer ticks for efficient pseudo-random values (no malloc/heavy RNG overhead)
+  uint64_t ticks = esp_timer_get_time();
+  
+  // Generate random offsets from timer ticks: range -3 to 3
+  int32_t x = (int32_t)((ticks % 7) - 3);
+  int32_t y = (int32_t)(((ticks >> 16) % 7) - 3);
+  
+  moveMouse(x, y, 0, 0, 0);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  moveMouse(-x, -y, 0, 0, 0);
+  vTaskDelay(pdMS_TO_TICKS(1000));
 }
 
+// ##################### RTOS Tasks + Helpers #################### //
 
 void keyboardTask(void* params)
 {
@@ -245,9 +254,8 @@ void keyboardTask(void* params)
   vTaskDelete(NULL);  // Delete self
 }
 
-
 // Start the persistent keyboard queue task
-void startKeyboard()
+void startKeyboardTask()
 {
   if (keyboardTaskHandle == nullptr) {
     keyboardStarted = true;  // Set flag before creating task
@@ -261,6 +269,16 @@ void startKeyboard()
       1
     );
   }
+}
+
+// Persistent RTOS task for mouse jiggle
+void jiggleTask(void* params)
+{
+  while (mouseJiggleEnabled) {
+    jiggleMouse();
+  }
+  // Task exits gracefully when flag is set to false
+  vTaskDelete(NULL);  // Delete self
 }
 
 // Start the jiggle task
@@ -290,22 +308,6 @@ void stopJiggle()
   }
 }
 
-// Simple mouse jiggle function to prevent screen sleep
-void jiggleMouse(){
-
-  // Use CPU timer ticks for efficient pseudo-random values (no malloc/heavy RNG overhead)
-  uint64_t ticks = esp_timer_get_time();
-  
-  // Generate random offsets from timer ticks: range -3 to 3
-  int32_t x = (int32_t)((ticks % 7) - 3);
-  int32_t y = (int32_t)(((ticks >> 16) % 7) - 3);
-  
-  moveMouse(x, y, 0, 0, 0);
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  moveMouse(-x, -y, 0, 0, 0);
-  vTaskDelay(pdMS_TO_TICKS(1000));
-}
-
 // ##################### Delay Functions #################### //
 // Timer callback must match `void (*)(void *)`
 void sendStringCallback(void *arg)
@@ -330,24 +332,27 @@ void sendStringDelay(void *arg, int delayms){
 //------------------------TINYUSB Callbacks------------------------------//
 
 // Callback triggered by TinyUSB once the HOST consumes the current report
-void tud_hid_report_complete_cb(uint8_t instance, uint8_t const *report, uint16_t len) {
-  DEBUG_SERIAL_PRINTLN("Report complete callback entered");
-  switch(instance){
-    case 0:
-      // keyboard0.unlock();
-      ESP_LOGI("HID", "Keyboard 0 report complete");
-      break;
+// TODO: Actually use this callback to manage report sending state, for now this blocks forever if the host is not ready
 
-    case 1:
-      // keyboard0.unlock();
-      ESP_LOGI("HID", "Keyboard 1 report complete");
-      break;
 
-    case 2:
-      control.unlock();
-      break;
+// void tud_hid_report_complete_cb(uint8_t instance, uint8_t const *report, uint16_t len) {
+//   DEBUG_SERIAL_PRINTLN("Report complete callback entered");
+//   switch(instance){
+//     case 0:
+//       // keyboard0.unlock();
+//       ESP_LOGI("HID", "Keyboard 0 report complete");
+//       break;
 
-    default:
-      break;
-  }
-}
+//     case 1:
+//       // keyboard0.unlock();
+//       ESP_LOGI("HID", "Keyboard 1 report complete");
+//       break;
+
+//     case 2:
+//       control.unlock();
+//       break;
+
+//     default:
+//       break;
+//   }
+// }

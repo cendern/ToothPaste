@@ -118,6 +118,8 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
       delete taskParams;
     }
   }
+
+  queuenotify(); // Immediately notify the semaphore if the queue has space for more tasks
 }
 
 // Create the BLE Device
@@ -125,7 +127,7 @@ void bleSetup(SecureSession* session)
 {
   
   createPacketTask(session); // Create the persistent RTOS packet handler task
-  startKeyboard();
+  startKeyboardTask();
   // Get the device name and start advertising 
   String deviceName;
   session->getDeviceName(deviceName); // Get the device name from memory
@@ -202,12 +204,26 @@ void notifyClient(const uint8_t* data, int length) {
   semaphoreCharacteristic->notify();                           // Notify the semaphor characteristic
 }
 
-// Notify the semaphore characteristic
+// Notify the semaphore characteristic with default values
 void notifyClient() {
   uint8_t packed = ((notificationPacket.packetType & 0x0F) << 4) | (notificationPacket.authStatus & 0x0F);
 
   semaphoreCharacteristic->setValue((uint8_t*)&packed, 1);  // Set the data to be notified
   semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
+}
+
+// Notify the semaphore characteristic if the RTOS task queue is not full
+void queuenotify() {
+  if (uxQueueSpacesAvailable(packetQueue) == 0) {
+    DEBUG_SERIAL_PRINTLN("Queue is full!");
+    return;
+  }
+
+  else {
+    notificationPacket.packetType = RECV_READY;
+    notifyClient();
+    printf("Queue has space: %d\n", uxQueueSpacesAvailable(packetQueue));
+  }
 }
 
 // Use the AUTH packet and peer public key to derive a new ecdh shared secret and AES key
@@ -272,41 +288,6 @@ void generateSharedSecret(toothpaste_DataPacket* packet, SecureSession* session)
   DEBUG_SERIAL_PRINTLN("Pairing mode disabled.");
 
   return;
-}
-
-// Turns a BLE callback bytestring into a ClipBoard packet
-SecureSession::rawDataPacket unpack(void* rawPacketBytes) {
-  std::string* rawValue = reinterpret_cast<std::string*>(rawPacketBytes);
-  const uint8_t* raw = reinterpret_cast<const uint8_t*>(rawValue->data()); // Pointer to the heap copy of the received data
-
-  DEBUG_SERIAL_PRINTF("rawValue Length: %d\n\r", rawValue->length());
-  //DEBUG_SERIAL_PRINTF("raw Length: %d\n\r", rawValue->length());
-
-  SecureSession::rawDataPacket packet; // Packet instance inside RTOS task
-  size_t offset = 0;
-
-  // Unpack the first 4 bytes (header) into packet vars
-  packet.packetId = raw[0];      // Unique ID for type of packet (0 = DATA, 1 = HANDSHAKE)
-  packet.slowmode = raw[1];      // When enabled reduces the wpm and slows down HID timing to enable legacy text input compatibility (notepad)
-  packet.packetNumber = raw[2];  // Current packet number out of total
-  packet.totalPackets = raw[3];  // Total packets for current message
-  offset += SecureSession::HEADER_SIZE;
-
-  // Copy IV
-  memcpy(packet.IV, raw + offset, SecureSession::IV_SIZE);
-  offset += SecureSession::IV_SIZE;
-
-  // Copy ciphertext
-  size_t dataLength = (rawValue->length()) - (SecureSession::IV_SIZE + SecureSession::TAG_SIZE + SecureSession::HEADER_SIZE);
-  packet.dataLen = dataLength;
-  memcpy(packet.data, raw + offset, dataLength);
-  offset += dataLength;
-
-  // Copy tag
-  memcpy(packet.TAG, raw + offset, SecureSession::TAG_SIZE);
-  offset += SecureSession::TAG_SIZE;
-
-  return packet;
 }
 
 // Decrypt a data packet and type the text content as a string
@@ -462,9 +443,6 @@ void packetTask(void* params)
     // Wait indefinitely for next packet pointer
     if (xQueueReceive(packetQueue, &taskParams, portMAX_DELAY) == pdTRUE) {
       if (taskParams) {
-        //std::string* rawValue = taskParams->rawValue;
-        //SecureSession::rawDataPacket packet = unpack(rawValue);
-
         DEBUG_SERIAL_PRINTF("Time entering packet decode: %lld us\n", esp_timer_get_time());
         // Decode protobuf
         toothpaste_DataPacket toothPacket = toothpaste_DataPacket_init_default;
@@ -512,6 +490,7 @@ void packetTask(void* params)
 
         delete taskParams; // Free the parameter struct
       }
+      queuenotify(); // Immediately notify the semaphore if the queue has space for more tasks
     }
   }
 }
