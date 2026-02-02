@@ -99,7 +99,7 @@ message NotificationPacket{
     enum NotificationType{
         KEEPALIVE = 0;
         RECV_READY = 1;
-        RECV_NOT_READY =2;
+        RECV_NOT_READY = 2;
     }
 
     // Indicate if the transmitter is authorized to send any packets (failure in auth = packet ignored)

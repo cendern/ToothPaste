@@ -118,8 +118,6 @@ void InputCharacteristicCallbacks::onWrite(BLECharacteristic* inputCharacteristi
       delete taskParams;
     }
   }
-
-  queuenotify(); // Immediately notify the semaphore if the queue has space for more tasks
 }
 
 // Create the BLE Device
@@ -210,20 +208,6 @@ void notifyClient() {
 
   semaphoreCharacteristic->setValue((uint8_t*)&packed, 1);  // Set the data to be notified
   semaphoreCharacteristic->notify();                      // Notify the semaphor characteristic
-}
-
-// Notify the semaphore characteristic if the RTOS task queue is not full
-void queuenotify() {
-  if (uxQueueSpacesAvailable(packetQueue) == 0) {
-    DEBUG_SERIAL_PRINTLN("Queue is full!");
-    return;
-  }
-
-  else {
-    notificationPacket.packetType = RECV_READY;
-    notifyClient();
-    printf("Queue has space: %d\n", uxQueueSpacesAvailable(packetQueue));
-  }
 }
 
 // Use the AUTH packet and peer public key to derive a new ecdh shared secret and AES key
@@ -528,9 +512,6 @@ void packetTask(void* params)
 
         delete taskParams; // Free the parameter struct
       }
-
-      queuenotify(); // Trigger the notification now that a spot in the queue is freed
-
     }
   }
 }
