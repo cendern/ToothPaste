@@ -18,7 +18,7 @@ void hidSetup();
 
 // Keyboard String Functions
 void sendString(const char* str, bool slowMode = true);
-void sendString(void* arg, bool slowMode = true);
+void sendString(const char *str, uint8_t stringLen, bool slowMode);
 void sendStringDelay(void *arg, int delay);
 
 // Keycode Functions

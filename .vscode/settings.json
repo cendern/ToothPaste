@@ -97,5 +97,6 @@
     "xstddef": "cpp",
     "xtr1common": "cpp",
     "xtree": "cpp"
-  }
+  },
+  "idf.currentSetup": "C:\\esp\\v5.5.2\\esp-idf"
 }

@@ -17,8 +17,10 @@
 
 // RTOS Queue for HID reports
 #define MAX_QUEUE_STRING_LEN 256
+
 typedef struct {
   char data[MAX_QUEUE_STRING_LEN];
+  uint8_t length;
 } QueueStringItem;
 
 QueueHandle_t reportQueue = xQueueCreate(18, sizeof(QueueStringItem)); // Queue to manage HID inputs
@@ -38,7 +40,7 @@ IDFHIDConsumerControl control(2); // Consumer Control
 
 void hidSetup()
 { 
-  tudsetup();
+  tudsetup(); // Configure TinyUSB
   keyboard0.begin(); // This creates the keyboard ascii layout instance, probably not the best way to handle it???
   startKeyboardTask(); // Start the RTOS keyboard task
 }
@@ -61,28 +63,29 @@ size_t sendStringSlow(const char *str, int delayms) {
   return sentCount;
 }
 
-// Send a string - slowMode is enabled by default
+// Queue a string to be sent via HID
 void sendString(const char *str, bool slowMode)
 {
-  // if(!slowMode){
-  //   keyboard0.print(str);
-  //   //keyboard1.print(str);
-  // }
-  // else
-  //   sendStringSlow(str, SLOWMODE_DELAY_MS);
-
-
   QueueStringItem item;
   strncpy(item.data, str, MAX_QUEUE_STRING_LEN - 1);
   item.data[MAX_QUEUE_STRING_LEN - 1] = '\0';
   xQueueSend(reportQueue, &item, 0);
 }
 
-// Cast a pointer to a string pointer and send the string 
-void sendString(void *arg, bool slowMode)
+// Queue a string with specified length
+void sendString(const char *str, uint8_t stringLen, bool slowMode)
 {
-  const char *str = static_cast<const char *>(arg);
-  sendString(str, slowMode);
+  QueueStringItem item;
+  size_t copyLen = (stringLen < MAX_QUEUE_STRING_LEN) ? stringLen : MAX_QUEUE_STRING_LEN - 1;
+  memcpy(item.data, str, copyLen);
+  item.data[copyLen] = '\0';
+  xQueueSend(reportQueue, &item, 0);
+}
+
+// Print a toothpaste_KeyboardPacket's message
+void sendString(toothpaste_KeyboardPacket& packet, bool slowMode)
+{
+  sendString(packet.message, packet.length, slowMode);
 }
 
 void stringTest(){
@@ -229,7 +232,7 @@ void keyboardTask(void* params)
   
   while (keyboardStarted) {
     if(xQueueReceive(reportQueue, &item, portMAX_DELAY) == pdTRUE){
-      sendStringSlow(item.data, 1);
+      sendStringSlow(item.data, 5);
     }
   }
   // Task exits gracefully when flag is set to false

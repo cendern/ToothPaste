@@ -292,12 +292,6 @@ void generateSharedSecret(toothpaste_DataPacket* packet, SecureSession* session)
 
 // Decrypt a data packet and type the text content as a string
 void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
-  // Allocate plaintext buffer and decrypt
-  //uint8_t* plaintext = new uint8_t[SecureSession::MAX_DATA_LEN];
-
-  // Todo: Decode encrypted BYTES into an encrypted data packet 
-  // Params: ciphertext, tag, iv, public key (to get private key from storage)
-
   // int64_t t0 = esp_timer_get_time();
  
   // Average decryption time: ~ 13000us (13ms)
@@ -333,59 +327,60 @@ void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
     // Reset the state so that we don't blink forever in an error state
     stateManager->setState(READY);
     switch (decrypted.which_packetData) {
-    case toothpaste_EncryptedData_keyboardPacket_tag:
-    {
-      std::string textString(decrypted.packetData.keyboardPacket.message, decrypted.packetData.keyboardPacket.length);
-      sendString(textString.data(), packet->slowMode);
-      break;
-    }
-
-    case toothpaste_EncryptedData_keycodePacket_tag:
-    {
-      //std::vector<uint8_t> keycode(decrypted.packetData.keycodePacket.code.bytes, decrypted.packetData.keycodePacket.code.size);
-      sendKeycode(decrypted.packetData.keycodePacket.code.bytes, packet->slowMode, true);
-      break;
-    }
-
-    case toothpaste_EncryptedData_mousePacket_tag:
-    {
-      //std::vector<uint8_t> mouseCode(decrypted.packetData.mousePacket);
-      moveMouse(decrypted.packetData.mousePacket);
-      break;
-    }
-
-    case toothpaste_EncryptedData_renamePacket_tag:
-    {
-      std::string textString(decrypted.packetData.renamePacket.message, decrypted.packetData.renamePacket.length);
-      int ret = session->setDeviceName(textString.c_str()); // Set the device name in preferences
-      DEBUG_SERIAL_PRINTF("Device rename status code: %d\n", ret);
-      DEBUG_SERIAL_PRINTLN("Rebooting Toothpaste...");
-      esp_restart();
-      break;
-    }
-
-    case toothpaste_EncryptedData_consumerControlPacket_tag:
-    {
-      //std::vector<uint8_t> keycode(decrypted.packetData.keycodePacket.code.bytes, decrypted.packetData.keycodePacket.code.size);
-      consumerControlPress(decrypted.packetData.consumerControlPacket);
-      break;
-    }
-
-    case toothpaste_EncryptedData_mouseJigglePacket_tag:
-    {
-      bool enable = decrypted.packetData.mouseJigglePacket.enable;
-      if (enable) {
-        startJiggle();
+      // A keyboard text packet (string data)
+      case toothpaste_EncryptedData_keyboardPacket_tag:
+      {
+        std::string textString(, decrypted.packetData.keyboardPacket.length);
+        sendString(decrypted.packetData.keyboardPacket.message, packet->slowMode);
+        break;
       }
-      else {
-        stopJiggle();
-      }
-      break;
-    }
 
-    default:
-      DEBUG_SERIAL_PRINTF("Unknown Packet Type: %d", decrypted.which_packetData);
-      break;
+      case toothpaste_EncryptedData_keycodePacket_tag:
+      {
+        //std::vector<uint8_t> keycode(decrypted.packetData.keycodePacket.code.bytes, decrypted.packetData.keycodePacket.code.size);
+        sendKeycode(decrypted.packetData.keycodePacket.code.bytes, packet->slowMode, true);
+        break;
+      }
+
+      case toothpaste_EncryptedData_mousePacket_tag:
+      {
+        //std::vector<uint8_t> mouseCode(decrypted.packetData.mousePacket);
+        moveMouse(decrypted.packetData.mousePacket);
+        break;
+      }
+
+      case toothpaste_EncryptedData_renamePacket_tag:
+      {
+        std::string textString(decrypted.packetData.renamePacket.message, decrypted.packetData.renamePacket.length);
+        int ret = session->setDeviceName(textString.c_str()); // Set the device name in preferences
+        DEBUG_SERIAL_PRINTF("Device rename status code: %d\n", ret);
+        DEBUG_SERIAL_PRINTLN("Rebooting Toothpaste...");
+        esp_restart();
+        break;
+      }
+
+      case toothpaste_EncryptedData_consumerControlPacket_tag:
+      {
+        //std::vector<uint8_t> keycode(decrypted.packetData.keycodePacket.code.bytes, decrypted.packetData.keycodePacket.code.size);
+        consumerControlPress(decrypted.packetData.consumerControlPacket);
+        break;
+      }
+
+      case toothpaste_EncryptedData_mouseJigglePacket_tag:
+      {
+        bool enable = decrypted.packetData.mouseJigglePacket.enable;
+        if (enable) {
+          startJiggle();
+        }
+        else {
+          stopJiggle();
+        }
+        break;
+      }
+
+      default:
+        DEBUG_SERIAL_PRINTF("Unknown Packet Type: %d", decrypted.which_packetData);
+        break;
     }
     notificationPacket.packetType = RECV_READY;
   }
