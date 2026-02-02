@@ -15,7 +15,7 @@
     USBCDC USBSerial; 
 #endif
 
-
+// RTOS Queue for HID reports
 #define MAX_QUEUE_STRING_LEN 256
 typedef struct {
   char data[MAX_QUEUE_STRING_LEN];
@@ -23,8 +23,7 @@ typedef struct {
 
 QueueHandle_t reportQueue = xQueueCreate(18, sizeof(QueueStringItem)); // Queue to manage HID inputs
 
-
-int syscount = 1;
+// RTOS Task flags
 bool mouseJiggleEnabled = false;
 bool keyboardStarted = false;
 
@@ -32,22 +31,16 @@ bool keyboardStarted = false;
 TaskHandle_t jiggleTaskHandle = nullptr;
 TaskHandle_t keyboardTaskHandle = nullptr;
 
+// HID Instances
 IDFHIDKeyboard keyboard0(0); // Boot Keyboard
-IDFHIDMouse mouse(1);
-IDFHIDConsumerControl control(2);
+IDFHIDMouse mouse(1); // Boot Mouse
+IDFHIDConsumerControl control(2); // Consumer Control
 
 void hidSetup()
 { 
   tudsetup();
-  
   keyboard0.begin(); // This creates the keyboard ascii layout instance, probably not the best way to handle it???
-  startKeyboardTask();
-
-
-  //keyboard1.begin();
-  // mouse.begin();
-  // control.begin();
-  // syscontrol.begin();
+  startKeyboardTask(); // Start the RTOS keyboard task
 }
 
 // Send a string with a delay between each character (crude implementation of alternative polling rates since ESPHID doesn't expose this)
@@ -162,17 +155,8 @@ void consumerControlPress(toothpaste_ConsumerControlPacket& controlPacket){
     consumerControlPress(controlPacket.code[i]);
   }
   vTaskDelay(pdMS_TO_TICKS(10));
-  consumerControlRelease();
-
-}
-
-// Release all consumer control keys
-void consumerControlRelease(){
   control.release();
-}
 
-void genericInput(){
-  //syscontrol.press(syscount++);
 }
 
 // Unpack a mouse packet from a byte array and move the mouse accordingly
@@ -219,8 +203,6 @@ void moveMouse(toothpaste_MousePacket& mousePacket) {
     //DEBUG_SERIAL_PRINTF("LClick: %d, RClick: %d\n", LClick, RClick);
     moveMouse(0, 0, LClick, RClick, mousePacket.wheel); 
 }
-
-
 
 
 // Simple mouse jiggle function to prevent screen sleep
