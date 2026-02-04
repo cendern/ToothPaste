@@ -191,7 +191,7 @@ export default function LiveCapture() {
             <div className={`relative w-10 h-10`}>
                 <div
                     title={title}
-                    onClick={onClick}
+                    onClick={ isDisconnected? null : onClick}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     className={`border border-hover h-10 flex justify-center items-center p-2 rounded-lg transition-all cursor-pointer ${getButtonStyle()} ${className}`}
