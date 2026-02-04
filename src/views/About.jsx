@@ -103,7 +103,11 @@ export default function About() {
         <div ref={containerRef} className=" relative flex-1 w-full bg-background text-text overflow-hidden">
 
             {/* 3D Model Container - Dynamic positioning and brightness */}
-            <div className="absolute inset-0 pointer-events-none">
+            <div className={`absolute pointer-events-none transition-all duration-1000 ease-in-out ${
+                currentSlide === 0 
+                  ? 'inset-0' 
+                  : 'top-0 bottom-0 left-1/3 right-1/3'
+            }`}>
                 <div
                     className={`
                     relative w-full h-full
@@ -193,97 +197,111 @@ export default function About() {
 
             {/* Feature Slide 1 */}
             <section
-                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-12 z-10"
+                className="absolute inset-0 min-h-screen flex flex-col px-6 md:px-12 py-12 z-10"
                 style={{
                     opacity: getSectionOpacity(1),
                     transition: 'opacity 0.3s ease-in-out',
                     pointerEvents: getSectionOpacity(1) > 0.5 ? 'auto' : 'none'
                 }}
             >
-                <div className="max-w-7xl w-full">
-                    <div className="flex flex-col gap-8">
-                        <div className="flex items-center gap-4">
-                            <LockClosedIcon className="h-12 w-12 text-primary flex-shrink-0" />
-                            <Typography type="h2" className="text-text font-bold">
-                                Why?
+                {/* Title Row */}
+                <div className="flex items-center gap-4 mb-12">
+                    <LockClosedIcon className="h-12 w-12 text-primary flex-shrink-0" />
+                    <Typography type="h2" className="text-text font-bold">
+                        Why?
+                    </Typography>
+                </div>
+
+                {/* Content Grid with Model Breaking Out */}
+                <div className="flex-1 relative">
+                    <div className="grid grid-cols-3 gap-8 h-full items-center">
+                        {/* Left Third */}
+                        <div className="flex flex-col gap-6">
+                            <Typography type="h4" className="text-2xl font-light text-white leading-relaxed">
+                                As a student and tinkerer, I often found myself needing to paste information to devices that I didn't want to connect to the internet or install apps on.
                             </Typography>
-                        </div>
-                        
-                        <Typography type="h4" className="text-3xl font-light text-white leading-relaxed">
-                            As a student and tinkerer, I often found myself needing to paste information to devices that I didn't want to connect to the internet or install apps on.
-                        </Typography>
-                        
-                        <div className="grid grid-cols-3 gap-8">
-                            <div className="flex flex-col col-span-1 gap-4">
-                                <Typography type="h4" className="text-3xl font-extralight text-orange leading-relaxed">
+                            
+                            <div className="flex flex-col gap-4">
+                                <Typography type="h4" className="text-2xl font-extralight text-orange leading-relaxed">
                                     MakerSpaces.
                                 </Typography>
-                                <Typography type="h4" className="text-3xl font-extralight text-orange leading-relaxed">
+                                <Typography type="h4" className="text-2xl font-extralight text-orange leading-relaxed">
                                     Libraries.
                                 </Typography>
-                                <Typography type="h4" className="text-3xl font-extralight text-orange leading-relaxed">
+                                <Typography type="h4" className="text-2xl font-extralight text-orange leading-relaxed">
                                     Vulnerable systems I'm definitely not trying to hack.
                                 </Typography>
                             </div>
-                            <div className="flex col-span-2 items-start gap-4 text-right">
-                                <div className="flex flex-col gap-10">
-                                    <Typography type="h4" className="text-lg text-white leading-relaxed">
-                                    Usually this involves emailing myself, using cloud clipboard services, or texting myself.
-                                    </Typography>
-                                    <Typography type="h4" className="text-lg text-white leading-relaxed">
-                                    ToothPaste makes this process seamless and secure by allowing me to quickly paste text directly to any nearby paired device.
-                                    </Typography>
-                                </div>
-                            </div>
-                            
                         </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-white mt-20">
-                        <ArrowDownIcon className="h-5 w-5 animate-bounce" />
-                        <Typography type="medium">What makes it secure?</Typography>
+                        
+                        {/* Center - Model breaks out with negative margins */}
+                        <div className="flex items-center justify-center -mx-8"></div>
+                        
+                        {/* Right Third */}
+                        <div className="flex flex-col gap-10">
+                            <Typography type="h4" className="text-lg text-white leading-relaxed">
+                            Usually this involves emailing myself, using cloud clipboard services, or texting myself.
+                            </Typography>
+                            <Typography type="h4" className="text-lg text-white leading-relaxed">
+                            ToothPaste makes this process seamless and secure by allowing me to quickly paste text directly to any nearby paired device.
+                            </Typography>
+                            
+                            <div className="flex items-center justify-center gap-2 text-white mt-auto">
+                                <ArrowDownIcon className="h-5 w-5 animate-bounce" />
+                                <Typography type="medium">What makes it secure?</Typography>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
             {/* Feature Slide 2 */}
             <section
-                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-12 z-10"
+                className="absolute inset-0 min-h-screen flex flex-col px-6 md:px-12 py-12 z-10"
                 style={{
                     opacity: getSectionOpacity(2),
                     transition: 'opacity 0.3s ease-in-out',
                     pointerEvents: getSectionOpacity(2) > 0.5 ? 'auto' : 'none'
                 }}
             >
-                <div className="max-w-6xl w-full">
-                    <div className="flex flex-col gap-8">
-                        <div className="flex items-start gap-6">
-                            <BoltIcon className="h-12 w-12 text-primary flex-shrink-0 mt-2" />
-                            <div>
-                                <Typography type="h2" className="text-text font-bold mb-16">
-                                    The nitty gritty details
-                                </Typography>
-                                <Typography type="h4" className="text-2xl text-white font-light leading-relaxed mb-10">
-                                    While convenient, WEB BLE isn't inherently secure. Its susceptible to snooping and Man In The Middle (MITM) attacks.
-                                </Typography>
-                                <Typography type="h4" className="text-2xl text-white leading-relaxed mb-16">
-                                    Since I wanted to paste passwords over the air, <span className="text-secondary">this wouldn't do.</span> 
-                                </Typography>
+                {/* Title Row */}
+                <div className="flex items-start gap-4 mb-12">
+                    <BoltIcon className="h-12 w-12 text-primary flex-shrink-0 mt-2" />
+                    <Typography type="h2" className="text-text font-bold">
+                        The nitty gritty details
+                    </Typography>
+                </div>
 
-                                <div className="flex flex-row gap-6">
-                                    <Typography type="paragraph" className="text-2xl flex-1 text-white leading-relaxed">
-                                        ToothPaste uses <span className="text-3xl font-bold">ECDSA Cryptography</span> to exchange information over custom packets, the private keys of the sender and receiver are never exposed over the BLE
-                                        network and without them, any information transmitted is unusable.
-                                    </Typography>
-                                    <Typography type="paragraph" className="text-2xl flex-1 text-white leading-relaxed text-right">
-                                        Since ToothPaste shows up as a standard HID keyboard, the receiving system doesnt need any special software or drivers to use it.
-                                    </Typography>
-                                </div>
+                {/* Content Grid with Model Breaking Out */}
+                <div className="flex-1 relative">
+                    <div className="grid grid-cols-3 gap-8 h-full items-center">
+                        {/* Left Third */}
+                        <div className="flex flex-col gap-6">
+                            <Typography type="h4" className="text-lg text-white font-light leading-relaxed">
+                                While convenient, WEB BLE isn't inherently secure. It's susceptible to snooping and Man In The Middle (MITM) attacks.
+                            </Typography>
+                            <Typography type="h4" className="text-lg text-white leading-relaxed">
+                                Since I wanted to paste passwords over the air, <span className="text-secondary">this wouldn't do.</span> 
+                            </Typography>
+                        </div>
+                        
+                        {/* Center - Model breaks out with negative margins */}
+                        <div className="flex items-center justify-center -mx-8"></div>
+                        
+                        {/* Right Third */}
+                        <div className="flex flex-col gap-6">
+                            <Typography type="paragraph" className="text-lg text-white leading-relaxed">
+                                ToothPaste uses <span className="text-xl font-bold">ECDSA Cryptography</span> to exchange information over custom packets, the private keys of the sender and receiver are never exposed over the BLE network and without them, any information transmitted is unusable.
+                            </Typography>
+                            <Typography type="paragraph" className="text-lg text-white leading-relaxed">
+                                Since ToothPaste shows up as a standard HID keyboard, the receiving system doesn't need any special software or drivers to use it.
+                            </Typography>
+                            
+                            <div className="flex items-center justify-center gap-2 text-white mt-auto">
+                                <ArrowDownIcon className="h-5 w-5 animate-bounce" />
+                                <Typography type="medium">Like what you see?</Typography>
                             </div>
                         </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-white mt-20">
-                        <ArrowDownIcon className="h-5 w-5 animate-bounce" />
-                        <Typography type="medium">Like what you see?</Typography>
                     </div>
                 </div>
             </section>
@@ -291,34 +309,45 @@ export default function About() {
 
             {/* CTA Footer Slide */}
             <section
-                className="absolute inset-0 min-h-screen flex items-center justify-center px-6 md:px-12 py-32 z-10"
+                className="absolute inset-0 min-h-screen flex flex-col px-6 md:px-12 py-12 z-10"
                 style={{
                     opacity: getSectionOpacity(3),
                     transition: 'opacity 0.3s ease-in-out',
                     pointerEvents: getSectionOpacity(3) > 0.5 ? 'auto' : 'none'
                 }}
             >
-                <div className="max-w-6xl w-full text-center flex flex-col gap-8">
+                {/* Title Row */}
+                <div className="mb-12">
                     <Typography type="h2" className="text-text font-bold">
                         Want to learn more?
                     </Typography>
+                </div>
 
-                    <Typography type="paragraph" className="text-text text-2xl text-white">
-                        ToothPaste is currently closed source while I finalize the hardware and software design.
-                        However, if you're interested in collaborating, contributing, or just want to chat about the project feel free to reach out!
-                    </Typography>
-                    
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {/* Content Grid with Model Breaking Out */}
+                <div className="flex-1 relative">
+                    <div className="grid grid-cols-3 gap-8 h-full items-center">
+                        {/* Left Third */}
+                        <div></div>
                         
-                        <Button
-                            size="lg"
-                            className='w-full h-10 my-4 bg-primary text-text items-center 
-                            justify-center' onClick={() => window.open('https://github.com/Brisk4t', '_blank')}>
-                            <FaGithub className="mr-2 h-5 w-5" />
-                            My GitHub
-                        </Button>
+                        {/* Center - Model breaks out with negative margins + CTA text */}
+                        <div className="flex flex-col gap-8 text-center items-center justify-center -mx-8">
+                            <Typography type="paragraph" className="text-lg text-white">
+                                ToothPaste is currently closed source while I finalize the hardware and software design.
+                                However, if you're interested in collaborating, contributing, or just want to chat about the project feel free to reach out!
+                            </Typography>
+                            
+                            <Button
+                                size="lg"
+                                className='h-10 bg-primary text-text items-center justify-center px-6' 
+                                onClick={() => window.open('https://github.com/Brisk4t', '_blank')}>
+                                <FaGithub className="mr-2 h-5 w-5" />
+                                My GitHub
+                            </Button>
+                        </div>
+                        
+                        {/* Right Third */}
+                        <div></div>
                     </div>
-
                 </div>
             </section>
         </div>
