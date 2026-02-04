@@ -234,7 +234,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
     }, [activeOverlay, status, onChangeOverlay]);
     return (
         <div className="w-full bg-shelf text-white">
-            <div className="flex justify-between h-24 items-center px-4">
+            <div className="relative flex justify-between h-24 items-center px-4">
                 {/* Left: Logo */}
                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsOpen(false)}>
                     <img src={ToothPaste} alt="brand" className="h-10 w-10" />
@@ -243,8 +243,8 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     </Typography>
                 </div>
 
-                {/* Center: Desktop menu */}
-                <div className="hidden lg:flex flex-1 justify-center space-x-5">
+                {/* Center: Desktop menu - positioned absolutely centered relative to container */}
+                <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 justify-center space-x-5">
                     <button
                         disabled={status === 2}
                         className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${

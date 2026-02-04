@@ -202,7 +202,7 @@ export default function About() {
                 }}
             >
                 {/* Title Row */}
-                <div className="flex items-center gap-4 mb-12">
+                <div className="flex items-center justify-center gap-4 mb-12">
                     <LockClosedIcon className="h-12 w-12 text-primary flex-shrink-0" />
                     <Typography type="h2" className="text-text font-bold">
                         Why?
@@ -262,7 +262,7 @@ export default function About() {
                 }}
             >
                 {/* Title Row */}
-                <div className="flex items-start gap-4 mb-12">
+                <div className="flex items-start justify-center gap-4 mb-12">
                     <BoltIcon className="h-12 w-12 text-primary flex-shrink-0 mt-2" />
                     <Typography type="h2" className="text-text font-bold">
                         The nitty gritty details
@@ -314,7 +314,7 @@ export default function About() {
                 }}
             >
                 {/* Title Row */}
-                <div className="mb-12">
+                <div className="mb-12 flex justify-center">
                     <Typography type="h2" className="text-text font-bold">
                         Want to learn more?
                     </Typography>
