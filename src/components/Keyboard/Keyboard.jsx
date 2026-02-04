@@ -159,7 +159,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
             <Button
                 variant="outline"
                 onClick={handleToggle}
-                className={`hidden lg:block p-3 border border-gray-500 text-text 
+                className={`hidden lg:block p-3 border border-gray-500 text-text hover:bg-white hover:text-shelf 
                     ${showKeyboard ? "bg-white text-shelf" : "bg-shelf "}`}
             >
                 Keyboard
