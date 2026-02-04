@@ -226,10 +226,16 @@ export default function About() {
                                 </Typography>
                             </div>
                             <div className="flex col-span-2 items-start gap-4 text-right">
-                                <Typography type="h4" className="text-lg text-white leading-relaxed">
-                                   Usually this involves emailing myself, using cloud clipboard services, or texting myself.
-                                </Typography>
+                                <div className="flex flex-col gap-10">
+                                    <Typography type="h4" className="text-lg text-white leading-relaxed">
+                                    Usually this involves emailing myself, using cloud clipboard services, or texting myself.
+                                    </Typography>
+                                    <Typography type="h4" className="text-lg text-white leading-relaxed">
+                                    ToothPaste makes this process seamless and secure by allowing me to quickly paste text directly to any nearby paired device.
+                                    </Typography>
+                                </div>
                             </div>
+                            
                         </div>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-white mt-20">
@@ -248,34 +254,30 @@ export default function About() {
                     pointerEvents: getSectionOpacity(2) > 0.5 ? 'auto' : 'none'
                 }}
             >
-                <div className="max-w-5xl w-full">
+                <div className="max-w-6xl w-full">
                     <div className="flex flex-col gap-8">
                         <div className="flex items-start gap-6">
                             <BoltIcon className="h-12 w-12 text-primary flex-shrink-0 mt-2" />
                             <div>
-                                <Typography variant="h3" className="text-text font-bold mb-3">
+                                <Typography type="h2" className="text-text font-bold mb-16">
                                     The nitty gritty details
                                 </Typography>
-                                <Typography variant="h4" className="text-2xl text-white leading-relaxed">
+                                <Typography type="h4" className="text-2xl text-white font-light leading-relaxed mb-10">
                                     While convenient, WEB BLE isn't inherently secure. Its susceptible to snooping and Man In The Middle (MITM) attacks.
-                                    Since I wanted to paste passwords over the air, this wouldn't do.
                                 </Typography>
-                                <br />
-                                <Typography variant="paragraph" className="text-lg text-white leading-relaxed">
-                                    ToothPaste uses ECDSA cryptography to exchange information over custom packets, the private keys of the sender and receiver are never exposed over the BLE
-                                    network and without them, any information transmitted is unusable.
-
-                                    The first time you set up a ToothPaste, the two devices exchange keys over usb, making it nearly impossible to steal the keys during the initial pairing process as well.
-                                    After that any data sent to a paired ToothPaste device is completly secure.
-                                </Typography>
-                                <Typography variant="paragraph" className="text-lg text-white leading-relaxed">
-                                    Since ToothPaste shows up as a standard HID keyboard, the receiving system doesnt need any special software or drivers to use it.
-                                </Typography>
-                                <br />
-                                <Typography variant="paragraph" className="text-xl font-bold text-white leading-relaxed">
-                                    This is the same principle behind the USB Rubber Ducky, and obvious that means ToothPaste can also be used as a pentesting attack vector ;).
+                                <Typography type="h4" className="text-2xl text-white leading-relaxed mb-16">
+                                    Since I wanted to paste passwords over the air, <span className="text-secondary">this wouldn't do.</span> 
                                 </Typography>
 
+                                <div className="flex flex-row gap-6">
+                                    <Typography type="paragraph" className="text-2xl flex-1 text-white leading-relaxed">
+                                        ToothPaste uses <span className="text-3xl font-bold">ECDSA Cryptography</span> to exchange information over custom packets, the private keys of the sender and receiver are never exposed over the BLE
+                                        network and without them, any information transmitted is unusable.
+                                    </Typography>
+                                    <Typography type="paragraph" className="text-2xl flex-1 text-white leading-relaxed text-right">
+                                        Since ToothPaste shows up as a standard HID keyboard, the receiving system doesnt need any special software or drivers to use it.
+                                    </Typography>
+                                </div>
                             </div>
                         </div>
                     </div>
