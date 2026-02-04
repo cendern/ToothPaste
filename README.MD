@@ -8,10 +8,8 @@ It has the bare minimum needed to get USB-C working in device mode and is probab
 
 #### If you don't care about the aesthetics and want to be some kind of modern caveman, an ESP32-S3 DevKit C or [Seeed Studio XIAO S3](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/) will also do just fine. It'll just be hanging on for dear life at the end of a USB cable.
 
-Other than the frustration of hand-soldering SMD components while shaking like an alcoholic in withdrawal, assembling a ToothPaste is relatively straightforward.
 
-Here's a no-nonsense BOM in case you were wondering what that chickenscratch handwriting actually says:
-
+### Here's a no-nonsense BOM in case you were wondering what that chickenscratch handwriting actually says:
 
 
 - ESP32-S3-WROOM-1 / 1U *x1* (The specs dont matter **too** much as long as you can fit the ~1MB firmware image in flash, the [datasheet](https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf) goes over the version differences well) 
@@ -24,6 +22,8 @@ Here's a no-nonsense BOM in case you were wondering what that chickenscratch han
 - 0.1uf capacitor *x1*
 - 3D Printed ToothPaste Case
 - A ToothPaste PCB (you could always hand wire one on a perfboard, although you'll need your own case)
+
+Other than the frustration of hand-soldering SMD components while shaking like an alcoholic in withdrawal, assembling a ToothPaste is relatively straightforward.
 
 ### My desk is not this clean, for illustration purposes only...
 ![ToothPaste_Build](/images/ToothPaste_BOM.jpg)
