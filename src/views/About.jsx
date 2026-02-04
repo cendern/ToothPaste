@@ -103,11 +103,8 @@ export default function About() {
         <div ref={containerRef} className=" relative flex-1 w-full bg-background text-text overflow-hidden">
 
             {/* 3D Model Container - Dynamic positioning and brightness */}
-            <div className={`absolute pointer-events-none transition-all duration-1000 ease-in-out ${
-                currentSlide === 0 
-                  ? 'inset-0' 
-                  : 'top-0 bottom-0 left-1/3 right-1/3'
-            }`}>
+            <div className="absolute inset-0 pointer-events-none">
+
                 <div
                     className={`
                     relative w-full h-full
