@@ -27,6 +27,7 @@ export default function LiveCapture() {
 
     const [macMode, setMacMode] = useState(false); // Does WIN key send WIN or COMMAND key
     const [jiggling, setJiggling] = useState(false);
+    const [isFocused, setIsFocused] = useState(false); // Track if input is focused
 
     // Contexts
     const { status, sendEncrypted } = useContext(BLEContext);
@@ -59,6 +60,7 @@ export default function LiveCapture() {
 
     // On click logic
     function onMouseDown(e) {
+        if (!isFocused) return; // Only capture when focused
         //e.target.setPointerCapture(e.pointerId);
         isTracking.current = true;
         lastPos.current = { x: e.clientX, y: e.clientY, t: e.timeStamp };
@@ -73,6 +75,7 @@ export default function LiveCapture() {
     }
 
     function onMouseUp(e) {
+        if (!isFocused) return; // Only capture when focused
         if (e.button == 0) sendMouseReport(2, 0); // Send left click
         if (e.button == 2) {
             e.preventDefault();
@@ -95,7 +98,7 @@ export default function LiveCapture() {
 
     // When a pointer moves
     function onPointerMove(e) {
-        if (!captureMouse) return;
+        if (!isFocused || !captureMouse) return; // Only capture when focused and enabled
 
         // Get bounding rect once (you can optimize by caching it elsewhere)
         const rect = inputRef.current.getBoundingClientRect();
@@ -142,7 +145,7 @@ export default function LiveCapture() {
 
 
     function onWheel(e) {
-        if (!captureMouse) return;  
+        if (!isFocused || !captureMouse) return; // Only capture when focused and enabled  
         e.preventDefault(); // Prevent page scrolling
 
         var reportDelta  = -e.deltaY * 0.01; // Scale down the scroll delta
@@ -449,6 +452,9 @@ export default function LiveCapture() {
                     data-lpignore="true"
                     //{...{ autocapitalize: "none" }} // forces lowercase HTML attribute
 
+                    // Focus handlers
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
                     // Keyboard event handlers
                     onKeyDown={handleKeyDown}
                     onKeyUp={handleKeyUp}
