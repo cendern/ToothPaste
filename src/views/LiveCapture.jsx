@@ -527,38 +527,40 @@ export default function LiveCapture() {
                             }
                             mobileInputRef.current.value = "";
                         }}
-                        // onKeyUp={(e) => {
-                        //     handleKeyUp(e);
-                        //     mobileInputRef.current.value = "";
-                        // }}
-                        // onPaste={(e) => {
-                        //     handlePaste(e);
-                        //     mobileInputRef.current.value = "";
-                        // }}
-                        // onBeforeInput={(e) => {
-                        //     handleOnBeforeInput(e);
-                        //     mobileInputRef.current.value = "";
-                        // }}
-                        // onContextMenu={(e) => {
-                        //     e.preventDefault();
-                        //     mobileInputRef.current.value = "";
-                        // }}
+                        onKeyUp={(e) => {
+                            console.log("Mobile input: onKeyUp fired");
+                            mobileInputRef.current.value = "";
+                        }}
+                        onPaste={(e) => {
+                            console.log("Mobile input: onPaste fired");
+                            mobileInputRef.current.value = "";
+                        }}
+                        onBeforeInput={(e) => {
+                            console.log("Mobile input: onBeforeInput fired");
+                            mobileInputRef.current.value = "";
+                        }}
+                        onContextMenu={(e) => {
+                            console.log("Mobile input: onContextMenu fired");
+                            e.preventDefault();
+                            mobileInputRef.current.value = "";
+                        }}
                         // IME event handlers
                         onChange={(e) => {
                             handleOnChange(e);
                             mobileInputRef.current.value = "";
                         }}
-                        // onCompositionStart={(e) => {
-                        //     handleCompositionStart(e);
-                        //     mobileInputRef.current.value = "";
-                        // }}
-                        // onCompositionUpdate={(e) => {
-                        //     mobileInputRef.current.value = "";
-                        // }}
-                        // onCompositionEnd={(e) => {
-                        //     handleCompositionEnd(e);
-                        //     mobileInputRef.current.value = "";
-                        // }}
+                        onCompositionStart={(e) => {
+                            console.log("Mobile input: onCompositionStart fired");
+                            mobileInputRef.current.value = "";
+                        }}
+                        onCompositionUpdate={(e) => {
+                            console.log("Mobile input: onCompositionUpdate fired");
+                            mobileInputRef.current.value = "";
+                        }}
+                        onCompositionEnd={(e) => {
+                            console.log("Mobile input: onCompositionEnd fired");
+                            mobileInputRef.current.value = "";
+                        }}
                         className="absolute inset-0 opacity-0 cursor-text pointer-events-auto"
                     ></input>
 
