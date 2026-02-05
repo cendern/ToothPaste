@@ -417,6 +417,76 @@ export default function LiveCapture() {
         );
     }
 
+    // Mobile click buttons with proper state management
+    function MobileClickButtons({ captureMouse, sendMouseReport }) {
+        const [pressedButton, setPressedButton] = useState(null);
+
+        const handleButtonPress = (buttonName, leftClick, rightClick) => {
+            if (!captureMouse) return;
+            setPressedButton(buttonName);
+            sendMouseReport(leftClick, rightClick);
+        };
+
+        const handleButtonRelease = (buttonName, leftClick, rightClick) => {
+            if (!captureMouse) return;
+            if (pressedButton === buttonName) {
+                setPressedButton(null);
+            }
+            // Send release event
+            if (buttonName === 'left') sendMouseReport(2, 0);
+            else if (buttonName === 'right') sendMouseReport(0, 2);
+        };
+
+        const getButtonClass = (buttonName) => {
+            const isPressed = pressedButton === buttonName;
+            const bgColor = isPressed ? "bg-white text-shelf" : "bg-shelf text-text";
+            let rounded = "";
+            if (buttonName === 'left') rounded = "rounded-bl-xl";
+            else if (buttonName === 'right') rounded = "rounded-br-xl";
+            return `h-16 flex justify-center items-center flex-1 transition-colors cursor-pointer select-none ${bgColor} ${rounded}`;
+        };
+
+        return (
+            <div className="absolute bottom-0 left-0 right-0 flex rounded-b-xl z-10 border border-hover border-t">
+                {/* Left Click Button - 2 parts */}
+                <button
+                    className={`flex-[2] ${getButtonClass('left')}`}
+                    onTouchStart={() => handleButtonPress('left', 1, 0)}
+                    onTouchEnd={() => handleButtonRelease('left', 1, 0)}
+                    onTouchCancel={() => handleButtonRelease('left', 1, 0)}
+                >
+                    <span className="text-sm font-medium">Left</span>
+                </button>
+
+                {/* Divider */}
+                <div className="w-px bg-hover" />
+
+                {/* Middle Click Button - 1 part */}
+                <button
+                    className={`flex-[1] ${getButtonClass('mid')}`}
+                    onTouchStart={() => handleButtonPress('mid', 0, 0)}
+                    onTouchEnd={() => handleButtonRelease('mid', 0, 0)}
+                    onTouchCancel={() => handleButtonRelease('mid', 0, 0)}
+                >
+                    <span className="text-sm font-medium">Mid</span>
+                </button>
+
+                {/* Divider */}
+                <div className="w-px bg-hover" />
+
+                {/* Right Click Button - 2 parts */}
+                <button
+                    className={`flex-[2] ${getButtonClass('right')}`}
+                    onTouchStart={() => handleButtonPress('right', 0, 1)}
+                    onTouchEnd={() => handleButtonRelease('right', 0, 1)}
+                    onTouchCancel={() => handleButtonRelease('right', 0, 1)}
+                >
+                    <span className="text-sm font-medium">Right</span>
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col flex-1 w-full p-4 bg-background text-text">
             {/* <Typography variant="h4" className="text-text">
@@ -564,7 +634,7 @@ export default function LiveCapture() {
 
                 <Typography
                     variant="h1"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 top-1/4 z-0"
                     aria-hidden="true"
                 >
                     Drag to move cursor
@@ -572,12 +642,15 @@ export default function LiveCapture() {
 
                 {/* Mobile touch surface */}
                 <div
-                    className="absolute inset-0 rounded-xl z-5 touch-none"
+                    className="absolute inset-0 rounded-xl z-5 touch-none top-0 bottom-16"
                     onTouchStart={onTouchStart}
                     onTouchMove={onTouchMove}
                     onTouchEnd={onTouchEnd}
                     onTouchCancel={onTouchEnd}
                 />
+
+                {/* Mobile Click Buttons - 2:1:2 ratio */}
+                <MobileClickButtons captureMouse={captureMouse} sendMouseReport={sendMouseReport} />
             </div>
         </div>
     );
