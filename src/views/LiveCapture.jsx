@@ -31,6 +31,7 @@ export default function LiveCapture() {
     const [jiggling, setJiggling] = useState(false);
     const [isFocused, setIsFocused] = useState(false); // Track if input is focused
     const [isAutofillFocused, setIsAutofillFocused] = useState(false); // Track if autofill input is focused
+    const mobileInputRef = useRef(null); // Ref for mobile input
 
     // Contexts
     const { status, sendEncrypted } = useContext(BLEContext);
@@ -511,6 +512,7 @@ export default function LiveCapture() {
                         autoComplete="off"
                         autoCorrect="off"
                         spellCheck="false"
+                        ref={mobileInputRef}
 
                         // Focus handlers
                         onFocus={() => setIsFocused(true)}
@@ -518,39 +520,39 @@ export default function LiveCapture() {
                         // Keyboard event handlers
                         onKeyDown={(e) => {
                             handleKeyDown(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onKeyUp={(e) => {
                             handleKeyUp(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onPaste={(e) => {
                             handlePaste(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onBeforeInput={(e) => {
                             handleOnBeforeInput(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onContextMenu={(e) => {
                             e.preventDefault();
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         // IME event handlers
                         onChange={(e) => {
                             handleOnChange(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onCompositionStart={(e) => {
                             handleCompositionStart(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onCompositionUpdate={(e) => {
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         onCompositionEnd={(e) => {
                             handleCompositionEnd(e);
-                            inputRef.current.value = "";
+                            mobileInputRef.current.value = "";
                         }}
                         className="absolute inset-0 opacity-0 cursor-text pointer-events-auto"
                     ></input>
