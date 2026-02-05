@@ -634,10 +634,10 @@ export default function LiveCapture() {
 
                 <Typography
                     variant="h1"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 top-1/4 z-0"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute left-0 right-0 top-1/2 -translate-y-1/2 z-0"
                     aria-hidden="true"
                 >
-                    Drag to move cursor
+                    {captureMouse ? "Drag to move cursor" : "Enable Mouse Capture To Use Touchpad"}
                 </Typography>
 
                 {/* Mobile touch surface */}
