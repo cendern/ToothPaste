@@ -5,6 +5,7 @@ import { CursorArrowRaysIcon, CursorArrowRippleIcon, PowerIcon, ArrowUpOnSquareS
 import { BLEContext } from "../context/BLEContext";
 //import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 import Keyboard from "../components/Keyboard/Keyboard";
+import Touchpad from "../components/Touchpad/Touchpad";
 import { useInputController } from "../controllers/LiveCaptureInput";
 
 import { createConsumerControlPacket, createKeyCodePacket, createMouseStream, createMouseJigglePacket } from "../controllers/PacketFunctions";
@@ -239,97 +240,6 @@ export default function LiveCapture() {
         }, 50);
     }
 
-    // Keyboard shortcut button component
-    function KeyboardShortcutButton({ label, keySequence }) {
-        const [isPressed, setIsPressed] = useState(false);
-
-        const handlePress = () => {
-            setIsPressed(true);
-            sendKeyboardShortcut(keySequence);
-            setTimeout(() => setIsPressed(false), 100);
-        };
-
-        return (
-            <button
-                className={`h-14 flex justify-center items-center flex-1 transition-colors cursor-pointer select-none ${
-                    isPressed ? "bg-white text-shelf" : "bg-background text-text"
-                }`}
-                onTouchStart={handlePress}
-                onMouseDown={handlePress}
-            >
-                <span className="text-sm font-medium text-center px-2">{label}</span>
-            </button>
-        );
-    }
-
-    // Carousel row for keyboard shortcuts with custom swipe handling
-    function KeyboardShortcutCarousel({ shortcuts }) {
-        const [currentSlide, setCurrentSlide] = useState(0);
-        const touchStartX = useRef(0);
-        const touchEndX = useRef(0);
-        const SWIPE_THRESHOLD = 50; // minimum swipe distance in pixels
-
-        const handleTouchStart = (e) => {
-            touchStartX.current = e.touches[0].clientX;
-        };
-
-        const handleTouchEnd = (e) => {
-            e.preventDefault();
-            touchEndX.current = e.changedTouches[0].clientX;
-            const diff = touchStartX.current - touchEndX.current;
-
-            if (Math.abs(diff) > SWIPE_THRESHOLD) {
-                if (diff > 0) {
-                    // Swiped left - go to next slide
-                    setCurrentSlide((prev) => (prev + 1) % shortcuts.length);
-                } else {
-                    // Swiped right - go to previous slide
-                    setCurrentSlide((prev) => (prev - 1 + shortcuts.length) % shortcuts.length);
-                }
-            }
-        };
-
-        return (
-            <div
-                className="flex flex-col bg-background"
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onTouchMove={(e) => e.preventDefault()}
-            >
-
-                {/* Slide indicators */}
-                <div className="flex justify-center gap-1 py-1 px-2 mb-1">
-                    {shortcuts.map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={`h-1 w-4 rounded-full transition-colors cursor-pointer ${
-                                idx === currentSlide ? "bg-text" : "bg-hover"
-                            }`}
-                            onClick={() => setCurrentSlide(idx)}
-                        />
-                    ))}
-                </div>
-                
-                {/* Slide container */}
-                <div className="flex h-14 border-hover border-b-0 border-x-0 border-t">
-                    {shortcuts[currentSlide].map((btn, btnIdx) => (
-                        <React.Fragment key={btnIdx}>
-                            <KeyboardShortcutButton 
-                                label={btn.label} 
-                                keySequence={btn.keys}
-                            />
-                            {btnIdx < shortcuts[currentSlide].length - 1 && (
-                                <div className="w-px bg-hover" />
-                            )}
-                        </React.Fragment>
-                    ))}
-                </div>
-
-                
-            </div>
-        );
-    }
-
     // Reusable IconToggleButton component
     function IconToggleButton({
         title, // Tooltip text
@@ -553,76 +463,6 @@ export default function LiveCapture() {
         );
     }
 
-    // Mobile click buttons with proper state management
-    function MobileClickButtons({ captureMouse, sendMouseReport }) {
-        const [pressedButton, setPressedButton] = useState(null);
-
-        const handleButtonPress = (buttonName, leftClick, rightClick) => {
-            if (!captureMouse) return;
-            setPressedButton(buttonName);
-            sendMouseReport(leftClick, rightClick);
-        };
-
-        const handleButtonRelease = (buttonName, leftClick, rightClick) => {
-            if (!captureMouse) return;
-            if (pressedButton === buttonName) {
-                setPressedButton(null);
-            }
-            // Send release event
-            if (buttonName === 'left') sendMouseReport(2, 0);
-            else if (buttonName === 'right') sendMouseReport(0, 2);
-        };
-
-        const getButtonClass = (buttonName) => {
-            const isPressed = pressedButton === buttonName;
-            const bgColor = isPressed ? "bg-white text-shelf" : "bg-shelf text-text";
-            let rounded = "";
-            if (buttonName === 'left') rounded = "rounded-bl-xl";
-            else if (buttonName === 'right') rounded = "rounded-br-xl";
-            return `h-16 flex justify-center items-center flex-1 transition-colors cursor-pointer select-none ${bgColor} ${rounded}`;
-        };
-
-        return (
-            <div className="absolute bottom-0 left-0 right-0 flex rounded-b-xl z-10 border border-hover border-t">
-                {/* Left Click Button - 2 parts */}
-                <button
-                    className={`flex-[2] ${getButtonClass('left')}`}
-                    onTouchStart={() => handleButtonPress('left', 1, 0)}
-                    onTouchEnd={() => handleButtonRelease('left', 1, 0)}
-                    onTouchCancel={() => handleButtonRelease('left', 1, 0)}
-                >
-                    <span className="text-sm font-medium">Left</span>
-                </button>
-
-                {/* Divider */}
-                <div className="w-px bg-hover" />
-
-                {/* Middle Click Button - 1 part */}
-                <button
-                    className={`flex-[1] ${getButtonClass('mid')}`}
-                    onTouchStart={() => handleButtonPress('mid', 0, 0)}
-                    onTouchEnd={() => handleButtonRelease('mid', 0, 0)}
-                    onTouchCancel={() => handleButtonRelease('mid', 0, 0)}
-                >
-                    <span className="text-sm font-medium">Mid</span>
-                </button>
-
-                {/* Divider */}
-                <div className="w-px bg-hover" />
-
-                {/* Right Click Button - 2 parts */}
-                <button
-                    className={`flex-[2] ${getButtonClass('right')}`}
-                    onTouchStart={() => handleButtonPress('right', 0, 1)}
-                    onTouchEnd={() => handleButtonRelease('right', 0, 1)}
-                    onTouchCancel={() => handleButtonRelease('right', 0, 1)}
-                >
-                    <span className="text-sm font-medium">Right</span>
-                </button>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col flex-1 w-full p-4 bg-background text-text">
             {/* <Typography type="h4" className="text-text">
@@ -758,77 +598,39 @@ export default function LiveCapture() {
             </div>
 
             {/* Mobile Touchpad Layout - Visible only on small screens */}
-            <div className="md:hidden flex flex-col flex-1 my-4 rounded-xl transition-all border border-hover bg-shelf relative group">
-                <div className="absolute top-2 left-2 z-10">
-                    <LeftButtonColumn />
-                </div>
-                
-                <div className="absolute top-2 right-2 z-10">
-                    <RightButtonColumn />
-                </div>
-
-                <Typography
-                    type="h5"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 -translate-y-1/2 z-10"
-                    aria-hidden="true"
-                >
-                    {captureMouse ? "Drag to move cursor" : "Enable Mouse Capture To Use Touchpad"}
-                </Typography>
-
-                {captureMouse && (
-                    <Typography
-                        type="h5"
-                        className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 translate-y-3 z-10"
-                        aria-hidden="true"
-                    >
-                        Double Tap to Click
-                    </Typography>
-                )}
-
-
-                {/* Mobile touch surface */}
-                <div
-                    className={`absolute inset-0 rounded-t-xl z-5 touch-none top-0 bottom-32 ${captureMouse ? "bg-background" : ""}`}
-                    onTouchStart={onTouchStart}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={onTouchEnd}
-                    onTouchCancel={onTouchEnd}
-                />
-
-                {/* Keyboard Shortcuts Carousel */}
-                {captureMouse && (
-                    <div className="absolute bottom-16 left-0 right-0 z-20">
-                        <KeyboardShortcutCarousel
-                            shortcuts={[
-                                [
-                                    { label: "Ctrl+A", keys: ["ControlLeft", "KeyA"] },
-                                    { label: "Ctrl+C", keys: ["ControlLeft", "KeyC"] },
-                                    { label: "Ctrl+V", keys: ["ControlLeft", "KeyV"] },
-                                    { label: "Ctrl+X", keys: ["ControlLeft", "KeyX"] },
-                                    { label: "Delete", keys: ["Delete"] },
-                                ],
-                                [
-                                    { label: "Ctrl+Z", keys: ["ControlLeft", "KeyZ"] },
-                                    { label: "Ctrl+Y", keys: ["ControlLeft", "KeyY"] },
-                                    { label: "Ctrl+S", keys: ["ControlLeft", "KeyS"] },
-                                    { label: "Alt+Tab", keys: ["AltLeft", "Tab"] },
-                                    { label: "Esc", keys: ["Escape"] },
-                                ],
-                                [
-                                    { label: "Ctrl+Alt+Del", keys: ["ControlLeft", "AltLeft", "Delete"] },
-                                    { label: "Ctrl+Shift+Esc", keys: ["ControlLeft", "ShiftLeft", "Escape"] },
-                                    { label: "Win+V", keys: ["MetaLeft", "KeyV"] },
-                                    { label: "Win+Shift+S", keys: ["MetaLeft", "ShiftLeft", "KeyS"] },
-                                    { label: "Enter", keys: ["Enter"] },
-                                ],
-                            ]}
-                        />
-                    </div>
-                )}
-
-                {/* Mobile Click Buttons - 2:1:2 ratio */}
-                <MobileClickButtons captureMouse={captureMouse} sendMouseReport={sendMouseReport} />
-            </div>
+            <Touchpad
+                captureMouse={captureMouse}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onSendMouseClick={sendMouseReport}
+                onSendKeyboardShortcut={sendKeyboardShortcut}
+                leftButtonColumn={<LeftButtonColumn />}
+                rightButtonColumn={<RightButtonColumn />}
+                shortcuts={[
+                    [
+                        { label: "Ctrl+A", keys: ["ControlLeft", "KeyA"] },
+                        { label: "Ctrl+C", keys: ["ControlLeft", "KeyC"] },
+                        { label: "Ctrl+V", keys: ["ControlLeft", "KeyV"] },
+                        { label: "Ctrl+X", keys: ["ControlLeft", "KeyX"] },
+                        { label: "Delete", keys: ["Delete"] },
+                    ],
+                    [
+                        { label: "Ctrl+Z", keys: ["ControlLeft", "KeyZ"] },
+                        { label: "Ctrl+Y", keys: ["ControlLeft", "KeyY"] },
+                        { label: "Ctrl+S", keys: ["ControlLeft", "KeyS"] },
+                        { label: "Alt+Tab", keys: ["AltLeft", "Tab"] },
+                        { label: "Esc", keys: ["Escape"] },
+                    ],
+                    [
+                        { label: "Ctrl+Alt+Del", keys: ["ControlLeft", "AltLeft", "Delete"] },
+                        { label: "Ctrl+Shift+Esc", keys: ["ControlLeft", "ShiftLeft", "Escape"] },
+                        { label: "Win+V", keys: ["MetaLeft", "KeyV"] },
+                        { label: "Win+Shift+S", keys: ["MetaLeft", "ShiftLeft", "KeyS"] },
+                        { label: "Enter", keys: ["Enter"] },
+                    ],
+                ]}
+            />
         </div>
     );
 }
