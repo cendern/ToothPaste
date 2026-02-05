@@ -49,7 +49,7 @@ const WELCOME_STEP = {
     spotlightRadius: 100,
     spotlightGridColumn: 5,
     spotlightGridRow: 6,
-    gradientIntensity: 0.6,
+    gradientIntensity: 0.8,
 };
 
 const NAV_MENU_STEP = {
@@ -239,12 +239,12 @@ export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live'
     };
 
     const handleComplete = () => {
-        localStorage.setItem('quickstart_completed', 'true');
+        localStorage.setItem('quickstart_viewed', 'true');
         onChangeOverlay(null);
     };
 
     const handleSkip = () => {
-        localStorage.setItem('quickstart_skipped', 'true');
+        localStorage.setItem('quickstart_viewed', 'true');
         onChangeOverlay(null);
     };
 

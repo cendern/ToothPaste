@@ -29,7 +29,7 @@ function App() {
     const ActiveOverlay = activeOverlay ? overlays[activeOverlay] : null;
 
     useEffect(() => {
-      const hasSeenQuickstart = localStorage.getItem('quickstart_completed') || localStorage.getItem('quickstart_skipped');
+      const hasSeenQuickstart = localStorage.getItem('quickstart_viewed');
       if (!hasSeenQuickstart) {
         setActiveOverlay('quickstart');
       }
