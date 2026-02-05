@@ -93,7 +93,7 @@ const CONNECTION_STATUS_STEP = {
 const stepsMap = {
     live: [
         WELCOME_STEP,
-        { ...NAV_MENU_STEP, spotlightRadius: 800, spotlightGridColumn: 5.5, spotlightGridRow: 1, gradientIntensity: 0.7 },
+        { ...NAV_MENU_STEP, spotlightRadius: 400, spotlightGridColumn: 5.5, spotlightGridRow: 1, gradientIntensity: 0.7 },
         {
             title: 'Live Capture',
             description: 'Capture keyboard and mouse input in real-time. Type in the input area to capture commands.',
@@ -260,7 +260,6 @@ export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live'
                 className="absolute inset-0"
                 onClick={handleSkip}
                 style={{
-                    backgroundColor: `rgba(255, 255, 255, ${steps[currentStep].gradientIntensity || 0.6})`,
                     opacity: `${steps[currentStep].gradientIntensity || 0.6}`,
                     backgroundColor: `rgba(0, 0, 0, ${steps[currentStep].gradientIntensity || 0.6})`,
                     maskImage: getSpotlightMask(),
