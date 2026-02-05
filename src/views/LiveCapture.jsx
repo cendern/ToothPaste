@@ -207,7 +207,7 @@ export default function LiveCapture() {
                     onClick={ isDisconnected? null : handleClick}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
-                    className={`border border-hover h-10 flex justify-center items-center p-2 rounded-lg transition-all cursor-pointer ${getButtonStyle()} ${className}`}
+                    className={`border border-hover h-10 flex justify-center items-center p-2 rounded-lg transition-all cursor-pointer select-none ${getButtonStyle()} ${className}`}
                 >
                     {Icon && <Icon className="h-5 w-5" />}
                     {(isHovered || isClicked) && hoverText && (
@@ -405,8 +405,6 @@ export default function LiveCapture() {
                 <div className="absolute top-2 right-2 z-10">
                     <RightButtonColumn />
                 </div>
-
-
 
                 <Typography
                     variant="h1"
