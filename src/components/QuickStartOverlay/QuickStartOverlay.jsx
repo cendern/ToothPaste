@@ -52,7 +52,6 @@ function Spotlight({ target, padding = 10 }) {
         left: rect.left - padding,
         width: rect.width + padding * 2,
         height: rect.height + padding * 2,
-        boxShadow: 'inset 0 0 0 9999px rgba(0, 0, 0, 0.1)',
         pointerEvents: 'none',
         borderRadius: '8px',
         animation: 'pulse 2s infinite',
@@ -86,6 +85,18 @@ export default function QuickStartOverlay({ onChangeOverlay }) {
     };
   };
 
+  const getSpotlightMask = () => {
+    if (!targetElement) return 'none';
+    
+    const rect = targetElement.getBoundingClientRect();
+    const padding = 10;
+    const radius = Math.max(rect.width, rect.height) / 2 + padding;
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    return `radial-gradient(circle ${radius}px at ${centerX}px ${centerY}px, transparent, black)`;
+  };
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -117,10 +128,14 @@ export default function QuickStartOverlay({ onChangeOverlay }) {
 
   return (
     <div className="fixed inset-0 z-[9999]">
-      {/* Overlay */}
+      {/* Overlay with mask to show spotlight */}
       <div
         className="absolute inset-0 bg-hover/60"
         onClick={handleSkip}
+        style={{
+          maskImage: getSpotlightMask(),
+          WebkitMaskImage: getSpotlightMask(),
+        }}
       />
 
       {/* Spotlight */}
