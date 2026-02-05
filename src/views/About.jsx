@@ -43,7 +43,7 @@ const Model = ({ url, scrollDeltaRef }) => {
     });
 
     return (
-        <group ref={groupRef} position={[0, -0.1, -1]}>
+        <group ref={groupRef} position={[0, -0.1, -2]}>
             {/* The group is the 'box' that the camera looks it, since the model isnt always centered on the origin we rotate the box */}
 
             <spotLight
