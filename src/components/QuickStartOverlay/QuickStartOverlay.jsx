@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Typography } from "@material-tailwind/react";
 
 const steps = [
@@ -124,6 +124,8 @@ export default function QuickStartOverlay({ onChangeOverlay }) {
 
   const step = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
+  
+  const gridStyles = useMemo(() => getGridPosition(step), [currentStep, step]);
 
   return (
     <div className="fixed inset-0 z-[9999]">
@@ -148,8 +150,9 @@ export default function QuickStartOverlay({ onChangeOverlay }) {
       >
         {/* Tooltip Card */}
         <div
+          key={currentStep}
           className="bg-shelf p-5 rounded-lg shadow-lg pointer-events-auto"
-          style={getGridPosition(step)}
+          style={gridStyles}
           onClick={(e) => e.stopPropagation()}
         >
         <div className="flex justify-between items-start mb-3">
