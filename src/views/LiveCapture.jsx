@@ -35,7 +35,6 @@ export default function LiveCapture() {
     // Mouse Vars
     const lastPos = useRef({ x: 0, y: 0, t: performance.now() }); // Last known position of the mouse
     const isTracking = useRef(true);
-    const lastReportTime = useRef(0);
     const tDisplacement = useRef({ x: 0, y: 0 }); // Total displacement since last report
     const REPORT_INTERVAL_MS = 100;
     const SCALE_FACTOR = 1; // Scale factor for mouse movement
