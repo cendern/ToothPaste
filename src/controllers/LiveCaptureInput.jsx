@@ -317,12 +317,15 @@ export function useInputController() {
     
     function handleOnChange(event) {
         // If the onChange event is fired but input size has shrunk, backspace was pressed
-        if (lastInputRef.current.length > event.target.value.length) {
-            handleSpecialKey({key:"Backspace"}, bufferRef.current);
-            lastCompositionRef.current = lastCompositionRef.current.slice(0, -1); // Keep the lastinput buffer updated
-        }
+        // if (lastInputRef.current.length > event.target.value.length) {
+        //     handleSpecialKey({key:"Backspace"}, bufferRef.current);
+        //     lastCompositionRef.current = lastCompositionRef.current.slice(0, -1); // Keep the lastinput buffer updated
+        // }
 
-        lastInputRef.current = event.target.value; // Update last input value to the current input
+        var packetStream = createKeyboardStream(event.target.value);
+        sendEncrypted(packetStream); // Send the final payload
+
+        //lastInputRef.current = event.target.value; // Update last input value to the current input
     }
     
     return {

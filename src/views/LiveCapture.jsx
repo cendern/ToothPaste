@@ -512,21 +512,46 @@ export default function LiveCapture() {
                         autoCorrect="off"
                         spellCheck="false"
 
-                        ref={inputRef}
                         // Focus handlers
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         // Keyboard event handlers
-                        onKeyDown={handleKeyDown}
-                        onKeyUp={handleKeyUp}
-                        onPaste={handlePaste}
-                        onBeforeInput={handleOnBeforeInput}
-                        onContextMenu={(e) => e.preventDefault()}
+                        onKeyDown={(e) => {
+                            handleKeyDown(e);
+                            inputRef.current.value = "";
+                        }}
+                        onKeyUp={(e) => {
+                            handleKeyUp(e);
+                            inputRef.current.value = "";
+                        }}
+                        onPaste={(e) => {
+                            handlePaste(e);
+                            inputRef.current.value = "";
+                        }}
+                        onBeforeInput={(e) => {
+                            handleOnBeforeInput(e);
+                            inputRef.current.value = "";
+                        }}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            inputRef.current.value = "";
+                        }}
                         // IME event handlers
-                        onChange={handleOnChange}
-                        onCompositionStart={handleCompositionStart}
-                        onCompositionUpdate={() => {}}
-                        onCompositionEnd={handleCompositionEnd}
+                        onChange={(e) => {
+                            handleOnChange(e);
+                            inputRef.current.value = "";
+                        }}
+                        onCompositionStart={(e) => {
+                            handleCompositionStart(e);
+                            inputRef.current.value = "";
+                        }}
+                        onCompositionUpdate={(e) => {
+                            inputRef.current.value = "";
+                        }}
+                        onCompositionEnd={(e) => {
+                            handleCompositionEnd(e);
+                            inputRef.current.value = "";
+                        }}
                         className="absolute inset-0 opacity-0 cursor-text pointer-events-auto"
                     ></input>
 
