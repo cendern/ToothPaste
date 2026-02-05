@@ -220,7 +220,7 @@ export default function Touchpad({
 
             <Typography
                 type="h5"
-                className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 -translate-y-1/2 z-10"
+                className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 -translate-y-1/2 w-full z-10 text-center"
                 aria-hidden="true"
             >
                 {captureMouse ? "Drag to move cursor" : "Enable Mouse Capture To Use Touchpad"}
@@ -229,7 +229,7 @@ export default function Touchpad({
             {captureMouse && (
                 <Typography
                     type="h5"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 translate-y-3 z-10"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 translate-y-3 w-full z-10 text-center"
                     aria-hidden="true"
                 >
                     Double Tap to Click
@@ -252,8 +252,8 @@ export default function Touchpad({
                 </div>
             ) : (
                 <Typography
-                    type="h5"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-2 whitespace-pre-wrap font-light absolute bottom-16 left-0 right-0 z-20"
+                    type="small"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-2 whitespace-pre-wrap font-light absolute bottom-16 left-0 right-0 w-full z-20 text-center"
                     aria-hidden="true"
                 >
                     Enable Command Passthrough to use shortcuts
