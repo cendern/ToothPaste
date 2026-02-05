@@ -43,6 +43,10 @@ export default function LiveCapture() {
     // Touch Vars
     const touchStartPos = useRef(null);
     const isTouching = useRef(false);
+    const lastTapTime = useRef(0);
+    const lastTapPos = useRef(null);
+    const DOUBLE_TAP_THRESHOLD = 300; // ms
+    const DOUBLE_TAP_DISTANCE = 50; // pixels
 
     
 
@@ -158,7 +162,32 @@ export default function LiveCapture() {
     // Touch event handlers for mobile touchpad
     function onTouchStart(e) {
         const touch = e.touches[0];
-        touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+        const currentTime = Date.now();
+        const currentPos = { x: touch.clientX, y: touch.clientY };
+        
+        // Check if this is a double tap
+        const timeSinceLastTap = currentTime - lastTapTime.current;
+        const distanceFromLastTap = lastTapPos.current 
+            ? Math.sqrt(
+                Math.pow(currentPos.x - lastTapPos.current.x, 2) + 
+                Math.pow(currentPos.y - lastTapPos.current.y, 2)
+              )
+            : Infinity;
+        
+        if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && distanceFromLastTap < DOUBLE_TAP_DISTANCE) {
+            // Double tap detected - send left click
+            if (captureMouse) {
+                sendMouseReport(1, 0); // Left click down
+                setTimeout(() => sendMouseReport(2, 0), 50); // Left click up
+            }
+            lastTapTime.current = 0; // Reset to prevent triple tap
+        } else {
+            // Normal tap - prepare for potential movement
+            touchStartPos.current = currentPos;
+            lastTapTime.current = currentTime;
+            lastTapPos.current = currentPos;
+        }
+        
         isTouching.current = true;
     }
 
@@ -489,11 +518,11 @@ export default function LiveCapture() {
 
     return (
         <div className="flex flex-col flex-1 w-full p-4 bg-background text-text">
-            {/* <Typography variant="h4" className="text-text">
+            {/* <Typography type="h4" className="text-text">
                 Send Keystrokes to the 'ToothPaste in real(ish) time
             </Typography> */}
 
-            {/* <Typography variant="h 5" className="text-hover">
+            {/* <Typography type="h 5" className="text-hover">
                 It just works.....
             </Typography> */}
 
@@ -502,18 +531,18 @@ export default function LiveCapture() {
             </div>
 
             {/* Mobile Input Area - Visible only on small screens */}
-            <div className="md:hidden flex flex-col my-4 rounded-lg min-h-12 bg-shelf focus-within:bg-background relative group">
+            <div className="md:hidden flex flex-col my-4 rounded-lg transition-all border border-hover min-h-12 bg-shelf focus-within:bg-background relative group">
                 <Typography
-                    variant="h1"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0 group-focus-within:hidden"
+                    type="h5"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute inset-0 z-0 group-focus-within:hidden"
                     aria-hidden="true"
                 >
                     Tap to focus keyboard
                 </Typography>
 
                 <Typography
-                    variant="h1"
-                    className="hidden group-focus-within:flex opacity-70 items-center justify-center pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0"
+                    type="h5"
+                    className="hidden group-focus-within:flex opacity-70 items-center justify-center pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute inset-0 z-0"
                     aria-hidden="true"
                 >
                     Capturing inputs...
@@ -565,16 +594,16 @@ export default function LiveCapture() {
                 </div>
 
                 <Typography
-                    variant="h1"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0 group-focus-within:hidden"
+                    type="h5"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute inset-0 z-0 group-focus-within:hidden"
                     aria-hidden="true"
                 >
                     Click here to start sending keystrokes in real time (kinda...)
                 </Typography>
 
                 <Typography
-                    variant="h1"
-                    className=" hidden group-focus-within:flex opacity-70 items-center justify-center pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0 "
+                    type="h5"
+                    className=" hidden group-focus-within:flex opacity-70 items-center justify-center pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute inset-0 z-0 "
                     aria-hidden="true"
                 >
                     Capturing inputs...
@@ -633,16 +662,27 @@ export default function LiveCapture() {
                 </div>
 
                 <Typography
-                    variant="h1"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute left-0 right-0 top-1/2 -translate-y-1/2 z-0"
+                    type="h5"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 -translate-y-1/2 z-10"
                     aria-hidden="true"
                 >
                     {captureMouse ? "Drag to move cursor" : "Enable Mouse Capture To Use Touchpad"}
                 </Typography>
 
+                {captureMouse && (
+                    <Typography
+                        type="h5"
+                        className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 translate-y-3 z-10"
+                        aria-hidden="true"
+                    >
+                        Double Tap to Click
+                    </Typography>
+                )}
+
+
                 {/* Mobile touch surface */}
                 <div
-                    className="absolute inset-0 rounded-xl z-5 touch-none top-0 bottom-16"
+                    className={`absolute inset-0 rounded-xl z-5 touch-none top-0 bottom-16 ${captureMouse ? "bg-background" : ""}`}
                     onTouchStart={onTouchStart}
                     onTouchMove={onTouchMove}
                     onTouchEnd={onTouchEnd}
