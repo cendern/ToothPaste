@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import "./index.css";
 //import "./styles/global.css"; // Ensure global styles are applied
 import Navbar from "./components/Navigation/Navbar";
@@ -7,6 +7,7 @@ import LiveCapture from "./views/LiveCapture";
 import { BLEProvider } from "./context/BLEContext";
 import ECDHOverlay from "./components/ECDHOverlay/ECDHOverlay";
 import UpdateController from "./components/UpdateComponent/UpdateController";
+import QuickStartOverlay from "./components/QuickStartOverlay/QuickStartOverlay";
 import { ECDHContext, ECDHProvider } from "./context/ECDHContext";
 import About from "./views/About";
 
@@ -22,9 +23,17 @@ function App() {
     const overlays = {
       pair: ECDHOverlay,
       update: UpdateController,
+      quickstart: QuickStartOverlay,
     };
 
     const ActiveOverlay = activeOverlay ? overlays[activeOverlay] : null;
+
+    useEffect(() => {
+      const hasSeenQuickstart = localStorage.getItem('quickstart_completed') || localStorage.getItem('quickstart_skipped');
+      if (!hasSeenQuickstart) {
+        setActiveOverlay('quickstart');
+      }
+    }, []);
 
     const renderView = () => {
         switch (activeView) {
@@ -34,8 +43,6 @@ function App() {
                 return <LiveCapture />;
             case "about":
                 return <About />;
-            // case "update":
-            //     return <UpdateController />;
             default:
                 return <BulkSend />;
         }
@@ -63,7 +70,11 @@ function App() {
 
           {/* Overlay */}
           {ActiveOverlay && (
-            <ActiveOverlay {...overlayProps} onChangeOverlay={setActiveOverlay} />
+            <ActiveOverlay 
+              {...overlayProps} 
+              onChangeOverlay={setActiveOverlay}
+              activeView={activeView}
+            />
           )}
         </div>
       </BLEProvider>
