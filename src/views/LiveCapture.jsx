@@ -429,6 +429,59 @@ export default function LiveCapture() {
 
             <Keyboard listenerRef={inputRef} deviceStatus={status}></Keyboard>
 
+            {/* Mobile Input Area - Visible only on small screens */}
+            <div className="md:hidden flex flex-col my-4 rounded-lg min-h-12 bg-shelf focus-within:bg-background relative group">
+                <Typography
+                    variant="h1"
+                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0 group-focus-within:hidden"
+                    aria-hidden="true"
+                >
+                    Tap to focus keyboard
+                </Typography>
+
+                <Typography
+                    variant="h1"
+                    className="hidden group-focus-within:flex opacity-70 items-center justify-center pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-sans absolute inset-0 z-0"
+                    aria-hidden="true"
+                >
+                    Capturing inputs...
+                </Typography>
+
+                {/* Mobile input for keyboard capture */}
+                <input
+                    id="mobile-capture-input"
+                    ref={inputRef}
+                    autoCapitalize="none"
+                    type="text"
+                    inputMode="text"
+                    name="user_input"
+                    autoComplete="off"
+                    spellCheck="false"
+                    data-lpignore="true"
+
+                    // Focus handlers
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    // Keyboard event handlers
+                    onKeyDown={handleKeyDown}
+                    onKeyUp={handleKeyUp}
+                    onPaste={handlePaste}
+                    onBeforeInput={handleOnBeforeInput}
+                    onContextMenu={(e) => e.preventDefault()}
+                    // IME event handlers
+                    onChange={handleOnChange}
+                    onCompositionStart={handleCompositionStart}
+                    onCompositionUpdate={() => {}}
+                    onCompositionEnd={handleCompositionEnd}
+                    className="absolute inset-0 opacity-0 cursor-text pointer-events-auto"
+                ></input>
+
+                {/* Event routing overlay div */}
+                <div
+                    className="absolute inset-0 rounded-xl z-5 pointer-events-none"
+                />
+            </div>
+
             {/* Desktop Layout - Hidden on small screens */}
             <div className="hidden md:flex flex-col flex-1 my-4 rounded-xl transition-all border border-hover focus-within:border-shelf bg-shelf focus-within:bg-background relative group ">         
                 <div className="absolute top-2 left-2 z-10">
