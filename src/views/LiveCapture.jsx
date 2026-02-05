@@ -542,7 +542,7 @@ export default function LiveCapture() {
                     <LockOpenIcon className="h-6 w-6 text-white opacity-50 absolute pointer-events-none z-0" />
                     <input
                         id="mobile-autofill-input"
-                        type="text"
+                        type="password"
                         name="autofill_helper"
                         autoComplete="on"
                         spellCheck="false"
