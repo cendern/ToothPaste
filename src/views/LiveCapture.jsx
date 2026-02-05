@@ -682,7 +682,7 @@ export default function LiveCapture() {
 
                 {/* Mobile touch surface */}
                 <div
-                    className={`absolute inset-0 rounded-xl z-5 touch-none top-0 bottom-16 ${captureMouse ? "bg-background" : ""}`}
+                    className={`absolute inset-0 rounded-t-xl z-5 touch-none top-0 bottom-16 ${captureMouse ? "bg-background" : ""}`}
                     onTouchStart={onTouchStart}
                     onTouchMove={onTouchMove}
                     onTouchEnd={onTouchEnd}
