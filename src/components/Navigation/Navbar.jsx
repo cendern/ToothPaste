@@ -238,7 +238,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
             <div className="flex justify-between h-24 items-center px-4">
                 {/* Left: Logo */}
                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsOpen(false)}>
-                    <img src={ToothPaste} alt="brand" className="h-10 w-10" />
+                    <img src={ToothPaste} alt="ToothPaste" className="h-10 w-10" />
                     <Typography variant="h3" color="text" className="select-none">
                         ToothPaste
                     </Typography>

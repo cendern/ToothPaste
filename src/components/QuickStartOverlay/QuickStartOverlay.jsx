@@ -1,15 +1,51 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Typography } from "@material-tailwind/react";
+import ToothPaste from "../../assets/ToothPaste.png";
+import {
+    LockClosedIcon,
+    WifiIcon,
+    CheckCircleIcon
+} from "@heroicons/react/24/outline";
 
 // Shared step objects across all views
 const WELCOME_STEP = {
-    title: 'Welcome to ToothPaste',
-    description: 'A tool to quickly capture and send clipboard data via BLE to your paired devices without compromising security.',
+    title: (
+        <>
+            <div className="inline-flex items-center gap-1 mb-3">
+                <Typography type="h3">Welcome To ToothPaste</Typography>
+                <img src={ToothPaste} alt="ToothPaste" className="h-12 w-12" />
+            </div>
+        </>
+    ),
+    description: (
+        <>
+            <div className="mb-6">
+                <Typography type="paragraph" className="text-xl">
+                    A tool to quickly capture and send clipboard data across devices without compromising security.
+                </Typography>
+            </div>
+
+            <div className="flex flex-col gap-5 text-lg">
+                <div className="flex gap-3">
+                    <LockClosedIcon className="h-6 w-6 text-primary font-bold" />
+                    <Typography className="text-lg">End-to-end encrypted communication</Typography>
+                </div>
+                <div className="flex gap-3">
+                    <WifiIcon className="h-6 w-6 text-primary font-bold" />
+                    <Typography className="text-lg">Real-time keyboard and mouse capture</Typography>
+                </div>
+                <div className="flex gap-3">
+                    <CheckCircleIcon className="h-6 w-6 text-primary font-bold" />
+                    <Typography className="text-lg">Easy device pairing and management</Typography>
+                </div>
+            </div>
+        </>
+    ),
     targetSelector: null,
-    gridColumn: 5,
-    gridRow: 6,
-    columnSpan: 2,
-    rowSpan: 1,
+    gridColumn: 4,
+    gridRow: 5,
+    columnSpan: 4,
+    rowSpan: 3,
     spotlightRadius: 100,
     spotlightGridColumn: 5,
     spotlightGridRow: 6,
@@ -27,17 +63,23 @@ const NAV_MENU_STEP = {
 };
 
 const CONNECTION_STATUS_STEP = {
-    title: (<><Typography type="h5">Connect Button</Typography></>),
+    title: (<><Typography type="h4">Connect Button</Typography></>),
     description: (
         <>
-            <Typography className="mb-2">Connect to a ToothPaste device via BLE to start sending data securely.</Typography>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-                <li><span className="text-primary font-semibold">Green</span> - Connected</li>
-                <li><span className="text-orange font-semibold">Orange</span> - Connecting</li>
-                <li><span className="text-secondary font-semibold">Red</span> - Disconnected</li>
-            </ul>
+            <div className="mb-4">
+                <Typography className="text-xl">Click to connect to a ToothPaste device via BLE.</Typography>
+            </div>
+            <div className="border border-2 border-hover mb-4"></div>
+            <div className="">
+                <Typography className="text-lg mb-2">Different border colors indicate connection status:</Typography>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                    <Typography><span className="text-primary font-semibold">Green</span> - Connected</Typography>
+                    <Typography><span className="text-orange font-semibold">Orange</span> - Connected, Not Paired</Typography>
+                    <Typography><span className="text-secondary font-semibold">Red</span> - Disconnected</Typography>
+                </ul>
+            </div>
             <br/>
-            <Typography type="paragraph" className="text-xl font-semibold">Once connected, hold this button to rename the connected device.</Typography>
+            <Typography type="paragraph" className="text-xl font-extralight">Once connected, <span className="font-semibold">hold this button </span>to rename the connected device.</Typography>
 
         </>
     ),
@@ -242,7 +284,7 @@ export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live'
                 {/* Tooltip Card */}
                 <div
                     key={currentStep}
-                    className="bg-shelf p-5 rounded-lg shadow-lg pointer-events-auto"
+                    className="bg-shelf p-5 rounded-lg shadow-lg pointer-events-auto flex flex-col"
                     style={gridStyles}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -255,9 +297,9 @@ export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live'
                         </span>
                     </div>
 
-                    <Typography className="text-text mb-4 text-sm leading-relaxed">
+                    <div className="flex-1 text-text mb-4 text-sm leading-relaxed">
                         {step.description}
-                    </Typography>
+                    </div>
 
                     <div className="flex gap-3">
                         {currentStep > 0 && (
