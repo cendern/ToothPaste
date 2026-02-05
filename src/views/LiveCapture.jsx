@@ -521,7 +521,7 @@ export default function LiveCapture() {
                         onKeyDown={(e) => {
                             // Default to backspace for unidentified keys to handle mobile keyboard quirks
                             if(e.key === "Unidentified") {
-                                handleKeyDown({key: "Backspace"});
+                                handleKeyDown({key: "Backspace", code:8, keyCode:8, ...e});
                             }
                             else{
                                 handleKeyDown(e);
