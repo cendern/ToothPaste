@@ -518,42 +518,42 @@ export default function LiveCapture() {
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         // Keyboard event handlers
-                        onKeyDown={(e) => {
-                            handleKeyDown(e);
-                            mobileInputRef.current.value = "";
-                        }}
-                        onKeyUp={(e) => {
-                            handleKeyUp(e);
-                            mobileInputRef.current.value = "";
-                        }}
-                        onPaste={(e) => {
-                            handlePaste(e);
-                            mobileInputRef.current.value = "";
-                        }}
-                        onBeforeInput={(e) => {
-                            handleOnBeforeInput(e);
-                            mobileInputRef.current.value = "";
-                        }}
-                        onContextMenu={(e) => {
-                            e.preventDefault();
-                            mobileInputRef.current.value = "";
-                        }}
+                        // onKeyDown={(e) => {
+                        //     handleKeyDown(e);
+                        //     mobileInputRef.current.value = "";
+                        // }}
+                        // onKeyUp={(e) => {
+                        //     handleKeyUp(e);
+                        //     mobileInputRef.current.value = "";
+                        // }}
+                        // onPaste={(e) => {
+                        //     handlePaste(e);
+                        //     mobileInputRef.current.value = "";
+                        // }}
+                        // onBeforeInput={(e) => {
+                        //     handleOnBeforeInput(e);
+                        //     mobileInputRef.current.value = "";
+                        // }}
+                        // onContextMenu={(e) => {
+                        //     e.preventDefault();
+                        //     mobileInputRef.current.value = "";
+                        // }}
                         // IME event handlers
                         onChange={(e) => {
                             handleOnChange(e);
                             mobileInputRef.current.value = "";
                         }}
-                        onCompositionStart={(e) => {
-                            handleCompositionStart(e);
-                            mobileInputRef.current.value = "";
-                        }}
-                        onCompositionUpdate={(e) => {
-                            mobileInputRef.current.value = "";
-                        }}
-                        onCompositionEnd={(e) => {
-                            handleCompositionEnd(e);
-                            mobileInputRef.current.value = "";
-                        }}
+                        // onCompositionStart={(e) => {
+                        //     handleCompositionStart(e);
+                        //     mobileInputRef.current.value = "";
+                        // }}
+                        // onCompositionUpdate={(e) => {
+                        //     mobileInputRef.current.value = "";
+                        // }}
+                        // onCompositionEnd={(e) => {
+                        //     handleCompositionEnd(e);
+                        //     mobileInputRef.current.value = "";
+                        // }}
                         className="absolute inset-0 opacity-0 cursor-text pointer-events-auto"
                     ></input>
 
