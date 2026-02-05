@@ -528,13 +528,8 @@ export default function LiveCapture() {
                             }
                             mobileInputRef.current.value = "";
                         }}
-                        onBeforeInput={(e) => {
-                            console.log("Mobile input: onBeforeInput fired ", e);
-                            mobileInputRef.current.value = "";
-                        }}
                         // IME event handlers
                         onChange={(e) => {
-                            console.log("Mobile input: onChange fired ", e);
                             handleOnChange(e);
                             mobileInputRef.current.value = "";
                         }}
