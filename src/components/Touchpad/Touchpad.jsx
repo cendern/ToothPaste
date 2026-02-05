@@ -81,7 +81,7 @@ export default function Touchpad({
         return (
             <div
                 ref={carouselRef}
-                className="flex flex-col bg-background border border-hover border-b-0"
+                className="flex flex-col bg-background border border-hover border-b-0 relative"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
             >
@@ -101,12 +101,12 @@ export default function Touchpad({
                 </div>
 
                 {/* Slide indicators */}
-                <div className="flex justify-center gap-1 py-1 px-2">
+                <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-1 py-1 px-2 pointer-events-none">
                     {shortcuts.map((_, idx) => (
                         <div
                             key={idx}
-                            className={`h-1 w-4 rounded-full transition-colors cursor-pointer ${
-                                idx === currentSlide ? "bg-text" : "bg-hover"
+                            className={`h-1 w-4 rounded-full transition-colors ${
+                                idx === currentSlide ? "bg-hover" : "bg-shelf"
                             }`}
                             onClick={() => setCurrentSlide(idx)}
                         />
@@ -216,7 +216,7 @@ export default function Touchpad({
 
             {/* Mobile touch surface */}
             <div
-                className={`absolute inset-0 rounded-t-xl z-5 touch-none top-0 bottom-32 ${captureMouse ? "bg-background" : ""}`}
+                className={`absolute inset-0 rounded-t-xl z-5 touch-none top-0 bottom-0 ${captureMouse ? "bg-background" : ""}`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
