@@ -376,7 +376,7 @@ export default function LiveCapture() {
                     hoverText="Shortcuts"
                 />
                 {isMenuOpen && (
-                    <div className="absolute right-0 top-12 rounded-lg z-50 w-48 max-h-80 overflow-y-auto p-2" style={{ scrollbarColor: "var(--color-hover) transparent" }}>
+                    <div className="absolute right-0 top-12 rounded-lg z-50 w-48 max-h-80 overflow-y-auto p-2 border-2 border-hover" style={{ scrollbarColor: "#555 transparent" }}>
                         <div className="flex flex-col gap-2">
                             {shortcuts.map((shortcut, idx) => (
                                 <button
