@@ -427,7 +427,9 @@ export default function LiveCapture() {
                 It just works.....
             </Typography> */}
 
-            <Keyboard listenerRef={inputRef} deviceStatus={status}></Keyboard>
+            <div className="hidden md:block">
+                <Keyboard listenerRef={inputRef} deviceStatus={status}></Keyboard>
+            </div>
 
             {/* Mobile Input Area - Visible only on small screens */}
             <div className="md:hidden flex flex-col my-4 rounded-lg min-h-12 bg-shelf focus-within:bg-background relative group">
