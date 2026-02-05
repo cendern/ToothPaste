@@ -252,7 +252,7 @@ export default function LiveCapture() {
         return (
             <button
                 className={`h-14 flex justify-center items-center flex-1 transition-colors cursor-pointer select-none ${
-                    isPressed ? "bg-white text-shelf" : "bg-shelf text-text"
+                    isPressed ? "bg-white text-shelf" : "bg-background text-text"
                 }`}
                 onTouchStart={handlePress}
                 onMouseDown={handlePress}
@@ -291,13 +291,27 @@ export default function LiveCapture() {
 
         return (
             <div
-                className="flex flex-col bg-shelf border border-hover border-b-0"
+                className="flex flex-col bg-background"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
                 onTouchMove={(e) => e.preventDefault()}
             >
+
+                {/* Slide indicators */}
+                <div className="flex justify-center gap-1 py-1 px-2 mb-1">
+                    {shortcuts.map((_, idx) => (
+                        <div
+                            key={idx}
+                            className={`h-1 w-4 rounded-full transition-colors cursor-pointer ${
+                                idx === currentSlide ? "bg-text" : "bg-hover"
+                            }`}
+                            onClick={() => setCurrentSlide(idx)}
+                        />
+                    ))}
+                </div>
+                
                 {/* Slide container */}
-                <div className="flex h-14">
+                <div className="flex h-14 border-hover border-b-0 border-x-0 border-t">
                     {shortcuts[currentSlide].map((btn, btnIdx) => (
                         <React.Fragment key={btnIdx}>
                             <KeyboardShortcutButton 
@@ -311,18 +325,7 @@ export default function LiveCapture() {
                     ))}
                 </div>
 
-                {/* Slide indicators */}
-                <div className="flex justify-center gap-1 py-1 px-2">
-                    {shortcuts.map((_, idx) => (
-                        <div
-                            key={idx}
-                            className={`h-1 w-4 rounded-full transition-colors cursor-pointer ${
-                                idx === currentSlide ? "bg-text" : "bg-hover"
-                            }`}
-                            onClick={() => setCurrentSlide(idx)}
-                        />
-                    ))}
-                </div>
+                
             </div>
         );
     }
