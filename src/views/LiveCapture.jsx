@@ -522,7 +522,9 @@ export default function LiveCapture() {
                             if(e.key === "Unidentified") {
                                 e.preventDefault(); // Prevent default to avoid unwanted characters
                             }
-                            handleKeyDown(e);
+                            else{
+                                handleKeyDown(e);
+                            }
                             mobileInputRef.current.value = "";
                         }}
                         // onKeyUp={(e) => {
