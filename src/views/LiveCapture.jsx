@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useContext, useCallback, useMemo } from "react";
 
 import { Button, Typography } from "@material-tailwind/react";
-import { CursorArrowRaysIcon, CursorArrowRippleIcon, PowerIcon, ArrowUpOnSquareStackIcon, PlayPauseIcon, ChevronDoubleUpIcon, ChevronDoubleDownIcon, ForwardIcon, BackwardIcon, CommandLineIcon, LockOpenIcon} from "@heroicons/react/24/outline";
+import { CursorArrowRaysIcon, CursorArrowRippleIcon, PowerIcon, ArrowUpOnSquareStackIcon, PlayPauseIcon, ChevronDoubleUpIcon, ChevronDoubleDownIcon, ForwardIcon, BackwardIcon, CommandLineIcon, LockOpenIcon, EllipsisVerticalIcon} from "@heroicons/react/24/outline";
 import { BLEContext } from "../context/BLEContext";
 //import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 import Keyboard from "../components/Keyboard/Keyboard";
@@ -345,6 +345,58 @@ export default function LiveCapture() {
         );
     }
 
+    // Collapsible shortcuts menu
+    function ShortcutsMenuButton() {
+        const [isMenuOpen, setIsMenuOpen] = useState(false);
+        const shortcuts = [
+            { label: "Ctrl+A", keys: ["ControlLeft", "a"] },
+            { label: "Ctrl+C", keys: ["ControlLeft", "c"] },
+            { label: "Ctrl+V", keys: ["ControlLeft", "v"] },
+            { label: "Ctrl+X", keys: ["ControlLeft", "x"] },
+            { label: "Delete", keys: ["Delete"] },
+            { label: "Ctrl+Z", keys: ["ControlLeft", "z"] },
+            { label: "Ctrl+Y", keys: ["ControlLeft", "y"] },
+            { label: "Ctrl+S", keys: ["ControlLeft", "s"] },
+            { label: "Alt+Tab", keys: ["AltLeft", "Tab"] },
+            { label: "Esc", keys: ["Escape"] },
+            { label: "Ctrl+Alt+Del", keys: ["ControlLeft", "AltLeft", "Delete"] },
+            { label: "Ctrl+Shift+Esc", keys: ["ControlLeft", "ShiftLeft", "Escape"] },
+            { label: "Win+V", keys: ["MetaLeft", "v"] },
+            { label: "Win+Shift+S", keys: ["MetaLeft", "ShiftLeft", "s"] },
+            { label: "Enter", keys: ["Enter"] },
+        ];
+
+        return (
+            <div className="relative">
+                <IconToggleButton
+                    title="Shortcuts Menu"
+                    toggled={isMenuOpen}
+                    onClick={() => setIsMenuOpen((prev) => !prev)}
+                    Icon={EllipsisVerticalIcon}
+                    hoverText="Shortcuts"
+                />
+                {isMenuOpen && (
+                    <div className="absolute right-0 top-12 rounded-lg z-50 w-48 max-h-80 overflow-y-auto p-2" style={{ scrollbarColor: "var(--color-hover) transparent" }}>
+                        <div className="flex flex-col gap-2">
+                            {shortcuts.map((shortcut, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        sendKeyboardShortcut(shortcut.keys);
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-sm font-medium bg-shelf text-text rounded-lg border border-hover hover:bg-white hover:text-shelf transition-colors"
+                                >
+                                    {shortcut.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     function sendControlCode(controlCode, hold = false) {
         const arr = new ArrayBuffer(10);
         var view = new DataView(arr);
@@ -432,6 +484,9 @@ export default function LiveCapture() {
                 </div>
                 <div>
                     <MouseJiggleButton />
+                </div>
+                <div>
+                    <ShortcutsMenuButton />
                 </div>
             </div>
         );
