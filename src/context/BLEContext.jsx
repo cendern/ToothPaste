@@ -3,7 +3,6 @@ import React, {
     useContext,
     useState,
     useRef,
-    useEffect,
     useMemo,
 } from "react";
 import { keyExists, loadBase64 } from "../services/Storage.js";
