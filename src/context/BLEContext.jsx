@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { keyExists, loadBase64 } from "../services/Storage.js";
 import { ECDHContext } from "./ECDHContext.jsx";
-import { Packet, createUnencryptedPacket } from "../services/packetService/packetFunctions.js";
+import { createUnencryptedPacket } from "../services/packetService/packetFunctions.js";
 import { PacketQueue } from "../services/packetService/PacketQueue.js";
 import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
 
