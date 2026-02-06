@@ -52,7 +52,6 @@ export function BLEProvider({ children }) {
         }
     };
 
-    // FIFO queue for encrypted packets
     // Encrypt and send untyped data stream (string, array, etc.) with a random IV and GCM tag added, chunk data if too large
     // inputPayload can be a single payload or an array of payloads
     // Uses a FIFO queue where encryption produces packets and sending consumes them concurrently
@@ -60,6 +59,7 @@ export function BLEProvider({ children }) {
     const sendEncrypted = async (inputPayload, prefix=0) => {
         if (!pktCharacteristic) return;
 
+        // Create a packet queue to hold encrypted packets before sending
         const packetQueue = new PacketQueue();
         
         try {
@@ -94,6 +94,7 @@ export function BLEProvider({ children }) {
 
             // Wait for both producer and consumer to complete
             await Promise.all([producerTask, consumerTask]);
+
         } catch (error) {
             console.error("Error sending encrypted packet", error);
         }
@@ -110,6 +111,7 @@ export function BLEProvider({ children }) {
             if (selfPublicKey) {
                 sendUnencrypted(selfPublicKey);
             }
+
         } catch (error) {
             console.error(error);
         }
@@ -206,6 +208,7 @@ export function BLEProvider({ children }) {
                 await loadKeys(device.macAddress);
                 await sendAuth(device);
             }
+            
         } catch (error) {
             console.error("Connection failed", error);
 

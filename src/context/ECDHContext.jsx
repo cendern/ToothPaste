@@ -60,7 +60,6 @@ export const ECDHProvider = ({ children }) => {
 
         await saveBase64(clientID, "SelfPublicKey", b64SelfPubkey);
         await saveBase64(clientID, "aesKey", aesKeyB64.current);
-        //await saveBase64(clientID, "SelfPrivateKey", privateKey);
 
         return;
     };
@@ -239,6 +238,36 @@ export const ECDHProvider = ({ children }) => {
         aesKey.current = await importAESKeyFromBytes(base64ToArrayBuffer(aesKeyB64));
     };
 
+    // Process peer key and complete key exchange in one function
+    const processPeerKeyAndGenerateSharedSecret = async (peerKeyBase64, deviceMacAddress) => {
+        // Decompress and import peer public key
+        const compressedBytes = new Uint8Array(base64ToArrayBuffer(peerKeyBase64));
+        
+        if (compressedBytes.length !== 33) {
+            throw new Error('Compressed public key must be 33 bytes');
+        }
+
+        const rawUncompressed = decompressKey(compressedBytes);
+        const peerPublicKeyObject = await importPeerPublicKey(rawUncompressed);
+
+        // Save the peer public key
+        const rawKey = await crypto.subtle.exportKey('raw', peerPublicKeyObject);
+        await savePeerPublicKey(rawKey, deviceMacAddress);
+
+        // Generate our key pair
+        await generateECDHKeyPair();
+        const rawPublicKey = await crypto.subtle.exportKey('raw', keyPair.current.publicKey);
+        const b64SelfPublic = arrayBufferToBase64(rawPublicKey);
+
+        // Derive shared secret using peer's public key
+        await deriveKey(peerPublicKeyObject);
+
+        // Save all keys (self public key and AES key)
+        await saveKeys(deviceMacAddress);
+
+        return b64SelfPublic;
+    };
+
     // Context Provider return
     const contextValue = useMemo(() => ({
         keyPair,
@@ -253,6 +282,7 @@ export const ECDHProvider = ({ children }) => {
         decryptText,
         createEncryptedPackets,
         loadKeys,
+        processPeerKeyAndGenerateSharedSecret,
     }), []);
 
     return (

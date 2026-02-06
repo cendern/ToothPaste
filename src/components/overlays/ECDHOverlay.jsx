@@ -1,19 +1,13 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
-import { ec as EC } from 'elliptic';
-import { ECDHContext, arrayBufferToBase64, base64ToArrayBuffer } from '../../context/ECDHContext';
+import { ECDHContext } from '../../context/ECDHContext';
 import { Button, Typography } from "@material-tailwind/react";
 import { KeyIcon } from '@heroicons/react/24/outline';
 import { BLEContext } from '../../context/BLEContext';
 
-const ec = new EC('p256'); // secp256r1
-
-
 const ECDHOverlay = ({ onChangeOverlay }) => {
-    const { generateECDHKeyPair, decompressKey, importPeerPublicKey, saveSelfKeys: saveKeys, deriveKey, savePeerPublicKey } = useContext(ECDHContext);
+    const { processPeerKeyAndGenerateSharedSecret } = useContext(ECDHContext);
     const [keyInput, setkeyInput] = useState("");
-    const [sharedSecret, setSharedSecret] = useState(null);
     const [error, setError] = useState(null);
-    const [pkey, setpkey] = useState(null);
     const { device, pktCharacteristic, status, sendUnencrypted } = useContext(BLEContext);
     const keyRef = useRef(null);
 
@@ -23,6 +17,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    // Handle submit when user (or ToothPaste) presses Enter in the input field
     const handleSubmit =  (event) =>{
         if(keyInput.trim() === "")
             return;
@@ -31,51 +26,25 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
             computeSecret();
         }   
     }
+
+    // Use the context function to handle entire key exchange
     const computeSecret = async () => {
         try {
             setError(null);
             setisLoading(true);
 
-            // Parse the Base64 compressed public key input into a Uint8Array
-            const compressedBytes = new Uint8Array(base64ToArrayBuffer(keyInput.trim()));
-            
-            // If the compressed key is not 33 bytes, throw an error
-            if (compressedBytes.length !== 33) {
-                throw new Error('Compressed public key must be 33 bytes');
-            }
+            // Use the comprehensive context function
+            const b64SelfPublic = await processPeerKeyAndGenerateSharedSecret(
+                keyInput.trim(),
+                device.macAddress
+            );
 
-            // Peer key functions
-            const rawUncompressed = decompressKey(compressedBytes);  // Decompress the compressed public key to get the raw uncompressed key uint8array (65 bytes)
-            const peerPublicKeyObject = await importPeerPublicKey(rawUncompressed); // Create a CryptoKey object from the uncompressed public key
-
-            // Save the uncompressed peer public key in the database as base64 <MAC, PubKey>
-            await crypto.subtle.exportKey('raw', peerPublicKeyObject).then((rawKey) => {
-                savePeerPublicKey(rawKey, device.macAddress);
-            });
-
-            // Self functions
-            const keys = await generateECDHKeyPair(); // Generate ECDH key pair
-            const { _, publicKey } = keys;
-
-            // Compress our public key and turn it into Base64 to send to the peer
-            const rawPublicKey = await crypto.subtle.exportKey('raw', publicKey);
-            const b64SelfPublic = arrayBufferToBase64(rawPublicKey);
-
-            // Derive the shared secret + AES key
-            await deriveKey(peerPublicKeyObject); // Derive the shared secret using our private key and the peer's public key
-
-            // Store all keys in DB under WEB BLE device.macAddress
-            await saveKeys(device.macAddress); 
-            setpkey(b64SelfPublic);
-
-
-            await sleep(2000); // Wait for 2 second after generating the shared secret
+            await sleep(2000); // Wait for 2 seconds after generating the shared secret
             await sendUnencrypted(b64SelfPublic);
             setisLoading(false);
 
         } catch (e) {
             setError('Error: ' + e.message);
-            setSharedSecret(null);
         }
     };
 
