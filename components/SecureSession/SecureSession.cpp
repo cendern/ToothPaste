@@ -13,6 +13,15 @@ Preferences preferences; // Preferences for storing data (Not secure, temporary 
 SecureSession::SecureSession() : sharedReady(false)
 {
     // nvsinit(); // // Initialize non-volatile storage on the ESP32
+
+    // PSA Init
+    psa_status_t status = psa_crypto_init();
+    if (status != PSA_SUCCESS) {
+        ESP_LOGE("SecureSession", "PSA Crypto initialization failed!");
+    }
+
+
+    // Old mbedTLS init
     mbedtls_ecdh_init(&ecdh_ctx);
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);

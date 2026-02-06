@@ -1,6 +1,7 @@
 #define MBEDTLS_ECP_RESTARTABLE 1
 #include <Arduino.h>
 #include <string>
+#include <esp_log.h>
 #include <mbedtls/ecdh.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
@@ -105,6 +106,11 @@ public:
     bool setDeviceName(const char* deviceName);
 
 private:
+
+    // New mbedTLS api vars
+    psa_key_id_t shared_secret_id; // PSA key ID for the shared secret
+    psa_key_id_t aes_key_id; // PSA key ID for the derived AES key
+
     mbedtls_ecdh_context ecdh;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_entropy_context entropy;
