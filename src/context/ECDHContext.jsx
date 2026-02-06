@@ -174,23 +174,29 @@ export const ECDHProvider = ({ children }) => {
     };
 
     /**
-     * Perform ECDH key derivation: compute shared secret and derive AES-GCM key using HKDF
-     * Stores results in aesKey.current and aesKeyB64.current for later encryption operations
+     * Derive the shared secret using ECDH with peer's public key
      * @param {CryptoKey} peerPubKey - Peer's public key (CryptoKey object)
-     * @returns {Promise<void>} Updates internal state; no direct return value
+     * @returns {Promise<ArrayBuffer>} The shared secret (256 bits)
      */
-    const deriveKey = async (peerPubKey) => {
-        
-        //Derive just the shared secret
-        const sharedSecret = await crypto.subtle.deriveBits(
+    const deriveSharedSecret = async (peerPubKey) => {
+        return await crypto.subtle.deriveBits(
             {
                 name: "ECDH",
-                public: peerPubKey, // Their public key (as a cryptokey object)
+                public: peerPubKey,
             },
-            keyPair.current.privateKey, // Our private key
+            keyPair.current.privateKey,
             256
         );
+    };
 
+    /**
+     * Derive AES-GCM encryption key from a shared secret using HKDF
+     * Stores result in aesKey.current and aesKeyB64.current
+     * @param {ArrayBuffer} sharedSecret - The shared secret (256 bits)
+     * @param {Uint8Array} [salt=new Uint8Array([])] - HKDF salt value for key derivation
+     * @returns {Promise<void>} Updates internal aesKey.current and aesKeyB64.current state
+     */
+    const deriveAESKey = async (sharedSecret, salt = new Uint8Array([])) => {
         const info = new TextEncoder().encode("aes-gcm-256");
         const keyMaterial = await crypto.subtle.importKey(
             "raw", 
@@ -200,32 +206,36 @@ export const ECDHProvider = ({ children }) => {
             ["deriveKey"]
         );
 
-        // Use HKDF to derive a symmetric AES-GCM key from the shared secret
         const aesKeyGen = await crypto.subtle.deriveKey(
             {
                 name: "HKDF",
                 hash: "SHA-256",
-                salt: new Uint8Array([]),
-                info: info,
+                salt,
+                info,
             },
-
-            //Use this cryptoKey object
             keyMaterial,
-
-            // Use the AES-GCM algorithm to create an AES key
             {
                 name: "AES-GCM",
                 length: 256,
             },
-
-            true, // not extractable || extractable ONLY FOR DEBUGGING
+            true,
             ["encrypt", "decrypt"]
         );
 
-        aesKey.current = aesKeyGen; // Set the aes key
-
+        aesKey.current = aesKeyGen;
         aesKeyB64.current = await crypto.subtle.exportKey("raw", aesKeyGen) 
                             .then((rawKey) => arrayBufferToBase64(rawKey));
+    };
+
+    /**
+     * Perform complete ECDH key derivation: compute shared secret and derive AES-GCM key using HKDF
+     * Stores results in aesKey.current and aesKeyB64.current for later encryption operations
+     * @param {CryptoKey} peerPubKey - Peer's public key (CryptoKey object)
+     * @returns {Promise<void>} Updates internal state; no direct return value
+     */
+    const deriveKey = async (peerPubKey) => {
+        const sharedSecret = await deriveSharedSecret(peerPubKey);
+        await deriveAESKey(sharedSecret);
     };
 
     /**
@@ -277,22 +287,25 @@ export const ECDHProvider = ({ children }) => {
     /**
      * Create and encrypt a ToothPacket payload, yielding encrypted DataPackets
      * Generator function that can yield multiple packets if payload exceeds max size
-     * @param {number} id - Packet ID for identification
+     * @param {number} packetId - Packet ID for identification
      * @param {Object} payload - Protobuf EncryptedData object to encrypt
      * @param {boolean} [slowMode=true] - Whether to use slow transmission mode
      * @param {number} [packetPrefix=0] - Prefix byte for packet identification
      * @yields {Object} DataPacket with encryptedData, IV, tag, and metadata
      */
-    const createEncryptedPackets = async function* (id, payload, slowMode = true, packetPrefix=0) {
+    const createEncryptedPackets = async function* (packetId, payload, slowMode = true, packetPrefix=0) {
         
         // Convert the protobuf payload to a byte array for encryption
         const toothPacketBinary = toBinary(ToothPacketPB.EncryptedDataSchema, payload);
         
-        const encryptedPacket = await encryptText(toothPacketBinary, null); // Encrypt the encryptedData component of a ToothPacket and get DataPacket
+        // Encrypt the encryptedData component of a ToothPacket and get DataPacket
+        const encryptedPacket = await encryptText(toothPacketBinary, null); 
         
         // Set packet metadata
-        encryptedPacket.packetID = id;
+        encryptedPacket.packetID = packetId;
         encryptedPacket.slowMode = slowMode;
+
+        // Not used for now
         encryptedPacket.packetNumber = 1;
         encryptedPacket.totalPackets = 1;
 
@@ -359,6 +372,8 @@ export const ECDHProvider = ({ children }) => {
         compressKey,
         decompressKey,
         importPeerPublicKey,
+        deriveSharedSecret,
+        deriveAESKey,
         deriveKey,
         savePeerPublicKey,
         encryptText,
