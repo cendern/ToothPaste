@@ -1,5 +1,6 @@
 import { createKeyboardStream, createKeyCodePacket } from '../PacketFunctions';
 import { HIDMap } from './HIDMap';
+import { createConsumerControlPacket } from '../PacketFunctions';
 
 /**
  * Keyboard input handler service
@@ -87,5 +88,22 @@ export const keyboardHandler = {
         }
 
         return true;
+    },
+
+    /**
+     * Send a consumer control code (media controls, power, etc.)
+     * @param {number} controlCode - The control code to send
+     * @param {Function} sendEncrypted - Function to send encrypted packets
+     * @param {boolean} hold - Whether to hold the key (default: false)
+     */
+    sendControlCode(controlCode, sendEncrypted, hold = false) {
+        const controlPacket = createConsumerControlPacket(controlCode);
+        sendEncrypted(controlPacket);
+
+        if (!hold) {
+            // If not holding, send a "key release" by sending 0
+            const releasePacket = createConsumerControlPacket(0);
+            sendEncrypted(releasePacket);
+        }
     }
 };

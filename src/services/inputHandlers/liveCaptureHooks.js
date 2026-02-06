@@ -1,10 +1,9 @@
 import { useRef, useState, useEffect, useCallback, useContext } from 'react';
-import { BLEContext } from "../context/BLEContext.jsx";
-import { ECDHContext } from "../context/ECDHContext.jsx";
+import { BLEContext } from "../../context/BLEContext.jsx";
+import { ECDHContext } from "../../context/ECDHContext.jsx";
 
-import * as ToothPacketPB from './toothpacket/toothpacket_pb.js';
-import { createKeyboardPacket, createKeyboardStream } from './PacketFunctions.js';
-import { keyboardHandler } from './inputHandlers/keyboardHandler';
+import { createKeyboardStream } from '../PacketFunctions.js';
+import { keyboardHandler } from './keyboardHandler';
 
 
 export function useInputController() {

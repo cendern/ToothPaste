@@ -5,10 +5,10 @@ import { CursorArrowRaysIcon, CursorArrowRippleIcon, PowerIcon, ArrowUpOnSquareS
 import { BLEContext } from "../context/BLEContext";
 import Keyboard from "../components/Keyboard/Keyboard";
 import Touchpad from "../components/Touchpad/Touchpad";
-import { useInputController } from "../services/LiveCaptureInput";
+import { useInputController } from "../services/inputHandlers/liveCaptureHooks";
 import { IconToggleButton, MediaToggleButton } from "../components/shared/buttons";
 
-import { createConsumerControlPacket, createMouseJigglePacket } from "../services/PacketFunctions";
+import { createMouseJigglePacket } from "../services/PacketFunctions";
 import { mouseHandler } from "../services/inputHandlers/mouseHandler";
 import { keyboardHandler } from "../services/inputHandlers/keyboardHandler";
 
@@ -36,6 +36,49 @@ export default function LiveCapture() {
 
     // Contexts
     const { status, sendEncrypted } = useContext(BLEContext);
+
+    // Shortcut definitions
+    const SHORTCUTS_MENU = [
+        { label: "Ctrl+A", keys: ["Control", "a"] },
+        { label: "Ctrl+C", keys: ["Control", "c"] },
+        { label: "Ctrl+V", keys: ["Control", "v"] },
+        { label: "Ctrl+X", keys: ["Control", "x"] },
+        { label: "Delete", keys: ["Delete"] },
+        { label: "Ctrl+Z", keys: ["Control", "z"] },
+        { label: "Ctrl+Y", keys: ["Control", "y"] },
+        { label: "Ctrl+S", keys: ["Control", "s"] },
+        { label: "Alt+Tab", keys: ["Alt", "Tab"] },
+        { label: "Esc", keys: ["Escape"] },
+        { label: "Ctrl+Alt+Del", keys: ["Control", "Alt", "Delete"] },
+        { label: "Ctrl+Shift+Esc", keys: ["Control", "Shift", "Escape"] },
+        { label: "Win+V", keys: ["Meta", "v"] },
+        { label: "Win+Shift+S", keys: ["Meta", "Shift", "s"] },
+        { label: "Enter", keys: ["Enter"] },
+    ];
+
+    const TOUCHPAD_SHORTCUTS = [
+        [
+            { label: "Ctrl+A", keys: ["Control", "a"] },
+            { label: "Ctrl+C", keys: ["Control", "c"] },
+            { label: "Ctrl+V", keys: ["Control", "v"] },
+            { label: "Ctrl+X", keys: ["Control", "x"] },
+            { label: "Delete", keys: ["Delete"] },
+        ],
+        [
+            { label: "Ctrl+Z", keys: ["Control", "z"] },
+            { label: "Ctrl+Y", keys: ["Control", "y"] },
+            { label: "Ctrl+S", keys: ["Control", "s"] },
+            { label: "Alt+Tab", keys: ["Alt", "Tab"] },
+            { label: "Esc", keys: ["Escape"] },
+        ],
+        [
+            { label: "Ctrl+Alt+Del", keys: ["Control", "Alt", "Delete"] },
+            { label: "Ctrl+Shift+Esc", keys: ["Control", "Shift", "Escape"] },
+            { label: "Win+V", keys: ["Meta", "v"] },
+            { label: "Win+Shift+S", keys: ["Meta", "Shift", "s"] },
+            { label: "Enter", keys: ["Enter"] },
+        ],
+    ];
 
     // Mouse Vars
     const mouseStartPos = useRef(null);
@@ -253,23 +296,6 @@ export default function LiveCapture() {
     // Collapsible shortcuts menu
     function ShortcutsMenuButton() {
         const [isMenuOpen, setIsMenuOpen] = useState(false);
-        const shortcuts = [
-            { label: "Ctrl+A", keys: ["Control", "a"] },
-            { label: "Ctrl+C", keys: ["Control", "c"] },
-            { label: "Ctrl+V", keys: ["Control", "v"] },
-            { label: "Ctrl+X", keys: ["Control", "x"] },
-            { label: "Delete", keys: ["Delete"] },
-            { label: "Ctrl+Z", keys: ["Control", "z"] },
-            { label: "Ctrl+Y", keys: ["Control", "y"] },
-            { label: "Ctrl+S", keys: ["Control", "s"] },
-            { label: "Alt+Tab", keys: ["Alt", "Tab"] },
-            { label: "Esc", keys: ["Escape"] },
-            { label: "Ctrl+Alt+Del", keys: ["Control", "Alt", "Delete"] },
-            { label: "Ctrl+Shift+Esc", keys: ["Control", "Shift", "Escape"] },
-            { label: "Win+V", keys: ["Meta", "v"] },
-            { label: "Win+Shift+S", keys: ["Meta", "Shift", "s"] },
-            { label: "Enter", keys: ["Enter"] },
-        ];
 
         return (
             <div className="relative">
@@ -284,7 +310,7 @@ export default function LiveCapture() {
                 {isMenuOpen && (
                     <div className="absolute right-0 top-12 rounded-lg z-50 w-48 max-h-80 overflow-y-auto p-2 border-2 border-hover" style={{ scrollbarColor: "#555 transparent" }}>
                         <div className="flex flex-col gap-2">
-                            {shortcuts.map((shortcut, idx) => (
+                            {SHORTCUTS_MENU.map((shortcut, idx) => (
                                 <button
                                     key={idx}
                                     onClick={() => {
@@ -301,25 +327,6 @@ export default function LiveCapture() {
                 )}
             </div>
         );
-    }
-
-    function sendControlCode(controlCode, hold = false) {
-        const arr = new ArrayBuffer(10);
-        var view = new DataView(arr);
-
-        // view.setUint8(0, 4); // first byte = flag
-        view.setUint16(0, controlCode, true); // next two bytes = control code
-
-        var controlPacket = createConsumerControlPacket(controlCode);
-        sendEncrypted(controlPacket);
-
-        if (!hold) {
-            // If not holding, send a "key release" after a short delay
-            const releaseArr = new ArrayBuffer(10);
-            var releaseView = new DataView(releaseArr);
-            releaseView.setUint8(0, 4); // first byte = flag
-            releaseView.setUint16(1, 0, true); // next two bytes = control code
-        }
     }   
 
     // Vertical dropdown with media control buttons (Play/Pause, Vol+, Vol-, Next, Prev)
@@ -329,7 +336,7 @@ export default function LiveCapture() {
                 <div>
                     <MediaToggleButton
                         title="Play / Pause media"
-                        onClick={() => {sendControlCode(0x00CD)}}
+                        onClick={() => {keyboardHandler.sendControlCode(0x00CD, sendEncrypted)}}
                         Icon={PlayPauseIcon}
                         expandDirection="right"
                         connectionStatus={status}
@@ -338,7 +345,7 @@ export default function LiveCapture() {
                 <div>
                     <MediaToggleButton
                         title="Volume Up"
-                        onClick={() => {sendControlCode(0x00E9)}}
+                        onClick={() => {keyboardHandler.sendControlCode(0x00E9, sendEncrypted)}}
                         Icon={ChevronDoubleUpIcon}
                         expandDirection="right"
                         connectionStatus={status}
@@ -347,7 +354,7 @@ export default function LiveCapture() {
                 <div>
                     <MediaToggleButton
                         title="Volume Down"
-                        onClick={() => {sendControlCode(0x00EA)}}
+                        onClick={() => {keyboardHandler.sendControlCode(0x00EA, sendEncrypted)}}
                         Icon={ChevronDoubleDownIcon}
                         expandDirection="right"
                         connectionStatus={status}
@@ -356,7 +363,7 @@ export default function LiveCapture() {
                 <div>
                     <MediaToggleButton
                         title="Next"
-                        onClick={() => {sendControlCode(0x00B5)}}
+                        onClick={() => {keyboardHandler.sendControlCode(0x00B5, sendEncrypted)}}
                         Icon={ForwardIcon}
                         expandDirection="right"
                         connectionStatus={status}
@@ -365,7 +372,7 @@ export default function LiveCapture() {
                 <div>
                     <MediaToggleButton
                         title="Previous"
-                        onClick={() => {sendControlCode(0x00B6)}}
+                        onClick={() => {keyboardHandler.sendControlCode(0x00B6, sendEncrypted)}}
                         Icon={BackwardIcon}
                         expandDirection="right"
                         connectionStatus={status}
@@ -375,7 +382,7 @@ export default function LiveCapture() {
                     <MediaToggleButton 
                         title="Press 'Power' button"
                         Icon={PowerIcon} 
-                        onClick={() => sendControlCode(0x0030)}
+                        onClick={() => keyboardHandler.sendControlCode(0x0030, sendEncrypted)}
                         expandDirection="right"
                         connectionStatus={status}
                     />
@@ -406,14 +413,6 @@ export default function LiveCapture() {
 
     return (
         <div className="flex flex-col flex-1 w-full p-4 bg-background text-text">
-            {/* <Typography type="h4" className="text-text">
-                Send Keystrokes to the 'ToothPaste in real(ish) time
-            </Typography> */}
-
-            {/* <Typography type="h 5" className="text-hover">
-                It just works.....
-            </Typography> */}
-
             <div className="hidden md:block">
                 <Keyboard listenerRef={inputRef} deviceStatus={status}></Keyboard>
             </div>
@@ -578,29 +577,7 @@ export default function LiveCapture() {
                 onSendKeyboardShortcut={sendKeyboardShortcut}
                 leftButtonColumn={<LeftButtonColumn />}
                 rightButtonColumn={<RightButtonColumn />}
-                shortcuts={[
-                    [
-                        { label: "Ctrl+A", keys: ["Control", "a"] },
-                        { label: "Ctrl+C", keys: ["Control", "c"] },
-                        { label: "Ctrl+V", keys: ["Control", "v"] },
-                        { label: "Ctrl+X", keys: ["Control", "x"] },
-                        { label: "Delete", keys: ["Delete"] },
-                    ],
-                    [
-                        { label: "Ctrl+Z", keys: ["Control", "z"] },
-                        { label: "Ctrl+Y", keys: ["Control", "y"] },
-                        { label: "Ctrl+S", keys: ["Control", "s"] },
-                        { label: "Alt+Tab", keys: ["Alt", "Tab"] },
-                        { label: "Esc", keys: ["Escape"] },
-                    ],
-                    [
-                        { label: "Ctrl+Alt+Del", keys: ["Control", "Alt", "Delete"] },
-                        { label: "Ctrl+Shift+Esc", keys: ["Control", "Shift", "Escape"] },
-                        { label: "Win+V", keys: ["Meta", "v"] },
-                        { label: "Win+Shift+S", keys: ["Meta", "Shift", "s"] },
-                        { label: "Enter", keys: ["Enter"] },
-                    ],
-                ]}
+                shortcuts={TOUCHPAD_SHORTCUTS}
             />
         </div>
     );
