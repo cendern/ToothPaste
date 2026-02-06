@@ -3,10 +3,10 @@ import React, { useEffect, useRef, useState, useContext, useCallback, useMemo } 
 import { Button, Typography } from "@material-tailwind/react";
 import { CursorArrowRaysIcon, CursorArrowRippleIcon, PowerIcon, ArrowUpOnSquareStackIcon, PlayPauseIcon, ChevronDoubleUpIcon, ChevronDoubleDownIcon, ForwardIcon, BackwardIcon, CommandLineIcon, LockOpenIcon, EllipsisVerticalIcon} from "@heroicons/react/24/outline";
 import { BLEContext } from "../context/BLEContext";
-//import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 import Keyboard from "../components/Keyboard/Keyboard";
 import Touchpad from "../components/Touchpad/Touchpad";
 import { useInputController } from "../services/LiveCaptureInput";
+import { IconToggleButton, MediaToggleButton } from "../components/shared/buttons";
 
 import { createConsumerControlPacket, createKeyCodePacket, createMouseStream, createMouseJigglePacket } from "../services/PacketFunctions";
 import { HIDMap } from "../services/HIDMap";
@@ -218,85 +218,6 @@ export default function LiveCapture() {
         handleKeyDown(syntheticEvent);
     }
 
-    // Reusable IconToggleButton component
-    function IconToggleButton({
-        title, // Tooltip text
-        toggled, // Set the button UI state
-        onClick, // Click handler
-        Icon, // Icon component
-        hoverText = "", // Text to show on hover
-        className = "", // Additional classes
-        expandDirection = "left" // Direction to expand on hover: "left" or "right"
-    }) {
-        const [isHovered, setIsHovered] = React.useState(false);
-        const [isClicked, setIsClicked] = React.useState(false);
-        const isDisconnected = status === 0; // ConnectionStatus.disconnected
-
-        const handleClick = () => {
-            setIsClicked(true);
-            onClick();
-            setTimeout(() => setIsClicked(false), 100);
-        };
-
-        const getButtonStyle = () => {
-            const bgColor = "bg-shelf";
-            const clickBgColor = isDisconnected ? "bg-secondary" : "bg-primary";
-            const positionClass = expandDirection === "right" ? "left-0" : "right-0";
-            const flexOrder = expandDirection === "right" ? "" : "flex-row-reverse";
-
-            if (isClicked) {
-                return `absolute ${positionClass} top-0 w-auto px-3 ${clickBgColor} text-white ${flexOrder}`;
-            }
-
-            if (isHovered) {
-                return `absolute ${positionClass} top-0 w-auto px-3 bg-white text-shelf ${flexOrder}`;
-            }
-
-            return `w-10 ${toggled ? "bg-white text-shelf" : `${bgColor} text-text`}`;
-        };
-
-        return (
-            <div className={`relative w-10 h-10`}>
-                <div
-                    title={title}
-                    onClick={ isDisconnected? null : handleClick}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                    className={`border border-hover h-10 flex justify-center items-center p-2 rounded-lg transition-all cursor-pointer select-none ${getButtonStyle()} ${className}`}
-                >
-                    {Icon && <Icon className="h-5 w-5" />}
-                    {(isHovered || isClicked) && hoverText && (
-                        <span className="mx-2 whitespace-nowrap text-sm font-medium">
-                            {hoverText}
-                        </span>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    function MediaToggleButton({ title, onClick, Icon, expandDirection = "left" }) {
-        const [toggled, setToggled] = React.useState(false);
-
-        const handleClick = () => {
-            setToggled(true);
-            onClick();
-            setTimeout(() => setToggled(false), 100); // 150ms visual feedback
-        };
-
-        return (
-            <IconToggleButton
-                title={title}
-                toggled={toggled}
-                onClick={handleClick}
-                Icon={Icon}
-                hoverText={title}
-                expandDirection={expandDirection}
-            />
-        );
-    }
-
     // Toggle capturing and sending mouse data
     function CaptureMouseButton() {
         const handleToggle = () => setCaptureMouse((prev) => !prev);
@@ -308,6 +229,7 @@ export default function LiveCapture() {
                 onClick={handleToggle}
                 Icon={CursorArrowRaysIcon}
                 hoverText="Enable / Disable mouse capture"
+                connectionStatus={status}
             />
         );
     }
@@ -322,6 +244,7 @@ export default function LiveCapture() {
                 onClick={handleToggle}
                 Icon={ArrowUpOnSquareStackIcon}
                 hoverText="Capture Shortcuts (e.g. Ctrl+V)"
+                connectionStatus={status}
             />
         );
     }
@@ -341,6 +264,7 @@ export default function LiveCapture() {
                 onClick={handleToggle}
                 Icon={CursorArrowRippleIcon}
                 hoverText="Start / Stop Mouse Jiggling"
+                connectionStatus={status}
             />
         );
     }
@@ -374,6 +298,7 @@ export default function LiveCapture() {
                     onClick={() => setIsMenuOpen((prev) => !prev)}
                     Icon={EllipsisVerticalIcon}
                     hoverText="Shortcuts"
+                    connectionStatus={status}
                 />
                 {isMenuOpen && (
                     <div className="absolute right-0 top-12 rounded-lg z-50 w-48 max-h-80 overflow-y-auto p-2 border-2 border-hover" style={{ scrollbarColor: "#555 transparent" }}>
@@ -426,6 +351,7 @@ export default function LiveCapture() {
                         onClick={() => {sendControlCode(0x00CD)}}
                         Icon={PlayPauseIcon}
                         expandDirection="right"
+                        connectionStatus={status}
                         />
                 </div>
                 <div>
@@ -434,6 +360,7 @@ export default function LiveCapture() {
                         onClick={() => {sendControlCode(0x00E9)}}
                         Icon={ChevronDoubleUpIcon}
                         expandDirection="right"
+                        connectionStatus={status}
                         />
                 </div>
                 <div>
@@ -442,6 +369,7 @@ export default function LiveCapture() {
                         onClick={() => {sendControlCode(0x00EA)}}
                         Icon={ChevronDoubleDownIcon}
                         expandDirection="right"
+                        connectionStatus={status}
                         />
                 </div>
                 <div>
@@ -450,6 +378,7 @@ export default function LiveCapture() {
                         onClick={() => {sendControlCode(0x00B5)}}
                         Icon={ForwardIcon}
                         expandDirection="right"
+                        connectionStatus={status}
                         />
                 </div>
                 <div>
@@ -458,6 +387,7 @@ export default function LiveCapture() {
                         onClick={() => {sendControlCode(0x00B6)}}
                         Icon={BackwardIcon}
                         expandDirection="right"
+                        connectionStatus={status}
                         />
                 </div>
                 <div>
@@ -465,7 +395,8 @@ export default function LiveCapture() {
                         title="Press 'Power' button"
                         Icon={PowerIcon} 
                         onClick={() => sendControlCode(0x0030)}
-                        expandDirection="right" 
+                        expandDirection="right"
+                        connectionStatus={status}
                     />
                 </div>
             </div>
