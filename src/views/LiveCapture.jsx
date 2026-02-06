@@ -6,10 +6,10 @@ import { BLEContext } from "../context/BLEContext";
 //import "../components/CustomTyping/CustomTyping.css"; // We'll define animations here
 import Keyboard from "../components/Keyboard/Keyboard";
 import Touchpad from "../components/Touchpad/Touchpad";
-import { useInputController } from "../controllers/LiveCaptureInput";
+import { useInputController } from "../services/LiveCaptureInput";
 
-import { createConsumerControlPacket, createKeyCodePacket, createMouseStream, createMouseJigglePacket } from "../controllers/PacketFunctions";
-import { HIDMap } from "../controllers/HIDMap";
+import { createConsumerControlPacket, createKeyCodePacket, createMouseStream, createMouseJigglePacket } from "../services/PacketFunctions";
+import { HIDMap } from "../services/HIDMap";
 
 export default function LiveCapture() {
     // Input controller hooks

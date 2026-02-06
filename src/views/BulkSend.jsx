@@ -3,7 +3,7 @@ import { Button, Typography } from "@material-tailwind/react";
 import { Textarea } from "@material-tailwind/react";
 import { BLEContext } from '../context/BLEContext';
 import { HomeIcon, PaperAirplaneIcon, ClipboardIcon } from "@heroicons/react/24/outline";
-import { createKeyboardPacket, createKeyboardStream } from '../controllers/PacketFunctions.js';
+import { createKeyboardPacket, createKeyboardStream } from '../services/PacketFunctions.js';
 
 
 

@@ -16,7 +16,7 @@ import {
 
 import { useBLEContext, ConnectionStatus } from "../../context/BLEContext";
 import ToothPaste from "../../assets/ToothPaste.png";
-import { createRenamePacket } from "../../controllers/PacketFunctions";
+import { createRenamePacket } from "../../services/PacketFunctions";
 
 export function useClickOrLongPress(longPressTime = 2000) {
     const timerRef = useRef(null);

@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
-import * as ToothPacketPB from '../controllers/toothpacket/toothpacket_pb.js';
-// import { EncryptedData, KeyboardPacket, MousePacket, RenamePacket, KeycodePacket, Frame, ConsumerControlPacket } from '../controllers/toothpacket/toothpacket_pb.js';
+import * as ToothPacketPB from './toothpacket/toothpacket_pb.js';
+// import { EncryptedData, KeyboardPacket, MousePacket, RenamePacket, KeycodePacket, Frame, ConsumerControlPacket } from './toothpacket/toothpacket_pb.js';
 
 // Base class for all packets (optional, for shared logic)
 export class Packet {

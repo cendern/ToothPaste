@@ -6,15 +6,15 @@ import React, {
     useEffect,
     useMemo,
 } from "react";
-import { keyExists, loadBase64 } from "../controllers/Storage.js";
+import { keyExists, loadBase64 } from "../services/Storage.js";
 import { ECDHContext } from "./ECDHContext.jsx";
-import { Packet } from "../controllers/PacketFunctions.js";
+import { Packet } from "../services/PacketFunctions.js";
 import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
 
 
-// import { toothpaste, DataPacket, EncryptedData, KeyboardPacket, MousePacket, RenamePacket, KeycodePacket } from '../controllers/toothpacket/toothpacket_pb.js';
+// import { toothpaste, DataPacket, EncryptedData, KeyboardPacket, MousePacket, RenamePacket, KeycodePacket } from '../services/toothpacket/toothpacket_pb.js';
 
-import * as ToothPacketPB from '../controllers/toothpacket/toothpacket_pb.js';
+import * as ToothPacketPB from '../services/toothpacket/toothpacket_pb.js';
 // const KeyboardPacket = new ToothPacketPB.proto.toothpaste.KeyboardPacket();
 // const EncryptedData = new ToothPacketPB.proto.toothpaste.EncryptedData();
 

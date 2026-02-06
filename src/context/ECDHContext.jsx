@@ -1,12 +1,12 @@
 import React, { createContext, useState, useEffect, useRef, useMemo } from "react";
-import { saveBase64, loadBase64 } from "../controllers/Storage.js";
+import { saveBase64, loadBase64 } from "../services/Storage.js";
 import { ec as EC } from "elliptic";
-import { Packet } from "../controllers/PacketFunctions.js";
+import { Packet } from "../services/PacketFunctions.js";
 import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
 
-import * as ToothPacketPB from '../controllers/toothpacket/toothpacket_pb.js';
+import * as ToothPacketPB from '../services/toothpacket/toothpacket_pb.js';
 
-// import { DataPacket, EncryptedData } from '../controllers/toothpacket/toothpacket_pb.js';
+// import { DataPacket, EncryptedData } from '../services/toothpacket/toothpacket_pb.js';
 import { enc } from "crypto-js";
 
 const ec = new EC("p256"); // Define the elliptic curve (secp256r1)
