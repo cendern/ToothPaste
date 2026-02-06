@@ -59,14 +59,13 @@ export const ECDHProvider = ({ children }) => {
             return;
         }
 
+        // Export the public key as an arraybuffer (66 bytes uncompressed)
         var rawPublicKey = await crypto.subtle.exportKey("raw", keyPair.current.publicKey);
 
+        // Convert the arraybuffer to base64 for storage
         var b64SelfPubkey = arrayBufferToBase64(rawPublicKey);
 
-        if (!b64SelfPubkey /*!privateKey*/) {
-            throw new Error("Invalid key pair provided");
-        }
-
+        // Store the public key and AES key in IndexedDB under the clientID
         await saveBase64(clientID, "SelfPublicKey", b64SelfPubkey);
         await saveBase64(clientID, "aesKey", aesKeyB64.current);
 
@@ -119,7 +118,11 @@ export const ECDHProvider = ({ children }) => {
      * @returns {Promise<CryptoKey>} CryptoKey object usable for key derivation
      */
     const importPeerPublicKey = async (rawKeyBuffer) => {
-        return await crypto.subtle.importKey("raw", rawKeyBuffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
+        return await crypto.subtle.importKey("raw", 
+            rawKeyBuffer, 
+            { name: "ECDH", namedCurve: "P-256" }, 
+            true, // Extractable 
+            []);
     };
 
     /**
@@ -177,6 +180,7 @@ export const ECDHProvider = ({ children }) => {
      * @returns {Promise<void>} Updates internal state; no direct return value
      */
     const deriveKey = async (peerPubKey) => {
+        
         //Derive just the shared secret
         const sharedSecret = await crypto.subtle.deriveBits(
             {
@@ -188,9 +192,15 @@ export const ECDHProvider = ({ children }) => {
         );
 
         const info = new TextEncoder().encode("aes-gcm-256");
-        const keyMaterial = await crypto.subtle.importKey("raw", sharedSecret, "HKDF", false, ["deriveKey"]);
+        const keyMaterial = await crypto.subtle.importKey(
+            "raw", 
+            sharedSecret, 
+            "HKDF", 
+            false, 
+            ["deriveKey"]
+        );
 
-        // Derive the sharedSecret and use it to return a usable aesKey
+        // Use HKDF to derive a symmetric AES-GCM key from the shared secret
         const aesKeyGen = await crypto.subtle.deriveKey(
             {
                 name: "HKDF",
@@ -226,34 +236,23 @@ export const ECDHProvider = ({ children }) => {
      * @returns {Promise<Object>} DataPacket with encryptedData, IV, tag, and metadata
      */
     const encryptText = async (unEncryptedData, aad) => {
-        const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 byte IV
-        const encoder = new TextEncoder();
-        const data = unEncryptedData instanceof Uint8Array ? unEncryptedData : encoder.encode(unEncryptedData);
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const data = unEncryptedData instanceof Uint8Array ? unEncryptedData : new TextEncoder().encode(unEncryptedData);
 
-        // Encrypt the data with the AES key from storage
-        const encrypted = await crypto.subtle.encrypt(
-            {
-                name: "AES-GCM",
-                iv,
-                //additionalData: aad // extra data that is not encrypted but authenticated by TAG for integrity
-            },
+        const encryptedBytes = new Uint8Array(await crypto.subtle.encrypt(
+            { name: "AES-GCM", iv },
             aesKey.current,
             data
-        );
+        ));
 
-        const encryptedBytes = new Uint8Array(encrypted); // encryptedBytes contains ciphertext + 16 byte tag
-        const tagLength = 16;
-        const ciphertextLength = encryptedBytes.length - tagLength;
-        const ciphertext = encryptedBytes.slice(0, ciphertextLength);
-        const tag = encryptedBytes.slice(ciphertextLength);
+        const ciphertextLength = encryptedBytes.length - 16; // 16-byte auth tag
 
-        var dataPacket = create(ToothPacketPB.DataPacketSchema, {});
-        dataPacket.encryptedData = ciphertext;
-        dataPacket.dataLen = ciphertextLength;
-        dataPacket.iv = iv;
-        dataPacket.tag = tag;
-
-        return dataPacket;
+        return create(ToothPacketPB.DataPacketSchema, {
+            encryptedData: encryptedBytes.slice(0, ciphertextLength),
+            dataLen: ciphertextLength,
+            iv,
+            tag: encryptedBytes.slice(ciphertextLength),
+        });
     };
 
     /**
@@ -323,17 +322,21 @@ export const ECDHProvider = ({ children }) => {
             throw new Error('Compressed public key must be 33 bytes');
         }
 
+        // Decompress the peer's compressed public key to raw uncompressed format
+        // Then import it as a CryptoKey object for ECDH operations
         const rawUncompressed = decompressKey(compressedBytes);
         const peerPublicKeyObject = await importPeerPublicKey(rawUncompressed);
 
         // Save the peer public key
-        const rawKey = await crypto.subtle.exportKey('raw', peerPublicKeyObject);
-        await savePeerPublicKey(rawKey, deviceMacAddress);
+        const rawPeerPublicKey = await crypto.subtle.exportKey('raw', peerPublicKeyObject);
+        await savePeerPublicKey(rawPeerPublicKey, deviceMacAddress);
 
         // Generate our key pair
         await generateECDHKeyPair();
-        const rawPublicKey = await crypto.subtle.exportKey('raw', keyPair.current.publicKey);
-        const b64SelfPublic = arrayBufferToBase64(rawPublicKey);
+
+        // Export our public key in raw uncompressed format and convert to base64 for sending to peer
+        const rawSelfPublicKey = await crypto.subtle.exportKey('raw', keyPair.current.publicKey);
+        const b64SelfPublic = arrayBufferToBase64(rawSelfPublicKey);
 
         // Derive shared secret using peer's public key
         await deriveKey(peerPublicKeyObject);
