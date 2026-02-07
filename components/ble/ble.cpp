@@ -280,18 +280,20 @@ void generateSharedSecret(toothpaste_DataPacket* packet, SecureSession* session)
 
 // Decrypt a data packet and type the text content as a string
 void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
-  // int64_t t0 = esp_timer_get_time();
+  int64_t t0 = esp_timer_get_time();
  
   // Average decryption time: ~ 13000us (13ms)
+  // Average decryption time: ~ 377us (0.377ms) with new SecureSession optimizations (key caching, HKDF caching, etc..)
+
   std::vector<uint8_t> decrypted_bytes((packet->dataLen) + 2);
   toothpaste_EncryptedData decrypted = toothpaste_EncryptedData_init_default;
  
 
   int ret = session->decrypt(packet, decrypted_bytes.data(), clientPubKey.c_str()); // Get the serialized form of the decrypted data
 
-  // int64_t elapsed = esp_timer_get_time() - t0;
+  int64_t elapsed = esp_timer_get_time() - t0;
 
-  // DEBUG_SERIAL_PRINTF("Packet Decryption took %lld us\n", elapsed);
+  DEBUG_SERIAL_PRINTF("Packet Decryption took %lld us\n", elapsed);
   DEBUG_SERIAL_PRINTF("Decrypted data length: %d\n", decrypted_bytes.size());
 
   DEBUG_SERIAL_PRINT("Raw Data (chars): ");
