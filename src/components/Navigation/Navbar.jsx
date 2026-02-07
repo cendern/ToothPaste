@@ -113,9 +113,10 @@ function ConnectionButton() {
 
     const borderClass =
         {
-            0: "border-secondary",
-            1: "border-primary",
-            2: "border-orange", // make sure you defined `border-tertiary` in Tailwind config
+            [ConnectionStatus.disconnected]: "border-secondary",
+            [ConnectionStatus.ready]: "border-primary",
+            [ConnectionStatus.connected]: "border-orange",
+            [ConnectionStatus.unsupported]: "border-orange",
         }[status] || "border-orange"; // fallback if undefined
     
 
@@ -181,10 +182,10 @@ function ConnectionButton() {
                     backgroundRepeat: 'no-repeat',
                     transition: 'background-image 0.016s linear'
                 }}
-                onMouseDown={() => {if (device && status === 1) handleStart(() => setIsEditing(true));}}
+                onMouseDown={() => {if (device && status === ConnectionStatus.ready) handleStart(() => setIsEditing(true));}}
                 onMouseLeave={() => {handleEnd(cancel);}}
                 onMouseUp={() => handleEnd(() => connectToDevice())}
-                onTouchStart={() => {if (device && status === 1) handleStart(() => setIsEditing(true));}}
+                onTouchStart={() => {if (device && status === ConnectionStatus.ready) handleStart(() => setIsEditing(true));}}
                 onTouchCancel={() => {handleEnd(cancel);}}
                 onTouchEnd={() => handleEnd(() => connectToDevice())}
             >
@@ -202,8 +203,8 @@ function ConnectionButton() {
                         ></EditableDeviceName>
                     </div>
                     {/* Change the icon for connected and disconnected states */}
-                    {status !== 0 && <SignalIcon className="h-5 w-5" />}
-                    {status === 0 && <SignalSlashIcon className="h-5 w-5" />}
+                    {status !== ConnectionStatus.disconnected && <SignalIcon className="h-5 w-5" />}
+                    {status === ConnectionStatus.disconnected && <SignalSlashIcon className="h-5 w-5" />}
                 </div>
             </Button>
         </div>
@@ -217,9 +218,10 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
     const borderClass =
         {
-            0: "border-secondary",
-            1: "border-primary",
-            2: "border-orange", // make sure you defined `border-tertiary` in Tailwind config
+            [ConnectionStatus.disconnected]: "border-secondary",
+            [ConnectionStatus.ready]: "border-primary",
+            [ConnectionStatus.connected]: "border-orange",
+            [ConnectionStatus.unsupported]: "border-orange",
         }[status] || "border-orange"; // fallback if undefined
 
     console.log("Status is: ", status);
@@ -251,7 +253,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                 <div className="hidden xl:flex absolute left-1/2 transform -translate-x-1/2 space-x-5 items-center">
                     <div className="flex items-center space-x-5">
                         <button
-                            disabled={status === 2}
+                            disabled={status === ConnectionStatus.connected || status === ConnectionStatus.unsupported}
                             className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "live" ? "disabled:border-hover border border-text" : "hover:bg-hover"
                             }`}
@@ -262,7 +264,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                         </button>
 
                         <button
-                            disabled={status === 2}
+                            disabled={status === ConnectionStatus.connected || status === ConnectionStatus.unsupported}
                             className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "paste" ? "disabled:border-hover border border-text" : "hover:bg-hover"
                             }`}
@@ -289,7 +291,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
                     <div className="flex items-center space-x-5">
                         <button
-                            disabled={status === 2}
+                            disabled={status === ConnectionStatus.connected}
                             className={`flex items-center space-x-1 p-2 gap-2 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "update" ? "disabled:border-hover border border-text" : "hover:bg-hover"
                             }`}
@@ -309,7 +311,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             <Typography variant="h4">Quick Start</Typography>
                         </button>
 
-                        {status === 2 && (
+                        {status === ConnectionStatus.connected && (
                             <button
                                 className="flex items-center space-x-1 p-2 gap-2 rounded hover:bg-hover"
                                 onClick={() => onChangeOverlay("pair")}
@@ -352,7 +354,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                 <div className="xl:hidden flex flex-col space-y-2 px-4 pb-4">
                     <div className="flex flex-col space-y-2">
                         <button
-                            disabled={status === 2}
+                            disabled={status === ConnectionStatus.connected || status === ConnectionStatus.unsupported}
                             className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "live" ? "bg-hover" : "hover:bg-hover"
                             }`}
@@ -366,7 +368,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                         </button>
 
                         <button
-                            disabled={status === 2}
+                            disabled={status === ConnectionStatus.connected || status === ConnectionStatus.unsupported}
                             className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded hover:bg-hover disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "paste" ? "bg-hover" : "hover:bg-hover"
                             }`}
@@ -399,7 +401,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
                     <div className="flex flex-col space-y-2">
                         <button
-                            disabled={status === 2}
+                            disabled={status === ConnectionStatus.connected}
                             className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "update" ? "bg-hover" : "hover:bg-hover"
                             }`}
@@ -424,7 +426,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             <span>Quick Start</span>
                         </button>
 
-                        {status === 2 && (
+                        {status === ConnectionStatus.connected && (
                             <button
                                 className="flex items-center space-x-1 px-3 py-2 rounded hover:bg-hover"
                                 onClick={() => {

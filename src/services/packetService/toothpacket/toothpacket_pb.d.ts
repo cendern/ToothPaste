@@ -214,11 +214,18 @@ export declare type ResponsePacket = Message<"toothpaste.ResponsePacket"> & {
   responseType: ResponsePacket_ResponseType;
 
   /**
-   * 32 bytes (if responseType == CHALLENGE)
+   * 150 bytes max
    *
    * @generated from field: bytes challengeData = 2;
    */
   challengeData: Uint8Array;
+
+  /**
+   * 50 bytes max
+   *
+   * @generated from field: string firmwareVersion = 3;
+   */
+  firmwareVersion: string;
 };
 
 /**

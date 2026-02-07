@@ -16,10 +16,13 @@ import * as ToothPacketPB from '../services/packetService/toothpacket/toothpacke
 
 export const BLEContext = createContext();
 export const useBLEContext = () => useContext(BLEContext);
+export const supportedFirmwareVersions = ["0.9.0^"]; // Supported firmware versions for compatibility checks
+
 export const ConnectionStatus = {
         disconnected: 0,
         ready: 1,
-        connected: 2
+        connected: 2,
+        unsupported: 3
 };
 
 export function BLEProvider({ children }) {
@@ -118,10 +121,10 @@ export function BLEProvider({ children }) {
     };
 
     // Subscribe to the semaphore notification and attach its event listener
-    const subscribeToSemaphore = async (semChar, deviceObj) => {
+    const subscribeToResponse = async (responseChar, deviceObj) => {
         try {
-            await semChar.startNotifications();
-            semChar.addEventListener("characteristicvaluechanged", async (event) => {
+            await responseChar.startNotifications();
+            responseChar.addEventListener("characteristicvaluechanged", async (event) => {
                 const responsePacketBytes = event.target.value;
                 
                 // Convert to Uint8Array and log in base64
@@ -144,8 +147,17 @@ export function BLEProvider({ children }) {
                 }
 
                 else if (responsePacket.responseType === ToothPacketPB.ResponsePacket_ResponseType.PEER_UNKNOWN) {
+                    console.log("Peer declined auth, authentication failed");
                     setStatus(ConnectionStatus.connected);
                 }
+
+                console.log("Firmware version:", responsePacket.firmwareVersion);
+                if (!isVersionCompatible(responsePacket.firmwareVersion, supportedFirmwareVersions)) {
+                    console.error("Incompatible firmware version:", responsePacket.firmwareVersion);
+                    setStatus(ConnectionStatus.unsupported);
+                }
+
+  
                 // If there is a promise to be resolved, resolve it
                 if (readyToReceive.current.resolve) {
                     readyToReceive.current.resolve(); // Signal the next packet can send
@@ -205,7 +217,7 @@ export function BLEProvider({ children }) {
             setDevice(device);
 
             console.log("Connected to device:", device.name, "MAC:", device.macAddress);
-            await subscribeToSemaphore(semChar, device); // Subscribe to the BLE characteristic that notifies when a HID message has finished sending
+            await subscribeToResponse(semChar, device); // Subscribe to the BLE characteristic that notifies when a HID message has finished sending
 
             // Get the MAC : PubKey mapping from storage, if we don't have it we need to pair first
             if (!(await keyExists(device.macAddress))) {
@@ -269,4 +281,70 @@ export function BLEProvider({ children }) {
             {children}
         </BLEContext.Provider>
     );
+}
+
+/**
+ * Check if a device firmware version is compatible with supported versions
+ * Supports exact matches, caret versions (^), and suffix validation
+ * @param {string} deviceFirmwareVersion - Device version string (e.g., "1.0.0" or "1.0.0-beta")
+ * @param {string[]} supportedFirmwareVersions - List of supported versions with optional "^" for >= matching and suffixes
+ * @returns {boolean} True if version is supported, false otherwise
+ */
+export function isVersionCompatible(deviceFirmwareVersion, supportedFirmwareVersions = []) {
+    // Extract base version (x.y.z) and suffix (anything after)
+    const versionMatch = deviceFirmwareVersion.match(/^(\d+\.\d+\.\d+)(.*)/);
+    
+    if (!versionMatch) {
+        console.error("Invalid firmware version format:", deviceFirmwareVersion);
+        return false; // Invalid version format
+    }
+    
+    const baseVersion = versionMatch[1];
+    const suffix = versionMatch[2]; // Empty string if no suffix
+    
+    // Check for exact full version match
+    if (supportedFirmwareVersions.includes(deviceFirmwareVersion)) {
+        return true;
+    }
+    
+    // If device has a suffix, the suffix must be explicitly supported
+    if (suffix && !supportedFirmwareVersions.includes(suffix)) {
+        return false;
+    }
+    
+    // Check the base version
+    // Exact match
+    if (supportedFirmwareVersions.includes(baseVersion)) {
+        return true;
+    }
+    
+    // Check for caret versions (x.y.z^ means >= x.y.z)
+    for (const supportedVersion of supportedFirmwareVersions) {
+        if (supportedVersion.endsWith('^')) {
+            const supportedBase = supportedVersion.slice(0, -1); // Remove the '^'
+            if (isVersionGreaterOrEqual(baseVersion, supportedBase)) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Compare semantic versions (x.y.z format)
+ * @param {string} version1 - First version to compare
+ * @param {string} version2 - Second version to compare
+ * @returns {boolean} True if version1 >= version2
+ */
+function isVersionGreaterOrEqual(version1, version2) {
+    const v1 = version1.split('.').map(Number);
+    const v2 = version2.split('.').map(Number);
+    
+    for (let i = 0; i < 3; i++) {
+        if (v1[i] > v2[i]) return true;
+        if (v1[i] < v2[i]) return false;
+    }
+    
+    return true; // Versions are equal
 }
