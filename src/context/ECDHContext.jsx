@@ -13,7 +13,7 @@ const ec = new EC("p256"); // Define the elliptic curve (secp256r1)
  * @property {(key: ArrayBuffer) => Promise<CryptoKey>} decompressKey
  * @property {(key: ArrayBuffer) => Promise<void>} importPeerPublicKey
  * @property {() => Promise<void>} saveSelfKeys
- * @property {(peerKey: CryptoKey) => Promise<CryptoKey>} deriveKey
+//  * @property {(peerKey: CryptoKey) => Promise<CryptoKey>} deriveKey
  * @property {(key: CryptoKey) => Promise<void>} savePeerPublicKey
  */
 
@@ -45,29 +45,32 @@ export const ECDHProvider = ({ children }) => {
     };
 
     /**
-     * Save self public key and AES encryption key to IndexedDB storage
-     * Requires keyPair and aesKeyB64 to be set in refs
+     * Save self public key and shared secret to IndexedDB storage
      * @param {string} clientID - The device MAC address or client identifier to store keys under
-     * @throws {Error} If key pair or AES key is not yet generated
+     * @param {ArrayBuffer} sharedSecret - The shared secret to store
+     * @throws {Error} If key pair is not yet generated
      */
-    const saveKeys = async (clientID) => {
+    const saveKeys = async (clientID, sharedSecret) => {
         if (!keyPair.current) {
             return;
         }
         
-        if (!aesKeyB64.current) {
+        if (!sharedSecret) {
             return;
         }
 
-        // Export the public key as an arraybuffer (66 bytes uncompressed)
+        // Export the public key as an arraybuffer (65 bytes uncompressed)
         var rawPublicKey = await crypto.subtle.exportKey("raw", keyPair.current.publicKey);
 
         // Convert the arraybuffer to base64 for storage
         var b64SelfPubkey = arrayBufferToBase64(rawPublicKey);
 
-        // Store the public key and AES key in IndexedDB under the clientID
+        // Store the shared secret in base64 format
+        var b64SharedSecret = arrayBufferToBase64(sharedSecret);
+
+        // Store the public key and shared secret in IndexedDB under the clientID
         await saveBase64(clientID, "SelfPublicKey", b64SelfPubkey);
-        await saveBase64(clientID, "aesKey", aesKeyB64.current);
+        await saveBase64(clientID, "sharedSecret", b64SharedSecret);
 
         return;
     };
@@ -225,17 +228,9 @@ export const ECDHProvider = ({ children }) => {
         aesKey.current = aesKeyGen;
         aesKeyB64.current = await crypto.subtle.exportKey("raw", aesKeyGen) 
                             .then((rawKey) => arrayBufferToBase64(rawKey));
-    };
 
-    /**
-     * Perform complete ECDH key derivation: compute shared secret and derive AES-GCM key using HKDF
-     * Stores results in aesKey.current and aesKeyB64.current for later encryption operations
-     * @param {CryptoKey} peerPubKey - Peer's public key (CryptoKey object)
-     * @returns {Promise<void>} Updates internal state; no direct return value
-     */
-    const deriveKey = async (peerPubKey) => {
-        const sharedSecret = await deriveSharedSecret(peerPubKey);
-        await deriveAESKey(sharedSecret);
+        console.log("Session salt (base64):", arrayBufferToBase64(salt));                            
+        console.log("Derived AES key (base64):", aesKeyB64.current);
     };
 
     /**
@@ -314,13 +309,17 @@ export const ECDHProvider = ({ children }) => {
 
     /**
      * Load previously saved keys from IndexedDB storage for a device
-     * Restores AES key into aesKey.current for decryption operations
+     * Restores shared secret and derives AES key using HKDF with provided salt
      * @param {string} clientID - Device MAC address or client identifier to load keys from
+     * @param {Uint8Array} [salt=new Uint8Array([])] - HKDF salt value for key derivation
      * @returns {Promise<void>} Updates internal aesKey.current state
      */
-    const loadKeys = async (clientID) => {
-        var aesKeyB64 = await loadBase64(clientID, "aesKey");
-        aesKey.current = await importAESKeyFromBytes(base64ToArrayBuffer(aesKeyB64));
+    const loadKeys = async (clientID, salt = new Uint8Array([])) => {
+        var sharedSecretB64 = await loadBase64(clientID, "sharedSecret");
+        var sharedSecretBuffer = base64ToArrayBuffer(sharedSecretB64);
+        
+        // Derive the AES key from the stored shared secret using the provided salt
+        await deriveAESKey(sharedSecretBuffer, salt);
     };
 
     /**
@@ -356,10 +355,10 @@ export const ECDHProvider = ({ children }) => {
         const b64SelfPublic = arrayBufferToBase64(rawSelfPublicKey);
 
         // Derive shared secret using peer's public key
-        await deriveKey(peerPublicKeyObject);
+        const sharedSecret = await deriveSharedSecret(peerPublicKeyObject);
 
-        // Save all keys (self public key and AES key)
-        await saveKeys(deviceMacAddress);
+        // Save all keys (self public key and shared secret)
+        await saveKeys(deviceMacAddress, sharedSecret);
 
         return b64SelfPublic;
     };
@@ -374,7 +373,6 @@ export const ECDHProvider = ({ children }) => {
         importPeerPublicKey,
         deriveSharedSecret,
         deriveAESKey,
-        deriveKey,
         savePeerPublicKey,
         encryptText,
         decryptText,

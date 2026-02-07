@@ -1,4 +1,4 @@
-import { create, toBinary } from "@bufbuild/protobuf";
+import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
 import * as ToothPacketPB from './toothpacket/toothpacket_pb.js';
 
 // Create an unencrypted DataPacket from an input string
@@ -183,4 +183,11 @@ export function createMouseJigglePacket(enable) {
     });
 
     return encryptedPacket;
+}
+
+export function unpackResponsePacket(responsePacketBytes) {
+    
+    // Deserialize the ResponsePacket from binary data
+    const responsePacket = fromBinary(ToothPacketPB.ResponsePacketSchema, responsePacketBytes);
+    return responsePacket;  
 }

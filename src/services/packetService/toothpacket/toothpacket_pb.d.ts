@@ -203,6 +203,63 @@ export enum EncryptedData_PacketType {
 export declare const EncryptedData_PacketTypeSchema: GenEnum<EncryptedData_PacketType>;
 
 /**
+ * Packet Sent by receiver to indicate state
+ *
+ * @generated from message toothpaste.ResponsePacket
+ */
+export declare type ResponsePacket = Message<"toothpaste.ResponsePacket"> & {
+  /**
+   * @generated from field: toothpaste.ResponsePacket.ResponseType responseType = 1;
+   */
+  responseType: ResponsePacket_ResponseType;
+
+  /**
+   * 32 bytes (if responseType == CHALLENGE)
+   *
+   * @generated from field: bytes challengeData = 2;
+   */
+  challengeData: Uint8Array;
+};
+
+/**
+ * Describes the message toothpaste.ResponsePacket.
+ * Use `create(ResponsePacketSchema)` to create a new message.
+ */
+export declare const ResponsePacketSchema: GenMessage<ResponsePacket>;
+
+/**
+ * Indicate the notification type
+ *
+ * @generated from enum toothpaste.ResponsePacket.ResponseType
+ */
+export enum ResponsePacket_ResponseType {
+  /**
+   * @generated from enum value: KEEPALIVE = 0;
+   */
+  KEEPALIVE = 0,
+
+  /**
+   * @generated from enum value: PEER_UNKNOWN = 1;
+   */
+  PEER_UNKNOWN = 1,
+
+  /**
+   * @generated from enum value: PEER_KNOWN = 2;
+   */
+  PEER_KNOWN = 2,
+
+  /**
+   * @generated from enum value: CHALLENGE = 3;
+   */
+  CHALLENGE = 3,
+}
+
+/**
+ * Describes the enum toothpaste.ResponsePacket.ResponseType.
+ */
+export declare const ResponsePacket_ResponseTypeSchema: GenEnum<ResponsePacket_ResponseType>;
+
+/**
  * Arbitrary String Data (processed based on packet type byte)
  *
  * @generated from message toothpaste.KeyboardPacket
@@ -396,67 +453,4 @@ export declare type MouseJigglePacket = Message<"toothpaste.MouseJigglePacket"> 
  * Use `create(MouseJigglePacketSchema)` to create a new message.
  */
 export declare const MouseJigglePacketSchema: GenMessage<MouseJigglePacket>;
-
-/**
- * Packet Sent by receiver to indicate state
- *
- * @generated from message toothpaste.NotificationPacket
- */
-export declare type NotificationPacket = Message<"toothpaste.NotificationPacket"> & {
-};
-
-/**
- * Describes the message toothpaste.NotificationPacket.
- * Use `create(NotificationPacketSchema)` to create a new message.
- */
-export declare const NotificationPacketSchema: GenMessage<NotificationPacket>;
-
-/**
- * Indicate the notification type
- *
- * @generated from enum toothpaste.NotificationPacket.NotificationType
- */
-export enum NotificationPacket_NotificationType {
-  /**
-   * @generated from enum value: KEEPALIVE = 0;
-   */
-  KEEPALIVE = 0,
-
-  /**
-   * @generated from enum value: RECV_READY = 1;
-   */
-  RECV_READY = 1,
-
-  /**
-   * @generated from enum value: RECV_NOT_READY = 2;
-   */
-  RECV_NOT_READY = 2,
-}
-
-/**
- * Describes the enum toothpaste.NotificationPacket.NotificationType.
- */
-export declare const NotificationPacket_NotificationTypeSchema: GenEnum<NotificationPacket_NotificationType>;
-
-/**
- * Indicate if the transmitter is authorized to send any packets (failure in auth = packet ignored)
- *
- * @generated from enum toothpaste.NotificationPacket.AuthStatus
- */
-export enum NotificationPacket_AuthStatus {
-  /**
-   * @generated from enum value: AUTH_FAILED = 0;
-   */
-  AUTH_FAILED = 0,
-
-  /**
-   * @generated from enum value: AUTH_SUCCESS = 1;
-   */
-  AUTH_SUCCESS = 1,
-}
-
-/**
- * Describes the enum toothpaste.NotificationPacket.AuthStatus.
- */
-export declare const NotificationPacket_AuthStatusSchema: GenEnum<NotificationPacket_AuthStatus>;
 

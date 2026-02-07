@@ -28,6 +28,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
     }
 
     // Use the context function to handle entire key exchange
+    // This function will generate the shared secret and send the public key to the device
     const computeSecret = async () => {
         try {
             setError(null);

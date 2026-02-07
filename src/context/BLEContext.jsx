@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { keyExists, loadBase64 } from "../services/Storage.js";
 import { ECDHContext } from "./ECDHContext.jsx";
-import { createUnencryptedPacket } from "../services/packetService/packetFunctions.js";
+import { createUnencryptedPacket, unpackResponsePacket } from "../services/packetService/packetFunctions.js";
 import { PacketQueue } from "../services/packetService/PacketQueue.js";
 import { create, toBinary, fromBinary } from "@bufbuild/protobuf";
 
@@ -118,25 +118,34 @@ export function BLEProvider({ children }) {
     };
 
     // Subscribe to the semaphore notification and attach its event listener
-    const subscribeToSemaphore = async (semChar) => {
+    const subscribeToSemaphore = async (semChar, deviceObj) => {
         try {
             await semChar.startNotifications();
-            semChar.addEventListener("characteristicvaluechanged", (event) => {
-                const dataView = event.target.value;
-                const packed = dataView.getUint8(0);
-                // Convert value (DataView) to string or bytes
-                const authStatus = packed & 0x0f; // lower 4 bits
-
-                // If the device isnt authenticated it needs to be paired first
-                if (authStatus === 0) {
-                    setStatus(ConnectionStatus.connected);
-                } 
+            semChar.addEventListener("characteristicvaluechanged", async (event) => {
+                const responsePacketBytes = event.target.value;
                 
-                // If the device is authenticated we are ready to send
-                else if (authStatus === 1) {
+                // Convert to Uint8Array and log in base64
+                const bytesArray = new Uint8Array(responsePacketBytes.buffer, responsePacketBytes.byteOffset, responsePacketBytes.byteLength);
+                const base64String = btoa(String.fromCharCode.apply(null, bytesArray));
+                console.log("Raw bytes (base64):", base64String);
+                console.log("Byte length:", bytesArray.length);
+                
+                var responsePacket = unpackResponsePacket(bytesArray);
+                
+                if (responsePacket.responseType === ToothPacketPB.ResponsePacket_ResponseType.CHALLENGE) {
+                        console.log("Challenge data received, loading keys...", responsePacket.challengeData);
+                        await loadKeys(deviceObj.macAddress, responsePacket.challengeData);
                     setStatus(ConnectionStatus.ready);
                 }
-                
+
+                else if (responsePacket.responseType === ToothPacketPB.ResponsePacket_ResponseType.PEER_KNOWN) {
+                    console.log("Authentication successful");
+                    setStatus(ConnectionStatus.ready);
+                }
+
+                else if (responsePacket.responseType === ToothPacketPB.ResponsePacket_ResponseType.PEER_UNKNOWN) {
+                    setStatus(ConnectionStatus.connected);
+                }
                 // If there is a promise to be resolved, resolve it
                 if (readyToReceive.current.resolve) {
                     readyToReceive.current.resolve(); // Signal the next packet can send
@@ -195,7 +204,8 @@ export function BLEProvider({ children }) {
             setpktCharacteristic(pktCharRef.current);
             setDevice(device);
 
-            await subscribeToSemaphore(semChar); // Subscribe to the BLE characteristic that notifies when a HID message has finished sending
+            console.log("Connected to device:", device.name, "MAC:", device.macAddress);
+            await subscribeToSemaphore(semChar, device); // Subscribe to the BLE characteristic that notifies when a HID message has finished sending
 
             // Get the MAC : PubKey mapping from storage, if we don't have it we need to pair first
             if (!(await keyExists(device.macAddress))) {
@@ -203,9 +213,8 @@ export function BLEProvider({ children }) {
                 setStatus(ConnectionStatus.connected);
             }
 
-            // Else we can send
+            // Else send auth and wait for semaphore to receive salt before loading keys
             else {
-                await loadKeys(device.macAddress);
                 await sendAuth(device);
             }
             

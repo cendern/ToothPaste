@@ -8,7 +8,7 @@ import { enumDesc, fileDesc, messageDesc, tsEnum } from "@bufbuild/protobuf/code
  * Describes the file toothpacket.proto.
  */
 export const file_toothpacket = /*@__PURE__*/
-  fileDesc("ChF0b290aHBhY2tldC5wcm90bxIKdG9vdGhwYXN0ZSLsAQoKRGF0YVBhY2tldBIxCghwYWNrZXRJRBgBIAEoDjIfLnRvb3RocGFzdGUuRGF0YVBhY2tldC5QYWNrZXRJRBIUCgxwYWNrZXROdW1iZXIYAiABKA0SFAoMdG90YWxQYWNrZXRzGAMgASgNEhAKCHNsb3dNb2RlGAQgASgIEgoKAml2GAUgASgMEg8KB2RhdGFMZW4YBiABKA0SFQoNZW5jcnlwdGVkRGF0YRgHIAEoDBILCgN0YWcYCCABKAwiLAoIUGFja2V0SUQSDwoLREFUQV9QQUNLRVQQABIPCgtBVVRIX1BBQ0tFVBABIpgECg1FbmNyeXB0ZWREYXRhEjgKCnBhY2tldFR5cGUYASABKA4yJC50b290aHBhc3RlLkVuY3J5cHRlZERhdGEuUGFja2V0VHlwZRI0Cg5rZXlib2FyZFBhY2tldBgCIAEoCzIaLnRvb3RocGFzdGUuS2V5Ym9hcmRQYWNrZXRIABIyCg1rZXljb2RlUGFja2V0GAMgASgLMhkudG9vdGhwYXN0ZS5LZXljb2RlUGFja2V0SAASLgoLbW91c2VQYWNrZXQYBCABKAsyFy50b290aHBhc3RlLk1vdXNlUGFja2V0SAASMAoMcmVuYW1lUGFja2V0GAUgASgLMhgudG9vdGhwYXN0ZS5SZW5hbWVQYWNrZXRIABJCChVjb25zdW1lckNvbnRyb2xQYWNrZXQYBiABKAsyIS50b290aHBhc3RlLkNvbnN1bWVyQ29udHJvbFBhY2tldEgAEjoKEW1vdXNlSmlnZ2xlUGFja2V0GAcgASgLMh0udG9vdGhwYXN0ZS5Nb3VzZUppZ2dsZVBhY2tldEgAInMKClBhY2tldFR5cGUSEwoPS0VZQk9BUkRfU1RSSU5HEAASFAoQS0VZQk9BUkRfS0VZQ09ERRABEgkKBU1PVVNFEAISCgoGUkVOQU1FEAMSFAoQQ09OU1VNRVJfQ09OVFJPTBAEEg0KCUNPTVBPU0lURRAFQgwKCnBhY2tldERhdGEiMQoOS2V5Ym9hcmRQYWNrZXQSDwoHbWVzc2FnZRgBIAEoCRIOCgZsZW5ndGgYAiABKA0iLwoMUmVuYW1lUGFja2V0Eg8KB21lc3NhZ2UYASABKAkSDgoGbGVuZ3RoGAIgASgNIi0KDUtleWNvZGVQYWNrZXQSDAoEY29kZRgBIAEoDBIOCgZsZW5ndGgYAiABKA0iHQoFRnJhbWUSCQoBeBgBIAEoBRIJCgF5GAIgASgFInUKC01vdXNlUGFja2V0EhIKCm51bV9mcmFtZXMYASABKA0SIQoGZnJhbWVzGAIgAygLMhEudG9vdGhwYXN0ZS5GcmFtZRIPCgdsX2NsaWNrGAMgASgFEg8KB3JfY2xpY2sYBCABKAUSDQoFd2hlZWwYBSABKAUiNQoVQ29uc3VtZXJDb250cm9sUGFja2V0EgwKBGNvZGUYASADKA0SDgoGbGVuZ3RoGAIgASgNIiMKEU1vdXNlSmlnZ2xlUGFja2V0Eg4KBmVuYWJsZRgBIAEoCCKMAQoSTm90aWZpY2F0aW9uUGFja2V0IkUKEE5vdGlmaWNhdGlvblR5cGUSDQoJS0VFUEFMSVZFEAASDgoKUkVDVl9SRUFEWRABEhIKDlJFQ1ZfTk9UX1JFQURZEAIiLwoKQXV0aFN0YXR1cxIPCgtBVVRIX0ZBSUxFRBAAEhAKDEFVVEhfU1VDQ0VTUxABYgZwcm90bzM");
+  fileDesc("ChF0b290aHBhY2tldC5wcm90bxIKdG9vdGhwYXN0ZSLsAQoKRGF0YVBhY2tldBIxCghwYWNrZXRJRBgBIAEoDjIfLnRvb3RocGFzdGUuRGF0YVBhY2tldC5QYWNrZXRJRBIUCgxwYWNrZXROdW1iZXIYAiABKA0SFAoMdG90YWxQYWNrZXRzGAMgASgNEhAKCHNsb3dNb2RlGAQgASgIEgoKAml2GAUgASgMEg8KB2RhdGFMZW4YBiABKA0SFQoNZW5jcnlwdGVkRGF0YRgHIAEoDBILCgN0YWcYCCABKAwiLAoIUGFja2V0SUQSDwoLREFUQV9QQUNLRVQQABIPCgtBVVRIX1BBQ0tFVBABIpgECg1FbmNyeXB0ZWREYXRhEjgKCnBhY2tldFR5cGUYASABKA4yJC50b290aHBhc3RlLkVuY3J5cHRlZERhdGEuUGFja2V0VHlwZRI0Cg5rZXlib2FyZFBhY2tldBgCIAEoCzIaLnRvb3RocGFzdGUuS2V5Ym9hcmRQYWNrZXRIABIyCg1rZXljb2RlUGFja2V0GAMgASgLMhkudG9vdGhwYXN0ZS5LZXljb2RlUGFja2V0SAASLgoLbW91c2VQYWNrZXQYBCABKAsyFy50b290aHBhc3RlLk1vdXNlUGFja2V0SAASMAoMcmVuYW1lUGFja2V0GAUgASgLMhgudG9vdGhwYXN0ZS5SZW5hbWVQYWNrZXRIABJCChVjb25zdW1lckNvbnRyb2xQYWNrZXQYBiABKAsyIS50b290aHBhc3RlLkNvbnN1bWVyQ29udHJvbFBhY2tldEgAEjoKEW1vdXNlSmlnZ2xlUGFja2V0GAcgASgLMh0udG9vdGhwYXN0ZS5Nb3VzZUppZ2dsZVBhY2tldEgAInMKClBhY2tldFR5cGUSEwoPS0VZQk9BUkRfU1RSSU5HEAASFAoQS0VZQk9BUkRfS0VZQ09ERRABEgkKBU1PVVNFEAISCgoGUkVOQU1FEAMSFAoQQ09OU1VNRVJfQ09OVFJPTBAEEg0KCUNPTVBPU0lURRAFQgwKCnBhY2tldERhdGEitgEKDlJlc3BvbnNlUGFja2V0Ej0KDHJlc3BvbnNlVHlwZRgBIAEoDjInLnRvb3RocGFzdGUuUmVzcG9uc2VQYWNrZXQuUmVzcG9uc2VUeXBlEhUKDWNoYWxsZW5nZURhdGEYAiABKAwiTgoMUmVzcG9uc2VUeXBlEg0KCUtFRVBBTElWRRAAEhAKDFBFRVJfVU5LTk9XThABEg4KClBFRVJfS05PV04QAhINCglDSEFMTEVOR0UQAyIxCg5LZXlib2FyZFBhY2tldBIPCgdtZXNzYWdlGAEgASgJEg4KBmxlbmd0aBgCIAEoDSIvCgxSZW5hbWVQYWNrZXQSDwoHbWVzc2FnZRgBIAEoCRIOCgZsZW5ndGgYAiABKA0iLQoNS2V5Y29kZVBhY2tldBIMCgRjb2RlGAEgASgMEg4KBmxlbmd0aBgCIAEoDSIdCgVGcmFtZRIJCgF4GAEgASgFEgkKAXkYAiABKAUidQoLTW91c2VQYWNrZXQSEgoKbnVtX2ZyYW1lcxgBIAEoDRIhCgZmcmFtZXMYAiADKAsyES50b290aHBhc3RlLkZyYW1lEg8KB2xfY2xpY2sYAyABKAUSDwoHcl9jbGljaxgEIAEoBRINCgV3aGVlbBgFIAEoBSI1ChVDb25zdW1lckNvbnRyb2xQYWNrZXQSDAoEY29kZRgBIAMoDRIOCgZsZW5ndGgYAiABKA0iIwoRTW91c2VKaWdnbGVQYWNrZXQSDgoGZW5hYmxlGAEgASgIYgZwcm90bzM");
 
 /**
  * Describes the message toothpaste.DataPacket.
@@ -53,86 +53,72 @@ export const EncryptedData_PacketType = /*@__PURE__*/
   tsEnum(EncryptedData_PacketTypeSchema);
 
 /**
+ * Describes the message toothpaste.ResponsePacket.
+ * Use `create(ResponsePacketSchema)` to create a new message.
+ */
+export const ResponsePacketSchema = /*@__PURE__*/
+  messageDesc(file_toothpacket, 2);
+
+/**
+ * Describes the enum toothpaste.ResponsePacket.ResponseType.
+ */
+export const ResponsePacket_ResponseTypeSchema = /*@__PURE__*/
+  enumDesc(file_toothpacket, 2, 0);
+
+/**
+ * Indicate the notification type
+ *
+ * @generated from enum toothpaste.ResponsePacket.ResponseType
+ */
+export const ResponsePacket_ResponseType = /*@__PURE__*/
+  tsEnum(ResponsePacket_ResponseTypeSchema);
+
+/**
  * Describes the message toothpaste.KeyboardPacket.
  * Use `create(KeyboardPacketSchema)` to create a new message.
  */
 export const KeyboardPacketSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 2);
+  messageDesc(file_toothpacket, 3);
 
 /**
  * Describes the message toothpaste.RenamePacket.
  * Use `create(RenamePacketSchema)` to create a new message.
  */
 export const RenamePacketSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 3);
+  messageDesc(file_toothpacket, 4);
 
 /**
  * Describes the message toothpaste.KeycodePacket.
  * Use `create(KeycodePacketSchema)` to create a new message.
  */
 export const KeycodePacketSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 4);
+  messageDesc(file_toothpacket, 5);
 
 /**
  * Describes the message toothpaste.Frame.
  * Use `create(FrameSchema)` to create a new message.
  */
 export const FrameSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 5);
+  messageDesc(file_toothpacket, 6);
 
 /**
  * Describes the message toothpaste.MousePacket.
  * Use `create(MousePacketSchema)` to create a new message.
  */
 export const MousePacketSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 6);
+  messageDesc(file_toothpacket, 7);
 
 /**
  * Describes the message toothpaste.ConsumerControlPacket.
  * Use `create(ConsumerControlPacketSchema)` to create a new message.
  */
 export const ConsumerControlPacketSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 7);
+  messageDesc(file_toothpacket, 8);
 
 /**
  * Describes the message toothpaste.MouseJigglePacket.
  * Use `create(MouseJigglePacketSchema)` to create a new message.
  */
 export const MouseJigglePacketSchema = /*@__PURE__*/
-  messageDesc(file_toothpacket, 8);
-
-/**
- * Describes the message toothpaste.NotificationPacket.
- * Use `create(NotificationPacketSchema)` to create a new message.
- */
-export const NotificationPacketSchema = /*@__PURE__*/
   messageDesc(file_toothpacket, 9);
-
-/**
- * Describes the enum toothpaste.NotificationPacket.NotificationType.
- */
-export const NotificationPacket_NotificationTypeSchema = /*@__PURE__*/
-  enumDesc(file_toothpacket, 9, 0);
-
-/**
- * Indicate the notification type
- *
- * @generated from enum toothpaste.NotificationPacket.NotificationType
- */
-export const NotificationPacket_NotificationType = /*@__PURE__*/
-  tsEnum(NotificationPacket_NotificationTypeSchema);
-
-/**
- * Describes the enum toothpaste.NotificationPacket.AuthStatus.
- */
-export const NotificationPacket_AuthStatusSchema = /*@__PURE__*/
-  enumDesc(file_toothpacket, 9, 1);
-
-/**
- * Indicate if the transmitter is authorized to send any packets (failure in auth = packet ignored)
- *
- * @generated from enum toothpaste.NotificationPacket.AuthStatus
- */
-export const NotificationPacket_AuthStatus = /*@__PURE__*/
-  tsEnum(NotificationPacket_AuthStatusSchema);
 

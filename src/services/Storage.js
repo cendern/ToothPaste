@@ -68,11 +68,10 @@ export async function loadBase64(clientID, key) {
 export async function keyExists(clientID) {
     try {
         const selfPublicKey = await loadBase64(clientID, "SelfPublicKey");
-        //const selfPrivateKey = await loadBase64(clientID, "SelfPrivateKey");
-        const aesKey = await loadBase64(clientID, "aesKey");
+        const sharedSecret = await loadBase64(clientID, "sharedSecret");
         const peerPublicKey = await loadBase64(clientID, "PeerPublicKey");
 
-        return !!(selfPublicKey && aesKey && peerPublicKey);
+        return !!(selfPublicKey && sharedSecret && peerPublicKey);
     } catch (error) {
         console.error("Error retreiving keys in ECDH context", error);
         return false;
