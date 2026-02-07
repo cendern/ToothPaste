@@ -221,7 +221,7 @@ void generateSharedSecret(toothpaste_DataPacket* packet, SecureSession* session)
     clientPubKey = std::string((const char*)base64Input.c_str(), base64Input.length());
     stateManager->setState(READY);
 
-    notifyPeerWithSessionSalt(session); // Notify the client with the session salt to confirm pairing and shared secret computation
+    notifyResponsePacket(toothpaste_ResponsePacket_ResponseType_CHALLENGE, session->sessionSalt, sizeof(session->sessionSalt));
   }
   // If the shared secret computation or key derivation fails
   else
@@ -358,7 +358,8 @@ void authenticateClient(toothpaste_DataPacket* packet, SecureSession* session) {
     stateManager->setState(UNPAIRED); // Set the device to the unpaired state
   }
 
-  // Todo: Confirm that the shared secret is correct by sending an encrypted challenge packet that the client must respond to correctly before setting to ready (this would prevent a MITM attack where an attacker could enroll with their own public key and then replay packets from a victim without needing to know the victim's shared secret) - This is especially important if we allow pairing mode to be re-enabled after a client is enrolled, as an attacker could force a disconnect, re-enable pairing, and enroll with their own key to perform a MITM attack
+  // Todo: Confirm that the shared secret is correct by sending an encrypted challenge packet that the client must respond to correctly before setting to ready (this would prevent a MITM attack where an attacker could enroll with their own public key and then replay packets from a victim without needing to know the victim's shared secret) - 
+  // This is especially important if we allow pairing mode to be re-enabled after a client is enrolled, as an attacker could force a disconnect, re-enable pairing, and enroll with their own key to perform a MITM attack
   // If we know the shared secret set device status to PAIRED (Note: This does not gurantee that the shared secret is correct, just that it exists)
   else {
     DEBUG_SERIAL_PRINTLN("Client is enrolled");
@@ -443,7 +444,7 @@ void packetTask(void* params)
         );
         DEBUG_SERIAL_PRINTLN();
 
-        // Print raw data as characters (not useful for excrypted data but good for debugging using unencrypted packets)
+        // Print raw data as characters (not useful for encrypted data but good for debugging using unencrypted packets)
         DEBUG_SERIAL_PRINT("Raw Data (chars): ");
         for (size_t i = 0; i < toothPacket.dataLen; ++i) {
           DEBUG_SERIAL_PRINTF("%c", toothPacket.encryptedData.bytes[i]);
