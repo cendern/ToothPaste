@@ -150,7 +150,7 @@ void bleSetup(SecureSession* session)
 
   // Create a BLE Characteristic
   inputCharacteristic = pService->createCharacteristic(
-    INPUT_STRING_CHARACTERISTIC,
+    TX_TO_TOOTHPASTE_CHARACTERISTIC,
     BLECharacteristic::PROPERTY_READ |      // Client can read
     BLECharacteristic::PROPERTY_WRITE_NR |  // Client can Write without Response
     BLECharacteristic::PROPERTY_NOTIFY |    // Server can async notify
@@ -161,7 +161,7 @@ void bleSetup(SecureSession* session)
 
   // Create the HID Ready Semaphore Characteristic
   semaphoreCharacteristic = pService->createCharacteristic(
-    HID_SEMAPHORE_CHARCTERISTIC,
+    TOOTHPASTE_TO_TX_CHARACTERISTIC,
     BLECharacteristic::PROPERTY_NOTIFY);
 
   // Create a MAC address characteristic
@@ -386,10 +386,6 @@ void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
 // Read an AUTH packet and check if the client public key and AES key are known
 void authenticateClient(toothpaste_DataPacket* packet, SecureSession* session) {
   DEBUG_SERIAL_PRINTLN("Entered authenticateClient");
-
-  // String deviceName;
-  // session->getDeviceName(deviceName);
-  // DEBUG_SERIAL_PRINTF("Device Name is: %s\n\r", deviceName.c_str());
 
   // The packet's "encryptedData" field contains the unencrypted public key in an AUTH packet
   clientPubKey = std::string((const char*)packet->encryptedData.bytes, packet->encryptedData.size);
