@@ -9,11 +9,12 @@ psa_key_id_t private_key_id = 0;  // Stores the ECDH private key ID
 Preferences preferences; // Preferences for storing data (Not secure, temporary solution)
 
 // Class constructor
-SecureSession::SecureSession() : sharedReady(false)
+SecureSession::SecureSession() : sharedReady(false), aesKeyReady(false)
 {
     // PSA Crypto initialization handled in init() method
     private_key_id = 0;
     mbedtls_gcm_init(&gcm);
+    memset(aesKey, 0, ENC_KEYSIZE);
 }
 
 // Class destructor
@@ -24,6 +25,11 @@ SecureSession::~SecureSession()
         psa_destroy_key(private_key_id);
         private_key_id = 0;
     }
+    
+    // Clear session AES key from RAM
+    memset(aesKey, 0, ENC_KEYSIZE);
+    aesKeyReady = false;
+    
     mbedtls_gcm_free(&gcm);
 }
 
@@ -90,40 +96,33 @@ int SecureSession::generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t& ou
 }
 
 // Compute shared secret given the peer's public key using PSA
-int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE * 2], size_t peerPubLen)
+// Also stores the shared secret and derives the session AES key
+int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE * 2], size_t peerPubLen, const char* base64pubKey)
 { 
-    if (peerPubLen < 65) {
-        DEBUG_SERIAL_PRINTLN("Peer public key too short");
+
+    DEBUG_SERIAL_PRINTF("Computing shared secret with peer public key of length %d\n", peerPubLen);
+    DEBUG_SERIAL_PRINTF("Last byte of peer public key: 0x%02x\n", peerPublicKey[peerPubLen - 1]);
+    // Handle null-terminated keys by skipping the null terminator
+    if (peerPubLen == 66 && peerPublicKey[65] == 0x00) {
+        peerPubLen = 65;  // Ignore the null terminator
+    }
+
+    if (peerPubLen != 65) {
+        DEBUG_SERIAL_PRINTF("Peer public key must be 65 bytes (uncompressed), got %d\n", peerPubLen);
         return -1;
     }
 
-    // PSA expects uncompressed format (0x04 + X + Y = 65 bytes)
-    // If we received compressed, we need to decompress it first
-    // For now, assume we receive uncompressed format
-    
-    // Import peer's public key temporarily
-    psa_key_attributes_t pub_key_attr = PSA_KEY_ATTRIBUTES_INIT;
-    psa_set_key_type(&pub_key_attr, PSA_KEY_TYPE_ECC_PUBLIC_KEY(PSA_ECC_FAMILY_SECP_R1));
-    psa_set_key_bits(&pub_key_attr, 256);
-    psa_set_key_usage_flags(&pub_key_attr, 0);  // Public key, no usage needed
-    
-    psa_key_id_t peer_key_id = 0;
-    psa_status_t status = psa_import_key(&pub_key_attr, peerPublicKey, peerPubLen, &peer_key_id);
-    if (status != PSA_SUCCESS) {
-        DEBUG_SERIAL_PRINTF("Failed to import peer public key: %ld\n", status);
+    // Verify peer public key starts with 0x04 (uncompressed format marker)
+    if (peerPublicKey[0] != 0x04) {
+        DEBUG_SERIAL_PRINTF("Invalid peer public key format. Expected 0x04 prefix, got 0x%02x\n", peerPublicKey[0]);
         return -1;
     }
 
-    DEBUG_SERIAL_PRINTLN("Peer public key imported successfully");
-
-    // Perform ECDH key agreement
-    // PSA returns the shared secret directly
+    // Perform ECDH key agreement using psa_raw_key_agreement
+    // This takes the raw peer public key without needing to import it first
     size_t output_len = 0;
-    status = psa_raw_key_agreement(PSA_ALG_ECDH, private_key_id, peerPublicKey, peerPubLen, 
-                                   sharedSecret, ENC_KEYSIZE, &output_len);
-    
-    // Clean up the imported peer key
-    psa_destroy_key(peer_key_id);
+    psa_status_t status = psa_raw_key_agreement(PSA_ALG_ECDH, private_key_id, peerPublicKey, peerPubLen, 
+                                               sharedSecret, ENC_KEYSIZE, &output_len);
 
     if (status != PSA_SUCCESS) {
         DEBUG_SERIAL_PRINTF("ECDH key agreement failed: %ld\n", status);
@@ -138,11 +137,37 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE *
     DEBUG_SERIAL_PRINTLN();
 
     sharedReady = true;
-    return 0;
+    
+    // Store the shared secret in NVS for persistence
+    int ret = storeSharedSecret(base64pubKey);
+    if (ret != 0) {
+        DEBUG_SERIAL_PRINTF("Failed to store shared secret: %d\n", ret);
+        return ret;
+    }
+    
+    // Derive the session AES key directly from the in-memory shared secret
+    const uint8_t info[] = "aes-gcm-256"; // Must match JS
+    size_t info_len = sizeof(info) - 1;
+
+    ret = hkdf_sha256(
+        nullptr, 0,                              // optional salt
+        sharedSecret, sizeof(sharedSecret),      // in-memory shared secret
+        info, info_len,                          // context info
+        aesKey, ENC_KEYSIZE                      // output directly to member variable
+    );
+
+    if (ret == 0) {
+        DEBUG_SERIAL_PRINTLN("AES key derived successfully from shared secret");
+        aesKeyReady = true;
+    } else {
+        DEBUG_SERIAL_PRINTF("AES key derivation failed: %d\n", ret);
+    }
+    
+    return ret;
 }
 
-// Called after computeSharedSecret succeeds to store the shared secret for later key derivation
-int SecureSession::deriveAESKeyFromSharedSecret(std::string base64Input)
+// Store the computed shared secret to NVS for persistence across reboots
+int SecureSession::storeSharedSecret(std::string base64Input)
 {
     // Return if a shared secret was never generated
     if (!sharedReady)
@@ -173,8 +198,9 @@ int SecureSession::deriveAESKeyFromSharedSecret(std::string base64Input)
     return 0;
 }
 
-// Helper function: Derive AES key from stored shared secret on-demand
-int SecureSession::deriveAESKeyFromStoredSecret(const char* base64pubKey, uint8_t aesKey[ENC_KEYSIZE])
+// Helper function: Derive AES key from stored shared secret
+// Call this once at the start of a session
+int SecureSession::deriveAESKeyFromStoredSecret(const char* base64pubKey)
 {
     String hashedKey = hashKey(base64pubKey);
     preferences.begin("security", true); // Open in read-only mode
@@ -199,11 +225,13 @@ int SecureSession::deriveAESKeyFromStoredSecret(const char* base64pubKey, uint8_
         nullptr, 0,                              // optional salt
         storedSharedSecret, sizeof(storedSharedSecret),  // input key material
         info, info_len,                          // context info
-        aesKey, ENC_KEYSIZE                      // output key
+        aesKey, ENC_KEYSIZE                      // output directly to member variable
     );
 
     if (ret == 0) {
         DEBUG_SERIAL_PRINTLN("AES key derived successfully from shared secret");
+        // Mark as ready for this session
+        aesKeyReady = true;
     } else {
         DEBUG_SERIAL_PRINTF("AES key derivation failed: %d\n", ret);
     }
@@ -221,14 +249,6 @@ int SecureSession::encrypt(
     const char* base64pubKey)    
 
 {
-    // Derive AES key from stored shared secret
-    uint8_t aesKey[ENC_KEYSIZE];
-    int ret = deriveAESKeyFromStoredSecret(base64pubKey, aesKey);
-    if (ret != 0) {
-        DEBUG_SERIAL_PRINTF("Failed to derive AES key for encryption: %d\n", ret);
-        return ret;
-    }
-
     // Generate random initialization vector using PSA random generator
     psa_status_t status = psa_generate_random(iv, IV_SIZE);
     if (status != PSA_SUCCESS) {
@@ -236,9 +256,9 @@ int SecureSession::encrypt(
         return -1;
     }
     
-    // Import the bytearray AES key into the mbedtls context
+    // Use the session AES key for encryption
     mbedtls_gcm_init(&gcm);
-    ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, aesKey, ENC_KEYSIZE * 8);
+    int ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, aesKey, ENC_KEYSIZE * 8);
     if (ret != 0)
         return ret;
 
@@ -264,17 +284,9 @@ int SecureSession::decrypt(
     uint8_t* plaintext_out,
     const char* base64pubKey)
 {
-    // Derive AES key from stored shared secret
-    uint8_t aesKey[ENC_KEYSIZE];
-    int ret = deriveAESKeyFromStoredSecret(base64pubKey, aesKey);
-    if (ret != 0) {
-        DEBUG_SERIAL_PRINTF("Failed to derive AES key for decryption: %d\n", ret);
-        return ret;
-    }
-
-    // Import the bytearray AES key into the mbedtls context
+    // Use the session AES key for decryption
     mbedtls_gcm_init(&gcm);
-    ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, aesKey, ENC_KEYSIZE * 8);
+    int ret = mbedtls_gcm_setkey(&gcm, MBEDTLS_CIPHER_ID_AES, aesKey, ENC_KEYSIZE * 8);
     if (ret != 0)
         return ret;
 

@@ -254,32 +254,21 @@ void generateSharedSecret(toothpaste_DataPacket* packet, SecureSession* session)
   }
 
   // TODO: Can probably be moved to SecureSession for clarity
-  // Compute shared secret from peer public key array
-  if (!session->computeSharedSecret(peerKeyArray, 66))
+  // Compute shared secret from peer public key array (also stores it and derives session AES key)
+  if (!session->computeSharedSecret(peerKeyArray, peerKeyLen, base64Input.c_str()))
   {
-    // Derive AES key from shared secret and save it
-    if (!session->deriveAESKeyFromSharedSecret(base64Input))
-    {
-      DEBUG_SERIAL_PRINTLN("AES key derived successfully");
-      clientPubKey = std::string((const char*)base64Input.c_str(), base64Input.length());
-      stateManager->setState(READY);
+    DEBUG_SERIAL_PRINTLN("Shared secret computed and AES key derived successfully");
+    clientPubKey = std::string((const char*)base64Input.c_str(), base64Input.length());
+    stateManager->setState(READY);
 
-      // Notify once pairing is successful
-      notificationPacket.authStatus = AUTH_SUCCESS;
-      notifyClient();
-    }
-    // If the AES key derivation fails
-    else
-    {
-      DEBUG_SERIAL_PRINTF("AES key derivation failed! Code: %d\n", ret);
-      stateManager->setState(ERROR);
-    }
+    // Notify once pairing is successful
+    notificationPacket.authStatus = AUTH_SUCCESS;
+    notifyClient();
   }
-
-  // If the shared secret computation fails
+  // If the shared secret computation or key derivation fails
   else
   {
-    DEBUG_SERIAL_PRINTF("Shared Secret computation failed! Code: %d\n", ret);
+    DEBUG_SERIAL_PRINTF("Shared secret computation or key derivation failed!\n");
     stateManager->setState(ERROR);
   }
 
@@ -418,6 +407,16 @@ void authenticateClient(toothpaste_DataPacket* packet, SecureSession* session) {
   // If we know the AES key set device status to PAIRED (Note: This does not gurantee that the AES key is correct, just that it exists)
   else {
     DEBUG_SERIAL_PRINTLN("Client is enrolled");
+    
+    // Derive the session AES key from the stored shared secret
+    int ret = session->deriveAESKeyFromStoredSecret(clientPubKey.c_str());
+    if (ret != 0) {
+      DEBUG_SERIAL_PRINTF("Failed to derive session AES key: %d\n", ret);
+      notificationPacket.packetType = RECV_NOT_READY;
+      notificationPacket.authStatus = AUTH_FAILED;
+      stateManager->setState(ERROR);
+      return;
+    }
 
     notificationPacket.packetType = RECV_READY;
     notificationPacket.authStatus = AUTH_SUCCESS;

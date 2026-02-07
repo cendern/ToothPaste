@@ -62,7 +62,7 @@ public:
     int generateKeypair(uint8_t outPublicKey[PUBKEY_SIZE], size_t& outPubLen);
 
     // Compute shared secret given peer public key bytes
-    int computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE], size_t peerPubLen);
+    int computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE], size_t peerPubLen, const char* base64pubKey);
 
     // Encrypt plaintext buffer, outputs ciphertext and auth tag
     int encrypt(
@@ -89,11 +89,11 @@ public:
     // Check if an AUTH packet is known
     bool isEnrolled(const char* key);
 
-    // Store shared secret after ECDH computation
-    int deriveAESKeyFromSharedSecret(std::string base64Input);
+    // Store shared secret to NVS after ECDH computation
+    int storeSharedSecret(std::string base64Input);
     
     // Derive AES key from stored shared secret on-demand (used during encrypt/decrypt)
-    int deriveAESKeyFromStoredSecret(const char* base64pubKey, uint8_t aesKey[ENC_KEYSIZE]);
+    int deriveAESKeyFromStoredSecret(const char* base64pubKey);
     
     void printBase64(const uint8_t * data, size_t dataLen);
     int hkdf_sha256(const uint8_t *salt, size_t salt_len,
@@ -111,6 +111,10 @@ private:
     
     String hashKey(const char* longKey);
     bool sharedReady;
+    
+    // Session AES key - generated once per session from shared secret, used for all packets
+    uint8_t aesKey[ENC_KEYSIZE];
+    bool aesKeyReady;
 
 };
 
