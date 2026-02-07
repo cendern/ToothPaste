@@ -253,7 +253,6 @@ void generateSharedSecret(toothpaste_DataPacket* packet, SecureSession* session)
     return;
   }
 
-  // TODO: Can probably be moved to SecureSession for clarity
   // Compute shared secret from peer public key array (also stores it and derives session AES key)
   if (!session->computeSharedSecret(peerKeyArray, peerKeyLen, base64Input.c_str()))
   {
@@ -386,17 +385,19 @@ void decryptSendString(toothpaste_DataPacket* packet, SecureSession* session) {
 void authenticateClient(toothpaste_DataPacket* packet, SecureSession* session) {
   DEBUG_SERIAL_PRINTLN("Entered authenticateClient");
 
-  String deviceName;
-  session->getDeviceName(deviceName);
-  DEBUG_SERIAL_PRINTF("Device Name is: %s\n\r", deviceName.c_str());
+  // String deviceName;
+  // session->getDeviceName(deviceName);
+  // DEBUG_SERIAL_PRINTF("Device Name is: %s\n\r", deviceName.c_str());
 
   // The packet's "encryptedData" field contains the unencrypted public key in an AUTH packet
   clientPubKey = std::string((const char*)packet->encryptedData.bytes, packet->encryptedData.size);
+  //ESP_LOGD("clientPubKey: %s\n\r", clientPubKey.c_str());
 
-  DEBUG_SERIAL_PRINTF("clientPubKey: %s\n\r", clientPubKey.c_str());
-  // If we don't know the AES key for the given public key, set Device Status to UNPAIRED
-  if (!session->isEnrolled(clientPubKey.c_str())) {
+
+  // If we don't know the shared secret for the given public key, set Device Status to UNPAIRED
+  if (!session->loadIfEnrolled(clientPubKey.c_str())) {
     DEBUG_SERIAL_PRINTLN("Client is not enrolled");
+    
     // Lower bits of notification are auth status to tell if we recognize the pubkey of the sender
     // Upper bits are the notification itself ([0] = KeepAlive, [1] = Ready to Receive, [2] = Not ready to receive )
     notificationPacket.packetType = RECV_NOT_READY;
@@ -404,12 +405,13 @@ void authenticateClient(toothpaste_DataPacket* packet, SecureSession* session) {
     stateManager->setState(UNPAIRED); // Set the device to the unpaired state
   }
 
-  // If we know the AES key set device status to PAIRED (Note: This does not gurantee that the AES key is correct, just that it exists)
+  // Todo: Confirm that the shared secret is correct by sending an encrypted challenge packet that the client must respond to correctly before setting to ready (this would prevent a MITM attack where an attacker could enroll with their own public key and then replay packets from a victim without needing to know the victim's shared secret) - This is especially important if we allow pairing mode to be re-enabled after a client is enrolled, as an attacker could force a disconnect, re-enable pairing, and enroll with their own key to perform a MITM attack
+  // If we know the shared secret set device status to PAIRED (Note: This does not gurantee that the shared secret is correct, just that it exists)
   else {
     DEBUG_SERIAL_PRINTLN("Client is enrolled");
     
     // Derive the session AES key from the stored shared secret
-    int ret = session->deriveAESKeyFromStoredSecret(clientPubKey.c_str());
+    int ret = session->deriveAESKeyFromSecret(clientPubKey.c_str());
     if (ret != 0) {
       DEBUG_SERIAL_PRINTF("Failed to derive session AES key: %d\n", ret);
       notificationPacket.packetType = RECV_NOT_READY;

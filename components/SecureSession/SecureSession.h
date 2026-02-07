@@ -87,13 +87,13 @@ public:
     bool isSharedSecretReady() const { return sharedReady; }
 
     // Check if an AUTH packet is known
-    bool isEnrolled(const char* key);
+    bool loadIfEnrolled(const char* key);
 
     // Store shared secret to NVS after ECDH computation
     int storeSharedSecret(std::string base64Input);
     
     // Derive AES key from stored shared secret on-demand (used during encrypt/decrypt)
-    int deriveAESKeyFromStoredSecret(const char* base64pubKey);
+    int deriveAESKeyFromSecret(const char* base64pubKey);
     
     void printBase64(const uint8_t * data, size_t dataLen);
     int hkdf_sha256(const uint8_t *salt, size_t salt_len,

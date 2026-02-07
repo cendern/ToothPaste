@@ -101,7 +101,8 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE *
 { 
 
     DEBUG_SERIAL_PRINTF("Computing shared secret with peer public key of length %d\n", peerPubLen);
-    DEBUG_SERIAL_PRINTF("Last byte of peer public key: 0x%02x\n", peerPublicKey[peerPubLen - 1]);
+    
+    // TODO: Remove redundant checks
     // Handle null-terminated keys by skipping the null terminator
     if (peerPubLen == 66 && peerPublicKey[65] == 0x00) {
         peerPubLen = 65;  // Ignore the null terminator
@@ -137,7 +138,6 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE *
     DEBUG_SERIAL_PRINTLN();
 
     sharedReady = true;
-    
     // Store the shared secret in NVS for persistence
     int ret = storeSharedSecret(base64pubKey);
     if (ret != 0) {
@@ -145,25 +145,13 @@ int SecureSession::computeSharedSecret(const uint8_t peerPublicKey[PUBKEY_SIZE *
         return ret;
     }
     
-    // Derive the session AES key directly from the in-memory shared secret
-    const uint8_t info[] = "aes-gcm-256"; // Must match JS
-    size_t info_len = sizeof(info) - 1;
-
-    ret = hkdf_sha256(
-        nullptr, 0,                              // optional salt
-        sharedSecret, sizeof(sharedSecret),      // in-memory shared secret
-        info, info_len,                          // context info
-        aesKey, ENC_KEYSIZE                      // output directly to member variable
-    );
-
-    if (ret == 0) {
-        DEBUG_SERIAL_PRINTLN("AES key derived successfully from shared secret");
-        aesKeyReady = true;
-    } else {
-        DEBUG_SERIAL_PRINTF("AES key derivation failed: %d\n", ret);
+    ret = deriveAESKeyFromSecret(base64pubKey);
+    if (ret != 0) {
+        DEBUG_SERIAL_PRINTF("Failed to derive AES key from shared secret: %d\n", ret);
+        return ret;
     }
-    
-    return ret;
+
+    return 0;
 }
 
 // Store the computed shared secret to NVS for persistence across reboots
@@ -185,7 +173,6 @@ int SecureSession::storeSharedSecret(std::string base64Input)
     }
 
     // Store the raw shared secret (not the AES key)
-    // The AES key will be derived on-demand during encryption/decryption
     String hashedBase64 = hashKey(base64Input.c_str());
     DEBUG_SERIAL_PRINTF("Storing shared secret for hashed key: %s\n", hashedBase64.c_str());
     
@@ -198,24 +185,9 @@ int SecureSession::storeSharedSecret(std::string base64Input)
     return 0;
 }
 
-// Helper function: Derive AES key from stored shared secret
-// Call this once at the start of a session
-int SecureSession::deriveAESKeyFromStoredSecret(const char* base64pubKey)
+// Helper function: Derive AES key from the session's shared secret
+int SecureSession::deriveAESKeyFromSecret(const char* base64pubKey)
 {
-    String hashedKey = hashKey(base64pubKey);
-    preferences.begin("security", true); // Open in read-only mode
-
-    if (!preferences.isKey(hashedKey.c_str())) {
-        DEBUG_SERIAL_PRINTF("Stored shared secret '%s' not found in preferences\n", hashedKey.c_str());
-        preferences.end();
-        return -1;
-    }
-
-    // Retrieve the stored shared secret
-    uint8_t storedSharedSecret[ENC_KEYSIZE];
-    preferences.getBytes(hashedKey.c_str(), storedSharedSecret, ENC_KEYSIZE);
-    preferences.end();
-
     // Derive AES key from the shared secret using HKDF
     const uint8_t info[] = "aes-gcm-256"; // Must match JS
     size_t info_len = sizeof(info) - 1;
@@ -223,7 +195,7 @@ int SecureSession::deriveAESKeyFromStoredSecret(const char* base64pubKey)
     // Use HKDF to create a secure AES-GCM 256-bit key
     int ret = hkdf_sha256(
         nullptr, 0,                              // optional salt
-        storedSharedSecret, sizeof(storedSharedSecret),  // input key material
+        sharedSecret, sizeof(sharedSecret),      // session's shared secret
         info, info_len,                          // context info
         aesKey, ENC_KEYSIZE                      // output directly to member variable
     );
@@ -321,11 +293,20 @@ int SecureSession::decrypt(toothpaste_DataPacket* packet, uint8_t* decrypted_out
     return ret;
 }
 
-// Check if a key exists in preferences storage
-bool SecureSession::isEnrolled(const char* key){
+// Check if a key exists in preferences storage and load its shared secret
+bool SecureSession::loadIfEnrolled(const char* key){
     preferences.begin("security", true); // Open storage session in read only mode
     String hashedKey = hashKey(key); // Hash the key, since there is a char limit for keys in storage
-    bool ret = preferences.isKey(hashedKey.c_str()); // Check if the AES key for the given public key exists
+    
+    // Check if the hashed key exists in storage, 
+    // If it does load the shared secret into the session variable and return true, otherwise return false
+    bool ret = preferences.isKey(hashedKey.c_str());
+    if (ret) {
+        // Load the shared secret into the session variable
+        preferences.getBytes(hashedKey.c_str(), sharedSecret, ENC_KEYSIZE);
+        sharedReady = true;
+    }
+    
     preferences.end();
     return ret;
 }
