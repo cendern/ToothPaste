@@ -12,44 +12,34 @@ const DB_VERSION = 3;
 // Open or create a new DB store and set the primary key to clientID
 export function openDB() {
     return new Promise((resolve, reject) => {
-        console.log("[Storage] Opening database...", { name: DB_NAME, version: DB_VERSION });
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {
-            console.log("[Storage] onupgradeneeded triggered", { oldVersion: event.oldVersion, newVersion: event.newVersion });
             const db = event.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
-                console.log("[Storage] Creating objectStore:", STORE_NAME);
                 db.createObjectStore(STORE_NAME, { keyPath: "clientID" });
             }
             if (!db.objectStoreNames.contains(CREDENTIALS_STORE)) {
-                console.log("[Storage] Creating objectStore:", CREDENTIALS_STORE);
                 db.createObjectStore(CREDENTIALS_STORE, { keyPath: "id" });
             }
         };
 
         request.onsuccess = () => {
             const db = request.result;
-            console.log("[Storage] Database opened successfully", { stores: Array.from(db.objectStoreNames) });
             
             // Verify all required stores exist
             const hasDeviceKeyStore = db.objectStoreNames.contains(STORE_NAME);
             const hasCredentialStore = db.objectStoreNames.contains(CREDENTIALS_STORE);
-            
-            console.log("[Storage] Store verification", { hasDeviceKeyStore, hasCredentialStore });
-            
+                        
             if (hasDeviceKeyStore && hasCredentialStore) {
-                console.log("[Storage] All stores present, database ready");
                 resolve(db);
             } else {
                 // Stores are missing - database may be corrupted or was deleted
-                console.warn("[Storage] Database corrupted or incomplete. Deleting and recreating...");
                 db.close();
                 
                 // Delete the database completely and recreate it
                 const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
                 deleteRequest.onsuccess = () => {
-                    console.log("[Storage] Database deleted successfully, recreating...");
                     // Wait briefly then retry opening - this will trigger onupgradeneeded
                     setTimeout(() => {
                         openDB().then(resolve).catch(reject);

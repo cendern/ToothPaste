@@ -24,7 +24,7 @@ let isAuthenticatedFlag = false;
  * Only used if ENCRYPTION_ENABLED is false
  */
 async function getInsecureDefaultKey() {
-    console.warn("[EncryptedStorage] WARNING: Using insecure storage without encryption. Do not use in production!");
+    console.warn("[EncryptedStorage] WARNING: Using insecure storage without encryption.");
     
     const keyMaterial = await crypto.subtle.importKey(
         "raw",
@@ -59,17 +59,16 @@ export async function initializeInsecureStorage() {
         throw new Error("Cannot initialize insecure storage when encryption is enabled");
     }
     
-    console.warn("[EncryptedStorage] Initializing insecure storage (no encryption)");
     sessionEncryptionKey = await getInsecureDefaultKey();
     isAuthenticatedFlag = true;
     return true;
 }
 
-// Get or create a stable user ID for WebAuthn
+// Get or create a user ID for WebAuthn
 function getOrCreateUserId() {
     let userId = localStorage.getItem(USER_ID_STORAGE_KEY);
     if (!userId) {
-        // Generate a stable user ID and store it
+        // Generate a user ID and store it
         const randomBytes = crypto.getRandomValues(new Uint8Array(16));
         userId = Storage.arrayBufferToBase64(randomBytes.buffer);
         localStorage.setItem(USER_ID_STORAGE_KEY, userId);
@@ -78,7 +77,7 @@ function getOrCreateUserId() {
 }
 
 /**
- * Derive a stable encryption key from credential ID
+ * Derive an encryption key from credential ID
  * Same key is produced every time for the same credential
  */
 async function deriveKeyFromCredentialId(credentialIdBase64) {
@@ -188,17 +187,14 @@ export async function credentialsExist() {
         const credentials = await new Promise((resolve) => {
             const request = store.getAll();
             request.onsuccess = () => {
-                console.log("[EncryptedStorage] getAll() returned:", JSON.stringify(request.result));
                 resolve(request.result);
             };
             request.onerror = () => {
-                console.error("[EncryptedStorage] getAll() error:", request.error);
                 resolve([]);
             };
         });
         
         const exists = credentials.length > 0;
-        console.log("[EncryptedStorage] Credentials check complete:", { count: credentials.length, exists });
         return exists;
     } catch (e) {
         console.error("[EncryptedStorage] Error checking credentials:", e);
@@ -217,25 +213,27 @@ export async function registerWebAuthnCredential(displayName) {
     console.log("[EncryptedStorage] Starting WebAuthn registration", { displayName });
     const challenge = crypto.getRandomValues(new Uint8Array(32));
     const userId = Storage.base64ToArrayBuffer(getOrCreateUserId());
-    console.log("[EncryptedStorage] Generated challenge and retrieved user ID");
     
     // Use provided displayName or prompt user
     const username = displayName || prompt("Enter a username for this account:", "ToothPaste User") || "ToothPaste User";
-    console.log("[EncryptedStorage] Using username:", username);
     
     try {
         const credential = await navigator.credentials.create({
             publicKey: {
                 challenge: challenge,
+                // Relying Party (ToothPaste app) information
                 rp: {
                     name: "ToothPaste",
                     id: window.location.hostname,
                 },
+
+                // User information for WebAuthn
                 user: {
                     id: new Uint8Array(userId),
-                    name: username.toLowerCase().replace(/\s+/g, "_"),
+                    name: username.toLowerCase().replace(/\s+/g, "_"), // Case insensitive username
                     displayName: username,
                 },
+
                 pubKeyCredParams: [
                     { alg: -7, type: "public-key" }, // ES256
                     { alg: -257, type: "public-key" }, // RS256
@@ -254,28 +252,12 @@ export async function registerWebAuthnCredential(displayName) {
         console.log("[EncryptedStorage] WebAuthn credential created successfully");
 
         // Store the credential in IndexedDB
-        console.log("[EncryptedStorage] Opening database to store credential...");
         const db = await Storage.openDB();
         const tx = db.transaction(CREDENTIALS_STORE, "readwrite");
         const store = tx.objectStore(CREDENTIALS_STORE);
-        console.log("[EncryptedStorage] Transaction created, storing credential...");
 
-        // Convert credential.id to base64 - handle multiple formats
-        let credentialIdAsBase64 = '';
-        
-        if (typeof credential.id === 'string') {
-            credentialIdAsBase64 = credential.id;
-            console.log("[EncryptedStorage] credential.id is already a base64 string");
-        } else if (credential.id instanceof ArrayBuffer) {
-            credentialIdAsBase64 = Storage.arrayBufferToBase64(credential.id);
-            console.log("[EncryptedStorage] credential.id was ArrayBuffer, converted to base64");
-        } else if (credential.id instanceof Uint8Array) {
-            credentialIdAsBase64 = Storage.arrayBufferToBase64(credential.id.buffer);
-            console.log("[EncryptedStorage] credential.id was Uint8Array, converted to base64");
-        } else {
-            console.warn("[EncryptedStorage] credential.id has unexpected type:", typeof credential.id);
-            throw new Error("Unable to handle credential.id format");
-        }
+        // credential.id is already a string per WebAuthn spec
+        const credentialIdAsBase64 = credential.id;
 
         await new Promise((resolve, reject) => {
             const request = store.put({
@@ -291,14 +273,9 @@ export async function registerWebAuthnCredential(displayName) {
                 reject(request.error);
             };
         });
-
-        console.log("[EncryptedStorage] WebAuthn registration completed successfully");
         
-        // Derive and set the session encryption key from the new credential ID
-        console.log("[EncryptedStorage] Deriving session key from registered credential...");
         sessionEncryptionKey = await deriveKeyFromCredentialId(credentialIdAsBase64);
         isAuthenticatedFlag = true;
-        console.log("[EncryptedStorage] Session encryption key established from credential");
         
         return true;
     } catch (error) {
@@ -358,37 +335,17 @@ export async function authenticateWithWebAuthn() {
         }
         console.log("[EncryptedStorage] WebAuthn assertion received successfully");
 
-        // Find the credential that was used for this assertion
-        let credentialId = '';
-        
-        if (typeof assertion.id === 'string') {
-            credentialId = assertion.id;
-            console.log("[EncryptedStorage] assertion.id is already a base64 string");
-        } else if (assertion.id instanceof ArrayBuffer) {
-            credentialId = Storage.arrayBufferToBase64(assertion.id);
-            console.log("[EncryptedStorage] assertion.id was ArrayBuffer, converted to base64");
-        } else if (assertion.id instanceof Uint8Array) {
-            credentialId = Storage.arrayBufferToBase64(assertion.id.buffer);
-            console.log("[EncryptedStorage] assertion.id was Uint8Array, converted to base64");
-        } else {
-            console.warn("[EncryptedStorage] assertion.id has unexpected type:", typeof assertion.id);
-            throw new Error("Unable to handle assertion.id format");
-        }
-        
+        // assertion.id is already a string per WebAuthn spec
+        const credentialId = assertion.id;
         const usedCredential = credentials.find((cred) => cred.id === credentialId);
         
         if (!usedCredential) {
             console.warn("[EncryptedStorage] Could not find credential that was used for assertion");
             throw new Error("Credential not found: ID does not match any registered credential");
         }
-        
-        console.log("[EncryptedStorage] Found matching credential, ID:", credentialId);
 
-        // Derive encryption key from the credential ID
-        console.log("[EncryptedStorage] Deriving encryption key from credential ID...");
         sessionEncryptionKey = await deriveKeyFromCredentialId(usedCredential.id);
         isAuthenticatedFlag = true;
-        console.log("[EncryptedStorage] Session encryption key derived successfully");
         return true;
     } catch (error) {
         console.error("[EncryptedStorage] WebAuthn authentication failed:", error);
