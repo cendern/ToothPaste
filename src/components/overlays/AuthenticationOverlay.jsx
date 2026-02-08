@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Typography, Input } from "@material-tailwind/react";
 import { ShieldCheckIcon } from '@heroicons/react/24/outline';
-import { unlockWithPassword, unlockPasswordless, isUnlocked } from '../../services/EncryptedStorage';
+import { unlockWithPassword, unlockPasswordless, isUnlocked, getRequiredAuthMode } from '../../services/EncryptedStorage';
 
 const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
-    const [mode, setMode] = useState('choose'); // 'choose' | 'password' | 'passwordless'
+    const [mode, setMode] = useState(null); // 'choose' | 'password' | 'passwordless' | null (loading)
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
 
-    // Check if already unlocked on mount
+    // Determine required auth mode on mount
     useEffect(() => {
+        const initAuthMode = async () => {
+            const requiredMode = await getRequiredAuthMode();
+            setMode(requiredMode);
+        };
+        initAuthMode();
         setHasChecked(true);
     }, []);
 

@@ -54,6 +54,58 @@ function loadOrGenerateMasterSalt() {
 }
 
 /**
+ * Create a validation token to verify password correctness on future unlocks.
+ * This is a special encrypted value that is stored immediately after successful unlock.
+ */
+async function createValidationToken(key) {
+    const token = { timestamp: Date.now(), challenge: "password_validated" };
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoder = new TextEncoder();
+    const data = encoder.encode(JSON.stringify(token));
+
+    const encrypted = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        data
+    );
+
+    const result = new Uint8Array(iv.length + encrypted.byteLength);
+    result.set(iv);
+    result.set(new Uint8Array(encrypted), iv.length);
+
+    return Storage.arrayBufferToBase64(result.buffer);
+}
+
+/**
+ * Verify the stored validation token with the current key.
+ * Returns true if token exists and decryption succeeds, false otherwise.
+ */
+async function verifyValidationToken(key) {
+    try {
+        const tokenBase64 = localStorage.getItem("__EncryptedStorage_ValidationToken__");
+        if (!tokenBase64) {
+            return null; // No token yet, so can't verify
+        }
+
+        const encryptedArray = new Uint8Array(Storage.base64ToArrayBuffer(tokenBase64));
+        const iv = encryptedArray.slice(0, 12);
+        const ciphertext = encryptedArray.slice(12);
+
+        const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv },
+            key,
+            ciphertext
+        );
+
+        const decoder = new TextDecoder();
+        const token = JSON.parse(decoder.decode(decrypted));
+        return token.challenge === "password_validated";
+    } catch {
+        return false; // If decryption fails, password is wrong
+    }
+}
+
+/**
  * Derive AES-GCM key from password using Argon2id and a specific salt.
  * @param {string} password - User password
  * @param {Uint8Array} salt - The salt to use for derivation
@@ -117,18 +169,36 @@ async function deriveInsecureKey() {
 
 /**
  * Unlock the storage with a password using Argon2id.
- * Uses stored master salt to ensure consistent key across sessions.
+ * Validates the password by checking the stored validation token.
+ * Fails immediately if password is incorrect.
  * @param {string} password - User password
+ * @throws {Error} If password is incorrect
  */
 export async function unlockWithPassword(password) {
     try {
         const { aesKey, salt } = await deriveAesKeyWithSalt(password);
+        
+        // Verify password by checking validation token
+        const validationResult = await verifyValidationToken(aesKey);
+        
+        // If token exists and verification failed, password is wrong
+        if (validationResult === false) {
+            throw new Error("Incorrect password");
+        }
+        
+        // If no token exists yet, create one (first unlock)
+        if (validationResult === null) {
+            const tokenBase64 = await createValidationToken(aesKey);
+            localStorage.setItem("__EncryptedStorage_ValidationToken__", tokenBase64);
+        }
+        
         sessionEncryptionKey = aesKey;
         sessionSalt = salt;
         isUnlockedFlag = true;
+        localStorage.setItem("__EncryptedStorage_AuthScheme__", "password");
         return { success: true };
     } catch (error) {
-        console.error("[EncryptedStorage] Password unlock failed:", error);
+        console.error("[EncryptedStorage] Password unlock failed:", error.message);
         throw error;
     }
 }
@@ -141,6 +211,7 @@ export async function unlockPasswordless() {
     try {
         sessionEncryptionKey = await deriveInsecureKey();
         isUnlockedFlag = true;
+        localStorage.setItem("__EncryptedStorage_AuthScheme__", "passwordless");
         return true;
     } catch (error) {
         console.error("[EncryptedStorage] Passwordless unlock failed:", error);
@@ -166,11 +237,13 @@ export function lock() {
 }
 
 /**
- * Clear the master salt (should be called when changing password or resetting encryption).
- * Warning: This will make all existing encrypted data inaccessible unless re-encrypted.
+ * Clear the master salt and validation token (for password reset/change).
+ * Warning: This will required re-entering password on next unlock.
  */
 export function clearMasterSalt() {
     localStorage.removeItem("__EncryptedStorage_MasterSalt__");
+    localStorage.removeItem("__EncryptedStorage_ValidationToken__");
+    localStorage.removeItem("__EncryptedStorage_AuthScheme__");
     lock();
 }
 
@@ -266,6 +339,63 @@ async function decryptValue(encryptedBase64, password, salt) {
  */
 export function isUnlocked() {
     return isUnlockedFlag;
+}
+
+/**
+ * Auto-unlock based on stored auth scheme.
+ * Returns:
+ *   "unlocked" - if already unlocked
+ *   "passwordless" - if passwordless mode is set and successfully unlocked
+ *   "password" - if password mode is set (requires manual password entry)
+ *   "choose" - if no auth scheme is set (show both options)
+ */
+export async function getRequiredAuthMode() {
+    // Already unlocked
+    if (isUnlockedFlag) {
+        return "unlocked";
+    }
+    
+    const authScheme = getAuthScheme();
+    
+    // Auto-unlock passwordless
+    if (authScheme === "passwordless") {
+        try {
+            await unlockPasswordless();
+            return "unlocked";
+        } catch (error) {
+            console.error("[EncryptedStorage] Passwordless auto-unlock failed:", error);
+            return "passwordless";
+        }
+    }
+    
+    // Password mode requires manual input
+    if (authScheme === "password") {
+        return "password";
+    }
+    
+    // No scheme set - show choose screen
+    return "choose";
+}
+
+/**
+ * Get the stored authentication scheme ("password", "passwordless", or null if not set).
+ */
+export function getAuthScheme() {
+    return localStorage.getItem("__EncryptedStorage_AuthScheme__");
+}
+
+/**
+ * Check if passwordless mode is available (i.e., has been used before).
+ */
+export function hasPasswordlessMode() {
+    return getAuthScheme() === "passwordless";
+}
+
+/**
+ * Check if password mode is available (i.e., has been used before).
+ */
+export function hasPasswordMode() {
+    return getAuthScheme() === "password";
 }
 
 /**
