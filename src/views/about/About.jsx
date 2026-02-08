@@ -5,6 +5,7 @@ import WhySection from './sections/WhySection';
 import SecuritySection from './sections/SecuritySection';
 import CTASection from './sections/CTASection';
 import GridBackground from '../../components/GridBackground';
+import { Typography } from "@material-tailwind/react";
 import { appColors } from '../../styles/colors';
 import { useBreakpoint } from '../../services/useBreakpoint';
 
@@ -140,6 +141,11 @@ export default function About() {
                 currentSlide={currentSlide} 
                 getSectionOpacity={getSectionOpacity}
             />
+
+            {/* Barcode ToothPaste */}
+            <div className='rotate-90 absolute bottom-0 right-0 -translate-y-full translate-x-[43%] pointer-events-none'>
+                            <Typography style={{ fontFamily: '"Libre Barcode 39 Extended", system-ui' }} className="text-8xl leading-relaxed">ToothPaste</Typography>
+            </div>
         </div>
     );
 }
