@@ -4,6 +4,8 @@ import HeroSection from './sections/HeroSection';
 import WhySection from './sections/WhySection';
 import SecuritySection from './sections/SecuritySection';
 import CTASection from './sections/CTASection';
+import GridBackground from '../../components/GridBackground';
+import { appColors } from '../../styles/colors';
 
 export default function About() {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -12,6 +14,38 @@ export default function About() {
     const maxSlides = 4;
     const scrollThreshold = useRef(0);
     const scrollSensitivity = 1000; // Adjust this value to change how many clicks required
+
+    // Define filled squares for each section
+    const sectionSquares = {
+        hero: [
+            { row: 20, col: 44, color: appColors.secondary },
+            { row: 20, col: 46, color: appColors.orange },
+            { row: 20, col: 48, color: appColors.primary }
+        ],
+        why: [
+            { row: 5, col: 2, color: appColors.primary },
+            { row: 6, col: 3, color: appColors.secondary }
+        ],
+        security: [
+            { row: 8, col: 4, color: appColors.primary },
+            { row: 9, col: 5, color: appColors.secondary }
+        ],
+        cta: [
+            { row: 11, col: 6, color: appColors.primary },
+            { row: 12, col: 7, color: appColors.secondary }
+        ]
+    };
+
+    // Show squares only for current section
+    const currentSectionSquares = (() => {
+        switch(currentSlide) {
+            case 0: return sectionSquares.hero;
+            case 1: return sectionSquares.why;
+            case 2: return sectionSquares.security;
+            case 3: return sectionSquares.cta;
+            default: return [];
+        }
+    })();
 
     useEffect(() => {
         const handleWheel = (event) => {
@@ -44,22 +78,35 @@ export default function About() {
     };
 
     return (
-        <div ref={containerRef} className=" relative flex-1 w-full bg-background text-text overflow-hidden" style={{
-            backgroundImage: `
-                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05) 76%, transparent 77%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05) 76%, transparent 77%, transparent)
-            `,
-            backgroundSize: '50px 50px'
-        }}>
+        //  Background with grid pattern - also serves as scroll container
+        <div ref={containerRef} className="relative flex-1 w-full bg-background text-text overflow-hidden">
+            <GridBackground
+                filledSquares={currentSectionSquares}
+                squareSize={25}
+                borderColor="rgba(255, 255, 255, 0.1)"
+                borderWidth={1}
+            />
 
             {/* 3D Model Container */}
             <ModelContainer currentSlide={currentSlide} scrollDeltaRef={scrollDeltaRef} />
 
             {/* Sections */}
-            <HeroSection currentSlide={currentSlide} getSectionOpacity={getSectionOpacity} />
-            <WhySection currentSlide={currentSlide} getSectionOpacity={getSectionOpacity} />
-            <SecuritySection currentSlide={currentSlide} getSectionOpacity={getSectionOpacity} />
-            <CTASection currentSlide={currentSlide} getSectionOpacity={getSectionOpacity} />
+            <HeroSection 
+                currentSlide={currentSlide} 
+                getSectionOpacity={getSectionOpacity}
+            />
+            <WhySection 
+                currentSlide={currentSlide} 
+                getSectionOpacity={getSectionOpacity}
+            />
+            <SecuritySection 
+                currentSlide={currentSlide} 
+                getSectionOpacity={getSectionOpacity}
+            />
+            <CTASection 
+                currentSlide={currentSlide} 
+                getSectionOpacity={getSectionOpacity}
+            />
         </div>
     );
 }

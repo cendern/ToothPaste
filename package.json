@@ -1,6 +1,7 @@
 {
   "name": "ToothPasteWeb",
   "version": "0.1.0",
+  "type": "module",
   "homepage": "https://toothpasteapp.com",
   "private": true,
   "dependencies": {
@@ -22,6 +23,7 @@
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",
     "esptool-js": "^0.5.7",
+    "framer-motion": "^12.33.0",
     "google-protobuf": "^4.0.1",
     "lexical": "^0.39.0",
     "protobufjs": "^8.0.0",

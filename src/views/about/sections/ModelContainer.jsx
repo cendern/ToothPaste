@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useLoader, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -46,20 +46,31 @@ const Model = ({ url, scrollDeltaRef }) => {
 };
 
 export default function ModelContainer({ currentSlide, scrollDeltaRef }) {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <div className="absolute inset-0 pointer-events-none">
             <div
                 className={`
                 relative w-full h-full
                 transition-transform duration-1000 ease-in-out
-                ${currentSlide === 0 ? '-translate-x-[15%]' : 'translate-x-0'}
+                ${isMobile ? 'translate-x-0' : (currentSlide === 0 ? '-translate-x-[28%]' : 'translate-x-0')}
                 `}
             >
                 <Canvas className="w-full h-full">
-                    <ambientLight intensity={currentSlide === 0 ? 2 : 1} />
+                    <ambientLight intensity={isMobile ? 0.2 : (currentSlide === 0 ? 2 : 1)} />
                     <directionalLight
                         position={[0, 2, 5]}
-                        intensity={currentSlide === 0 ? 1 : 0.1}
+                        intensity={isMobile ? 0.1 : (currentSlide === 0 ? 1 : 0.1)}
                         castShadow
                     />
                     <Model url="/ToothPaste.glb" scrollDeltaRef={scrollDeltaRef} />
