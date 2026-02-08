@@ -37,6 +37,36 @@ const star = [
                     { row: 6, col: 6, color: appColors.primary },
 ]
 
+// Generate repeating pattern of 3 stars with equal spacing
+const generateRepeatingStars = (cols, rowOffset = 20) => {
+    const starWidth = 7;
+    const colors = [appColors.secondary, appColors.orange, appColors.primary];
+    const groupSpacing = 12;
+    const groupSize = groupSpacing * 3;
+    
+    const stars = [];
+    let col = 0;
+    
+    while (col < cols) {
+        for (let i = 0; i < 3; i++) {
+            const starCol = col + (i * groupSpacing);
+            if (starCol + starWidth <= cols) {
+                stars.push(
+                    ...star.map(square => ({
+                        ...square,
+                        col: square.col + starCol,
+                        row: square.row + rowOffset,
+                        color: colors[i]
+                    }))
+                );
+            }
+        }
+        col += groupSize;
+    }
+    
+    return stars;
+};
+
 export default function About() {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [gridDimensions, setGridDimensions] = useState({ rows: 0, cols: 0, width: 0, height: 0 });
@@ -56,10 +86,7 @@ export default function About() {
                     { row: 20, col: 3, color: appColors.orange },
                     { row: 20, col: 5, color: appColors.primary }
                 ],
-                why: [
-                    { row: 5, col: 2, color: appColors.primary },
-                    { row: 6, col: 3, color: appColors.secondary }
-                ],
+                why: generateRepeatingStars(gridDimensions.cols),
                 security: [
                     { row: 8, col: 4, color: appColors.primary },
                     { row: 9, col: 5, color: appColors.secondary }
@@ -76,36 +103,7 @@ export default function About() {
                     { row: 20, col: 46, color: appColors.orange },
                     { row: 20, col: 48, color: appColors.primary }
                 ],
-                why: (() => {
-                    const cols = gridDimensions.cols;
-                    const starWidth = 7;
-                    const color = [appColors.secondary, appColors.orange, appColors.primary];
-                    const groupSpacing = 12; // Space between each star in the group
-                    const groupSize = groupSpacing * 3; // Total width of one complete group
-                    
-                    const stars = [];
-                    let col = 0;
-                    
-                    while (col < cols) {
-                        // Place 3 stars in this group
-                        for (let i = 0; i < 3; i++) {
-                            const starCol = col + (i * groupSpacing);
-                            if (starCol + starWidth <= cols) {
-                                stars.push(
-                                    ...star.map(square => ({
-                                        ...square,
-                                        col: square.col + starCol,
-                                        row: square.row + 20,
-                                        color: color[i]
-                                    }))
-                                );
-                            }
-                        }
-                        col += groupSize;
-                    }
-                    
-                    return stars;
-                })(),
+                why: generateRepeatingStars(gridDimensions.cols),
                 security: [
                     { row: 8, col: 4, color: appColors.primary },
                     { row: 9, col: 5, color: appColors.secondary }
