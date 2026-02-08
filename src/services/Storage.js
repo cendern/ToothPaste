@@ -6,7 +6,6 @@
 
 const DB_NAME = "ToothPasteDB";
 const STORE_NAME = "deviceKeys";
-const CREDENTIALS_STORE = "webauthnCredentials";
 const DB_VERSION = 3;
 
 // Open or create a new DB store and set the primary key to clientID
@@ -19,9 +18,6 @@ export function openDB() {
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: "clientID" });
             }
-            if (!db.objectStoreNames.contains(CREDENTIALS_STORE)) {
-                db.createObjectStore(CREDENTIALS_STORE, { keyPath: "id" });
-            }
         };
 
         request.onsuccess = () => {
@@ -29,12 +25,11 @@ export function openDB() {
             
             // Verify all required stores exist
             const hasDeviceKeyStore = db.objectStoreNames.contains(STORE_NAME);
-            const hasCredentialStore = db.objectStoreNames.contains(CREDENTIALS_STORE);
                         
-            if (hasDeviceKeyStore && hasCredentialStore) {
+            if (hasDeviceKeyStore) {
                 resolve(db);
             } else {
-                // Stores are missing - database may be corrupted or was deleted
+                // Store is missing - database may be corrupted or was deleted
                 db.close();
                 
                 // Delete the database completely and recreate it

@@ -19,6 +19,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
+    "argon2-wasm-esm": "^1.0.3",
     "crypto-js": "^4.2.0",
     "elliptic": "^6.6.1",
     "esptool-js": "^0.5.7",
