@@ -78,29 +78,33 @@ export default function About() {
                 ],
                 why: (() => {
                     const cols = gridDimensions.cols;
-                    const minMargin = 1;
-                    const starWidth = 7; // Star spans from col 0 to col 6
-                    const centerCol = Math.round(cols / 2);
+                    const starWidth = 7;
+                    const color = [appColors.secondary, appColors.orange, appColors.primary];
+                    const groupSpacing = 12; // Space between each star in the group
+                    const groupSize = groupSpacing * 3; // Total width of one complete group
                     
-                    // Left half: stars from left margin to center
-                    const leftStar1 = minMargin;
-                    const leftStar3 = centerCol - starWidth - minMargin;
-                    const leftStar2 = Math.round((leftStar1 + leftStar3) / 2);
+                    const stars = [];
+                    let col = 0;
                     
-                    // Right half: stars from center to right margin
-                    const rightStar1 = centerCol + minMargin;
-                    const rightStar3 = cols - starWidth - minMargin;
-                    const rightStar2 = Math.round((rightStar1 + rightStar3) / 2);
-                    return [
-                        { row: 25, col: 52, color: appColors.secondary },
-                        ...star.map(square => ({ ...square, col: square.col + leftStar1, row: square.row + 20, color: appColors.secondary })),
-                        ...star.map(square => ({ ...square, col: square.col + leftStar2, row: square.row + 20, color: appColors.orange })),
-                        ...star.map(square => ({ ...square, col: square.col + leftStar3, row: square.row + 20, color: appColors.primary })),
-
-                        ...star.map(square => ({ ...square, col: square.col + rightStar1, row: square.row + 20, color: appColors.secondary })),
-                        ...star.map(square => ({ ...square, col: square.col + rightStar2, row: square.row + 20, color: appColors.orange })),
-                        ...star.map(square => ({ ...square, col: square.col + rightStar3, row: square.row + 20, color: appColors.primary })),
-                    ];
+                    while (col < cols) {
+                        // Place 3 stars in this group
+                        for (let i = 0; i < 3; i++) {
+                            const starCol = col + (i * groupSpacing);
+                            if (starCol + starWidth <= cols) {
+                                stars.push(
+                                    ...star.map(square => ({
+                                        ...square,
+                                        col: square.col + starCol,
+                                        row: square.row + 20,
+                                        color: color[i]
+                                    }))
+                                );
+                            }
+                        }
+                        col += groupSize;
+                    }
+                    
+                    return stars;
                 })(),
                 security: [
                     { row: 8, col: 4, color: appColors.primary },
