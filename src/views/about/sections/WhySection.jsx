@@ -5,7 +5,7 @@ import { ArrowDownIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outli
 export default function WhySection({ currentSlide, getSectionOpacity }) {
     return (
         <section
-            className="absolute inset-0 flex flex-col px-6 md:px-12 py-12 z-10 pb-32 items-center justify-center"
+            className="absolute inset-0 flex flex-col px-6 md:px-12 py-48 z-10 pb-10 items-center justify-center"
             style={{
                 opacity: getSectionOpacity(1),
                 transition: 'opacity 0.3s ease-in-out',
@@ -13,11 +13,11 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
             }}
         >
             {/* Title Row */}
-            <div className="flex items-center justify-center gap-10 my-12 flex-shrink-0">
-                <div className="grid grid-cols-2 gap-40 h-full items-center">
+            <div className="absolute top-5 gap-10 mb-8 flex-shrink-0">
+                <div className="grid grid-cols-3 gap-40 h-full items-center">
                     {/* Left Third */}
                     <div className="flex flex-col col-span-1 gap-2 text-left">
-                        <Typography type="h4" className="font-body text-lg font-light text-gray-700 italic ">
+                        <Typography type="h5" className="font-body text-lg font-light text-gray-700 italic ">
                         "If only i could copy this really long password to this really shady computer, we could achieve world peace. 
                         <br/>Alas! I'm going to type it manually......"
                         </Typography>
@@ -29,21 +29,45 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
 
             {/* Content Grid with Model Breaking Out */}
             <div className="flex-1 relative">
-                <div className="grid grid-cols-5 gap-8 h-full items-center">
-                    {/* Left Third */}
-                    <div className="flex flex-col col-span-2 gap-40 text-left">
-                        <Typography className="font-body text-3xl font-light text-white ">
-                        So I made something that doesn't require installing an app, and is secure enough for your most sensitive data.
+                <div className="grid grid-cols-5 grid-rows-5 gap-8 h-full">
+                    {/* Row 1 - Height 2 */}
+                    <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
+                        <Typography type="h1" className="font-header text-3xl font-light text-white">
+                        Secure passwords are annoying to type and easy to mess up.
                         </Typography>
+
+                    </div>
+                    <div className="row-span-2"></div>
+                    <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
+                        {/* <Typography className="font-body text-3xl font-light text-white">
+                        So that you can paste that 50 character password, or that long address without worrying about typos or keyloggers.
+                        </Typography> */}
                     </div>
                     
-                    <div></div>
-
-                    {/* Right Third */}
-                    <div className="flex flex-col col-span-2 gap-40 text-left">
-                        <Typography className="font-body text-3xl font-light text-white ">
-                        So that you can paste that 50 character password, or that long address without worrying about typos or keyloggers.
+                    {/* Row 2 - Height 1 */}
+                    <div className="col-span-2 row-span-1 flex flex-col gap-40 text-left">
+                        {/* <Typography className="font-body text-3xl font-light text-white">
+                        [Left Content Row 2]
+                        </Typography> */}
+                    </div>
+                    <div className="row-span-1"></div>
+                    <div className="col-span-2 row-span-1 flex flex-col gap-40 text-left">
+                        {/* <Typography className="font-body text-3xl font-light text-white">
+                        [Right Content Row 2]
+                        </Typography> */}
+                    </div>
+                    
+                    {/* Row 3 - Height 2 */}
+                    <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
+                        <Typography type="h3" className="font-header text-lg font-light text-text italic ">
+                        And installing clipboard sharing apps isn't always an option.
                         </Typography>
+                    </div>
+                    <div className="row-span-2"></div>
+                    <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
+                        {/* <Typography className="font-body text-3xl font-light text-white">
+                        [Right Content Row 3]
+                        </Typography> */}
                     </div>
                 </div>
             </div>
@@ -56,9 +80,9 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     <div></div>
                    {/* Right Third */}
                     <div className="flex flex-col col-span-1 gap-40 text-right">
-                        <Typography type="h3" className="font-header text-lg font-light text-gray-500 italic ">
+                        {/* <Typography type="h3" className="font-header text-lg font-light text-gray-500 italic ">
                         Sometimes installing clipboard apps is not an option.
-                        </Typography>
+                        </Typography> */}
                     </div>
                     
                 </div>

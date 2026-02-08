@@ -56,7 +56,8 @@ const generateRepeatingStars = (cols, rowOffset = 20) => {
                         ...square,
                         col: square.col + starCol,
                         row: square.row + rowOffset,
-                        color: colors[i]
+                        color: colors[i],
+                        opacity: 0.3
                     }))
                 );
             }

@@ -30,7 +30,7 @@ export function getGridDimensions(element, squareSize, filledSquares = []) {
 
 /**
  * GridBackground - Renders a grid overlay with selective square coloring
- * @param {Array} filledSquares - Array of objects: [{row: 0, col: 0, color: '#00A878'}, ...]
+ * @param {Array} filledSquares - Array of objects: [{row: 0, col: 0, color: '#00A878', opacity: 0.5}, ...]
  * @param {number} squareSize - Size of each grid square in pixels (default: 50)
  * @param {string} borderColor - Color of grid lines (default: rgba(255, 255, 255, 0.05))
  * @param {number} borderWidth - Width of grid lines in pixels (default: 1)
@@ -72,7 +72,7 @@ export default function GridBackground({
   const filledSquaresMap = useMemo(() => {
     const map = new Map();
     filledSquares.forEach((square) => {
-      map.set(`${square.row}-${square.col}`, square.color);
+      map.set(`${square.row}-${square.col}`, { color: square.color, opacity: square.opacity ?? 1 });
     });
     return map;
   }, [filledSquares]);
@@ -108,12 +108,13 @@ export default function GridBackground({
     for (let row = 0; row < maxRows; row++) {
       for (let col = 0; col < maxCols; col++) {
         const key = `${row}-${col}`;
-        const color = filledSquaresMap.get(key);
+        const squareData = filledSquaresMap.get(key);
         result.push({
           row,
           col,
           key,
-          color,
+          color: squareData?.color,
+          opacity: squareData?.opacity ?? 1,
           x: col * squareSize,
           y: row * squareSize
         });
@@ -154,6 +155,7 @@ export default function GridBackground({
               width={squareSize}
               height={squareSize}
               fill={square.color}
+              opacity={square.opacity}
               stroke={borderColor}
               strokeWidth={borderWidth}
             />
