@@ -7,7 +7,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
     const [mode, setMode] = useState(null); // 'login' | 'register' | 'loading'
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [credentialsExist, setCredentialsExist] = useState(false);
+    const [hasCredentials, setHasCredentials] = useState(false);
     const [hasChecked, setHasChecked] = useState(false);
 
     // Check if credentials exist on mount
@@ -15,7 +15,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
         const checkCredentials = async () => {
             try {
                 const exists = await credentialsExist();
-                setCredentialsExist(exists);
+                setHasCredentials(exists);
                 setMode(exists ? 'login' : 'register');
                 setHasChecked(true);
             } catch (e) {
@@ -130,7 +130,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                     </Typography>
                 </Button>
 
-                {credentialsExist && mode === 'register' && (
+                {hasCredentials && mode === 'register' && (
                     <Button
                         onClick={() => setMode('login')}
                         variant="outlined"
@@ -142,7 +142,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                     </Button>
                 )}
 
-                {mode === 'register' && !credentialsExist && (
+                {mode === 'register' && !hasCredentials && (
                     <Typography variant="h6" className="text-primary text-sm text-center mt-4">
                         Your device keys will be encrypted and stored locally on your browser. No one else can access them without your passkey.
                     </Typography>

@@ -82,17 +82,31 @@ export const ECDHProvider = ({ children }) => {
      * @throws {Error} If key format is not valid uncompressed P-256 format
      */
     const compressKey = async (pkey) => {
-        const rawKey = new Uint8Array(await crypto.subtle.exportKey("raw", pkey));
-        if (rawKey[0] !== 0x04 || rawKey.length !== 65) {
-            throw new Error("Unexpected raw public key format");
+        try {
+            const rawKey = new Uint8Array(await crypto.subtle.exportKey("raw", pkey));
+            console.log("[ECDHContext] Compressing key, raw length:", rawKey.length);
+            
+            if (rawKey[0] !== 0x04 || rawKey.length !== 65) {
+                throw new Error(`Unexpected raw public key format: first byte ${rawKey[0].toString(16)}, length ${rawKey.length}`);
+            }
+            const x = rawKey.slice(1, 33);
+            const y = rawKey.slice(33, 65);
+            
+            if (x.length !== 32 || y.length !== 32) {
+                throw new Error(`Invalid key component lengths: x=${x.length}, y=${y.length}`);
+            }
+            
+            const prefix = y[y.length - 1] % 2 === 0 ? 0x02 : 0x03;
+            const compressed = new Uint8Array(33);
+            compressed[0] = prefix;
+            compressed.set(x, 1);
+            
+            console.log("[ECDHContext] Compressed key successfully");
+            return compressed;
+        } catch (error) {
+            console.error("[ECDHContext] Error compressing key:", error);
+            throw error;
         }
-        const x = rawKey.slice(1, 33);
-        const y = rawKey.slice(33, 65);
-        const prefix = y[y.length - 1] % 2 === 0 ? 0x02 : 0x03;
-        const compressed = new Uint8Array(33);
-        compressed[0] = prefix;
-        compressed.set(x, 1);
-        return compressed;
     };
 
     /**
@@ -102,16 +116,29 @@ export const ECDHProvider = ({ children }) => {
      * @returns {ArrayBuffer} Uncompressed key in raw format (65 bytes): [0x04, ...x, ...y]
      */
     const decompressKey = (compressedBytes) => {
-        const key = ec.keyFromPublic(compressedBytes, "array");
-        const pubPoint = key.getPublic();
-        const x = pubPoint.getX().toArray("be", 32);
-        const y = pubPoint.getY().toArray("be", 32);
+        try {
+            console.log("[ECDHContext] Decompressing key, input length:", compressedBytes.length);
+            const key = ec.keyFromPublic(compressedBytes, "array");
+            const pubPoint = key.getPublic();
+            const x = pubPoint.getX().toArray("be", 32);
+            const y = pubPoint.getY().toArray("be", 32);
 
-        const uncompressed = new Uint8Array(65);
-        uncompressed[0] = 0x04;
-        uncompressed.set(x, 1);
-        uncompressed.set(y, 33);
-        return uncompressed.buffer;
+            console.log("[ECDHContext] Decompressed x length:", x.length, "y length:", y.length);
+
+            if (x.length !== 32) throw new Error(`X coordinate should be 32 bytes, got ${x.length}`);
+            if (y.length !== 32) throw new Error(`Y coordinate should be 32 bytes, got ${y.length}`);
+
+            const uncompressed = new Uint8Array(65);
+            uncompressed[0] = 0x04;
+            uncompressed.set(x, 1);
+            uncompressed.set(y, 33);
+            
+            console.log("[ECDHContext] Decompressed key successfully, output length:", uncompressed.length);
+            return uncompressed.buffer;
+        } catch (error) {
+            console.error("[ECDHContext] Error decompressing key:", error);
+            throw error;
+        }
     };
 
     /**
@@ -262,16 +289,30 @@ export const ECDHProvider = ({ children }) => {
      * @returns {Promise<string>} Decrypted plaintext as UTF-8 string
      */
     const decryptText = async (ciphertextBase64) => {
-        const ciphertextArray = new Uint8Array(base64ToArrayBuffer(ciphertextBase64));
-        const iv = ciphertextArray.slice(0, 12);
-        const data = ciphertextArray.slice(12);
-        
-        const decrypted = await crypto.subtle.decrypt(
-            { name: "AES-GCM", iv }, 
-            aesKey.current, data
-        );
+        try {
+            const ciphertextArray = new Uint8Array(base64ToArrayBuffer(ciphertextBase64));
+            console.log("[ECDHContext] Decrypting, ciphertext length:", ciphertextArray.length);
+            
+            if (ciphertextArray.length < 12) {
+                throw new Error(`Ciphertext too short: need at least 12 bytes for IV, got ${ciphertextArray.length}`);
+            }
+            
+            const iv = ciphertextArray.slice(0, 12);
+            const data = ciphertextArray.slice(12);
+            console.log("[ECDHContext] IV length:", iv.length, "data length:", data.length);
+            
+            const decrypted = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv }, 
+                aesKey.current, 
+                data
+            );
 
-        return new TextDecoder().decode(decrypted);
+            console.log("[ECDHContext] Decrypted successfully");
+            return new TextDecoder().decode(decrypted);
+        } catch (error) {
+            console.error("[ECDHContext] Decryption error:", error);
+            throw error;
+        }
     };
 
     /**
@@ -326,36 +367,52 @@ export const ECDHProvider = ({ children }) => {
      * @throws {Error} If peer key is not 33 bytes, or if any cryptographic operation fails
      */
     const processPeerKeyAndGenerateSharedSecret = async (peerKeyBase64, deviceMacAddress) => {
-        // Decompress and import peer public key
-        const compressedBytes = new Uint8Array(base64ToArrayBuffer(peerKeyBase64));
-        
-        if (compressedBytes.length !== 33) {
-            throw new Error('Compressed public key must be 33 bytes');
+        try {
+            console.log("[ECDHContext] Starting key exchange for device:", deviceMacAddress);
+            
+            // Decompress and import peer public key
+            const compressedBytes = new Uint8Array(base64ToArrayBuffer(peerKeyBase64));
+            console.log("[ECDHContext] Peer key decoded, length:", compressedBytes.length);
+            
+            if (compressedBytes.length !== 33) {
+                throw new Error(`Compressed public key must be 33 bytes, got ${compressedBytes.length}`);
+            }
+
+            // Decompress the peer's compressed public key to raw uncompressed format
+            // Then import it as a CryptoKey object for ECDH operations
+            const rawUncompressed = decompressKey(compressedBytes);
+            console.log("[ECDHContext] Decompressed peer key");
+            
+            const peerPublicKeyObject = await importPeerPublicKey(rawUncompressed);
+            console.log("[ECDHContext] Imported peer public key as CryptoKey");
+
+            // Save the peer public key
+            const rawPeerPublicKey = await crypto.subtle.exportKey('raw', peerPublicKeyObject);
+            await savePeerPublicKey(rawPeerPublicKey, deviceMacAddress);
+            console.log("[ECDHContext] Saved peer public key");
+
+            // Generate our key pair
+            await generateECDHKeyPair();
+            console.log("[ECDHContext] Generated self key pair");
+
+            // Export our public key in raw uncompressed format and convert to base64 for sending to peer
+            const rawSelfPublicKey = await crypto.subtle.exportKey('raw', keyPair.current.publicKey);
+            const b64SelfPublic = arrayBufferToBase64(rawSelfPublicKey);
+            console.log("[ECDHContext] Exported self public key, base64 length:", b64SelfPublic.length);
+
+            // Derive shared secret using peer's public key
+            const sharedSecret = await deriveSharedSecret(peerPublicKeyObject);
+            console.log("[ECDHContext] Derived shared secret");
+
+            // Save all keys (self public key and shared secret)
+            await saveKeys(deviceMacAddress, sharedSecret);
+            console.log("[ECDHContext] Saved all keys");
+
+            return b64SelfPublic;
+        } catch (error) {
+            console.error("[ECDHContext] Key exchange failed:", error);
+            throw error;
         }
-
-        // Decompress the peer's compressed public key to raw uncompressed format
-        // Then import it as a CryptoKey object for ECDH operations
-        const rawUncompressed = decompressKey(compressedBytes);
-        const peerPublicKeyObject = await importPeerPublicKey(rawUncompressed);
-
-        // Save the peer public key
-        const rawPeerPublicKey = await crypto.subtle.exportKey('raw', peerPublicKeyObject);
-        await savePeerPublicKey(rawPeerPublicKey, deviceMacAddress);
-
-        // Generate our key pair
-        await generateECDHKeyPair();
-
-        // Export our public key in raw uncompressed format and convert to base64 for sending to peer
-        const rawSelfPublicKey = await crypto.subtle.exportKey('raw', keyPair.current.publicKey);
-        const b64SelfPublic = arrayBufferToBase64(rawSelfPublicKey);
-
-        // Derive shared secret using peer's public key
-        const sharedSecret = await deriveSharedSecret(peerPublicKeyObject);
-
-        // Save all keys (self public key and shared secret)
-        await saveKeys(deviceMacAddress, sharedSecret);
-
-        return b64SelfPublic;
     };
 
     // Context Provider return

@@ -99,6 +99,17 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
+// Helper: Convert URL-safe Base64 to ArrayBuffer
+// Handles base64url encoding (used by WebAuthn) with - and _ characters
+function base64urlToArrayBuffer(base64url) {
+    // Convert URL-safe base64 to standard base64
+    const standardBase64 = base64url
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+    
+    return base64ToArrayBuffer(standardBase64);
+}
+
 // Derive encryption key from WebAuthn assertion
 async function deriveKeyFromWebAuthn(assertionData) {
     const authenticatorData = assertionData.authenticatorData;
@@ -128,6 +139,40 @@ async function deriveKeyFromWebAuthn(assertionData) {
     );
 }
 
+// Derive a stable encryption key from credential ID
+// This produces the same key every time for the same credential, unlike assertion data which changes on each auth
+async function deriveKeyFromCredentialId(credentialIdBase64) {
+    console.log("[Storage] Deriving key from credential ID");
+    
+    // Convert credential ID from URL-safe base64url to bytes
+    const credentialIdBytes = new Uint8Array(base64urlToArrayBuffer(credentialIdBase64));
+    
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        credentialIdBytes,
+        "HKDF",
+        false,
+        ["deriveKey"]
+    );
+
+    return await crypto.subtle.deriveKey(
+        {
+            name: "HKDF",
+            hash: "SHA-256",
+            salt: new TextEncoder().encode("toothpaste-user"),
+            info: new TextEncoder().encode("toothpaste-encryption-v1"),
+        },
+        keyMaterial,
+        {
+            name: "AES-GCM",
+            length: 256,
+        },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
+
+
 // Check if WebAuthn credentials exist without opening a transaction
 export async function credentialsExist() {
     try {
@@ -138,8 +183,14 @@ export async function credentialsExist() {
         
         const credentials = await new Promise((resolve) => {
             const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => resolve([]);
+            request.onsuccess = () => {
+                console.log("[Storage] getAll() returned:", JSON.stringify(request.result));
+                resolve(request.result);
+            };
+            request.onerror = () => {
+                console.error("[Storage] getAll() error:", request.error);
+                resolve([]);
+            };
         });
         
         const exists = credentials.length > 0;
@@ -190,7 +241,7 @@ export async function registerWebAuthnCredential(displayName) {
             console.warn("[Storage] Credential creation was cancelled by user");
             throw new Error("Credential creation was cancelled");
         }
-        console.log("[Storage] WebAuthn credential created successfully", { id: credential.id.byteLength });
+        console.log("[Storage] WebAuthn credential created successfully", { id: credential.id, idType: typeof credential.id, idByteLength: credential.id?.byteLength || credential.id?.length });
 
         // Store the credential in IndexedDB for future authentication
         console.log("[Storage] Opening database to store credential...");
@@ -199,11 +250,32 @@ export async function registerWebAuthnCredential(displayName) {
         const store = tx.objectStore(CREDENTIALS_STORE);
         console.log("[Storage] Transaction created, storing credential...");
 
+        // Convert credential.id to base64 - handle multiple formats
+        // Some browsers return it as a base64 string, others as ArrayBuffer/Uint8Array
+        let credentialIdAsBase64 = '';
+        
+        if (typeof credential.id === 'string') {
+            // Already a base64 string
+            credentialIdAsBase64 = credential.id;
+            console.log("[Storage] credential.id is already a base64 string");
+        } else if (credential.id instanceof ArrayBuffer) {
+            // Raw ArrayBuffer
+            credentialIdAsBase64 = arrayBufferToBase64(credential.id);
+            console.log("[Storage] credential.id was ArrayBuffer, converted to base64");
+        } else if (credential.id instanceof Uint8Array) {
+            // Uint8Array
+            credentialIdAsBase64 = arrayBufferToBase64(credential.id.buffer);
+            console.log("[Storage] credential.id was Uint8Array, converted to base64");
+        } else {
+            console.warn("[Storage] credential.id has unexpected type:", typeof credential.id);
+            throw new Error("Unable to handle credential.id format");
+        }
+        
+        console.log("[Storage] Final credential.id for storage:", { base64Length: credentialIdAsBase64.length, base64Sample: credentialIdAsBase64.substring(0, 20) });
+
         await new Promise((resolve, reject) => {
             const request = store.put({
-                id: arrayBufferToBase64(credential.id),
-                publicKey: arrayBufferToBase64(credential.response.getPublicKey()),
-                credentialId: credential.id,
+                id: credentialIdAsBase64,
                 displayName: username,
             });
             request.onsuccess = () => {
@@ -217,6 +289,13 @@ export async function registerWebAuthnCredential(displayName) {
         });
 
         console.log("[Storage] WebAuthn registration completed successfully");
+        
+        // Derive and set the session encryption key from the new credential ID
+        // This makes it available immediately for encrypting keys during the initial key exchange
+        console.log("[Storage] Deriving session key from registered credential...");
+        sessionEncryptionKey = await deriveKeyFromCredentialId(credentialIdAsBase64);
+        console.log("[Storage] Session encryption key established from credential");
+        
         return true;
     } catch (error) {
         console.error("[Storage] WebAuthn registration failed:", error);
@@ -236,7 +315,10 @@ export async function authenticateWithWebAuthn() {
         // Get all registered credentials
         const credentials = await new Promise((resolve, reject) => {
             const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
+            request.onsuccess = () => {
+                console.log("[Storage] Retrieved credentials from store:", JSON.stringify(request.result));
+                resolve(request.result);
+            };
             request.onerror = () => reject(request.error);
         });
 
@@ -247,7 +329,7 @@ export async function authenticateWithWebAuthn() {
         console.log("[Storage] Found credentials:", { count: credentials.length });
 
         const allowCredentials = credentials.map((cred) => ({
-            id: new Uint8Array(base64ToArrayBuffer(cred.id)),
+            id: new Uint8Array(base64urlToArrayBuffer(cred.id)),
             type: "public-key",
         }));
 
@@ -266,10 +348,46 @@ export async function authenticateWithWebAuthn() {
         }
         console.log("[Storage] WebAuthn assertion received successfully");
 
-        // Derive encryption key from the assertion
-        console.log("[Storage] Deriving encryption key from assertion...");
-        sessionEncryptionKey = await deriveKeyFromWebAuthn(assertion.response);
-        console.log("[Storage] Session encryption key derived successfully");
+        // Find the credential that was used for this assertion
+        // Handle assertion.id in the same way we handle credential.id during registration
+        let credentialId = '';
+        
+        if (typeof assertion.id === 'string') {
+            // Already a base64 string
+            credentialId = assertion.id;
+            console.log("[Storage] assertion.id is already a base64 string");
+        } else if (assertion.id instanceof ArrayBuffer) {
+            // Convert ArrayBuffer to standard base64
+            credentialId = arrayBufferToBase64(assertion.id);
+            console.log("[Storage] assertion.id was ArrayBuffer, converted to base64");
+        } else if (assertion.id instanceof Uint8Array) {
+            // Convert Uint8Array to standard base64
+            credentialId = arrayBufferToBase64(assertion.id.buffer);
+            console.log("[Storage] assertion.id was Uint8Array, converted to base64");
+        } else {
+            console.warn("[Storage] assertion.id has unexpected type:", typeof assertion.id);
+            throw new Error("Unable to handle assertion.id format");
+        }
+        
+        console.log("[Storage] Assertion credential ID:", { base64Length: credentialId.length, base64Sample: credentialId.substring(0, 20) });
+        console.log("[Storage] Looking for credential in stored credentials:", { storedIds: credentials.map(c => c.id) });
+        
+        const usedCredential = credentials.find((cred) => cred.id === credentialId);
+        
+        if (!usedCredential) {
+            console.warn("[Storage] Could not find credential that was used for assertion");
+            console.warn("[Storage] Assertion credential ID:", credentialId);
+            console.warn("[Storage] Stored credential IDs:", credentials.map(c => c.id));
+            throw new Error("Credential not found: ID does not match any registered credential");
+        }
+        
+        console.log("[Storage] Found matching credential, ID:", credentialId);
+
+        // Derive encryption key from the CREDENTIAL ID (stable across sessions) rather than assertion data
+        // This ensures that every authentication with the same passkey produces the same session key
+        console.log("[Storage] Deriving encryption key from credential ID...");
+        sessionEncryptionKey = await deriveKeyFromCredentialId(usedCredential.id);
+        console.log("[Storage] Session encryption key derived successfully from credential ID");
         return true;
     } catch (error) {
         console.error("[Storage] WebAuthn authentication failed:", error);
@@ -306,7 +424,7 @@ async function encryptValue(value) {
     );
 
     // Combine IV + encrypted data, then base64 encode
-    const result = new Uint8Array(iv.length + encrypted.length);
+    const result = new Uint8Array(iv.length + encrypted.byteLength);
     result.set(iv);
     result.set(new Uint8Array(encrypted), iv.length);
 
@@ -319,19 +437,30 @@ async function decryptValue(encryptedBase64) {
         throw new Error("Not authenticated. Please authenticate with WebAuthn first.");
     }
 
-    const encryptedArray = new Uint8Array(base64ToArrayBuffer(encryptedBase64));
+    try {
+        const encryptedArray = new Uint8Array(base64ToArrayBuffer(encryptedBase64));
+        console.log("[Storage] Decrypting value, total length:", encryptedArray.length);
 
-    const iv = encryptedArray.slice(0, 12);
-    const encrypted = encryptedArray.slice(12);
+        if (encryptedArray.length < 12) {
+            throw new Error(`Encrypted data too short: need at least 12 bytes for IV+data, got ${encryptedArray.length}`);
+        }
 
-    const decrypted = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv },
-        sessionEncryptionKey,
-        encrypted
-    );
+        const iv = encryptedArray.slice(0, 12);
+        const encrypted = encryptedArray.slice(12);
+        console.log("[Storage] IV length:", iv.length, "encrypted data length:", encrypted.length);
 
-    const decoder = new TextDecoder();
-    return JSON.parse(decoder.decode(decrypted));
+        const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv },
+            sessionEncryptionKey,
+            encrypted
+        );
+
+        const decoder = new TextDecoder();
+        return JSON.parse(decoder.decode(decrypted));
+    } catch (error) {
+        console.error("[Storage] Decryption failed:", error.message);
+        throw error;
+    }
 }
 
 // Save base64 shared secret under a given key in the store for a specific client
@@ -383,10 +512,15 @@ export async function loadBase64(clientID, key) {
             }
 
             try {
+                console.log("[Storage] Loading base64 key:", key, "for clientID:", clientID);
                 const decryptedValue = await decryptValue(encryptedData);
+                console.log("[Storage] Successfully decrypted key:", key);
                 resolve(decryptedValue);
             } catch (error) {
-                reject(error);
+                console.error("[Storage] Failed to decrypt key", key, ":", error.message);
+                console.warn("[Storage] Data may be corrupted from previous encryption bug. Returning null.");
+                // Return null instead of rejecting - data is corrupted from the encryption fix
+                resolve(null);
             }
         };
         req.onerror = () => reject(req.error);
