@@ -35,6 +35,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
         }
     }, [hasChecked, onAuthSuccess]);
 
+    // Create a new passkey
     const handleRegister = async () => {
         try {
             setError(null);
@@ -50,15 +51,12 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                 return;
             }
 
-            console.log("[AuthenticationOverlay] Registering WebAuthn credential...");
+            // Make the call to the service function to handle WebAuthn registration
             await registerWebAuthnCredential(displayName || "ToothPaste User");
             
-            console.log("[AuthenticationOverlay] Registration complete, authenticating...");
-            // After registration, authenticate to establish session
-            await authenticateWithWebAuthn();
-            console.log("[AuthenticationOverlay] Authentication complete");
-            setIsLoading(false);
-            onAuthSuccess();
+            // TODO: After registration, automatically authenticate to establish session
+
+            handleLogin(); // Call the login function to authenticate immediately after registration
         } catch (e) {
             console.error("[AuthenticationOverlay] Registration error:", e);
             setError('Registration failed: ' + e.message);
@@ -66,12 +64,13 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
         }
     };
 
+    // Authenticate with existing passkey
     const handleLogin = async () => {
         try {
             setError(null);
             setIsLoading(true);
-            console.log("[AuthenticationOverlay] Starting authentication...");
 
+            // Call the service function to handle WebAuthn authentication
             await authenticateWithWebAuthn();
             console.log("[AuthenticationOverlay] Authentication successful");
             setIsLoading(false);
