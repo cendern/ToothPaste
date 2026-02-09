@@ -106,8 +106,9 @@ export default function About() {
     const maxSlides = 4;
     const scrollThreshold = useRef(0);
     const scrollSensitivity = 1000; // Adjust this value to change how many clicks required
-    const touchSensitivity = 300; // Pixels of swipe to trigger slide change
-    const lastTouchYRef = useRef(0);
+    const touchSensitivity = 50; // Pixels of swipe to trigger slide change
+    const pointerStartYRef = useRef(0);
+    const isPointerDownRef = useRef(false);
     const lastSlideChangeTimeRef = useRef(0);
     const slideChangeCooldownRef = useRef(500); // Cooldown in milliseconds
 
@@ -165,10 +166,10 @@ export default function About() {
     })();
 
     useEffect(() => {
-        // Common handler for both wheel and touch scroll input
-        const handleScrollInput = (delta, threshold) => {
-            // Accumulate scroll delta for model rotation
-            scrollDeltaRef.current += delta;
+        // Common handler for scroll input (pointer and wheel)
+        const handleScrollInput = (delta, threshold, modelMultiplier = 1) => {
+            // Accumulate to model rotation with optional multiplier
+            scrollDeltaRef.current += delta * modelMultiplier;
 
             // Check if cooldown has expired
             const now = Date.now();
@@ -191,30 +192,44 @@ export default function About() {
             }
         };
 
+        // Unified pointer events handler (touch, mouse, pen)
+        const handlePointerDown = (event) => {
+            pointerStartYRef.current = event.clientY;
+            isPointerDownRef.current = true;
+        };
+
+        const handlePointerMove = (event) => {
+            if (isPointerDownRef.current && event.isPrimary) {
+                const currentY = event.clientY;
+                const pointerDelta = pointerStartYRef.current - currentY;
+                // Pointer events with 0.5x model rotation multiplier
+                handleScrollInput(pointerDelta, touchSensitivity, 100);
+                pointerStartYRef.current = currentY;
+            }
+        };
+
+        const handlePointerUp = () => {
+            isPointerDownRef.current = false;
+        };
+
         const handleWheel = (event) => {
             event.preventDefault();
-            handleScrollInput(event.deltaY, scrollSensitivity);
-        };
-
-        const handleTouchStart = (event) => {
-            lastTouchYRef.current = event.touches[0].clientY;
-        };
-
-        const handleTouchMove = (event) => {
-            const currentTouchY = event.touches[0].clientY;
-            const touchDelta = lastTouchYRef.current - currentTouchY;
-            handleScrollInput(touchDelta, touchSensitivity);
-            lastTouchYRef.current = currentTouchY;
+            // Wheel events with 1x model rotation multiplier
+            handleScrollInput(event.deltaY, scrollSensitivity, 1);
         };
 
         window.addEventListener('wheel', handleWheel, { passive: false });
-        window.addEventListener('touchstart', handleTouchStart, { passive: true });
-        window.addEventListener('touchmove', handleTouchMove, { passive: true });
+        window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+        window.addEventListener('pointermove', handlePointerMove, { passive: true });
+        window.addEventListener('pointerup', handlePointerUp, { passive: true });
+        window.addEventListener('pointercancel', handlePointerUp, { passive: true });
         
         return () => {
             window.removeEventListener('wheel', handleWheel);
-            window.removeEventListener('touchstart', handleTouchStart);
-            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('pointerdown', handlePointerDown);
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+            window.removeEventListener('pointercancel', handlePointerUp);
         };
     }, []);
 
