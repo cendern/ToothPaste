@@ -106,6 +106,10 @@ export default function About() {
     const maxSlides = 4;
     const scrollThreshold = useRef(0);
     const scrollSensitivity = 1000; // Adjust this value to change how many clicks required
+    const touchSensitivity = 300; // Pixels of swipe to trigger slide change
+    const lastTouchYRef = useRef(0);
+    const lastSlideChangeTimeRef = useRef(0);
+    const slideChangeCooldownRef = useRef(500); // Cooldown in milliseconds
 
     // Define filled squares for each section and screen size
     const getSquaresForScreenSize = () => {
@@ -164,25 +168,76 @@ export default function About() {
         const handleWheel = (event) => {
             event.preventDefault();
 
-            // Accumulate scroll delta
-            scrollThreshold.current += event.deltaY;
+            // Accumulate scroll delta for model rotation
+            scrollDeltaRef.current += event.deltaY;
 
-            // Check if accumulated scroll exceeds threshold
-            if (Math.abs(scrollThreshold.current) >= scrollSensitivity) {
-                if (scrollThreshold.current > 0) {
-                    setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
-                } else {
-                    setCurrentSlide(prev => Math.max(prev - 1, 0));
+            // Check if cooldown has expired
+            const now = Date.now();
+            const isOnCooldown = now - lastSlideChangeTimeRef.current < slideChangeCooldownRef.current;
+
+            if (!isOnCooldown) {
+                // Accumulate scroll delta for slide navigation
+                scrollThreshold.current += event.deltaY;
+
+                // Check if accumulated scroll exceeds threshold
+                if (Math.abs(scrollThreshold.current) >= scrollSensitivity) {
+                    if (scrollThreshold.current > 0) {
+                        setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
+                    } else {
+                        setCurrentSlide(prev => Math.max(prev - 1, 0));
+                    }
+                    scrollThreshold.current = 0;
+                    lastSlideChangeTimeRef.current = now;
                 }
-                scrollThreshold.current = 0;
+            }
+        };
+
+        const handleTouchStart = (event) => {
+            lastTouchYRef.current = event.touches[0].clientY;
+        };
+
+        const handleTouchMove = (event) => {
+            const currentTouchY = event.touches[0].clientY;
+            const touchDelta = lastTouchYRef.current - currentTouchY; // Negative = swipe down, Positive = swipe up
+            
+            // Accumulate touch delta for model rotation
+            scrollDeltaRef.current += touchDelta;
+
+            // Check if cooldown has expired
+            const now = Date.now();
+            const isOnCooldown = now - lastSlideChangeTimeRef.current < slideChangeCooldownRef.current;
+
+            if (!isOnCooldown) {
+                // Accumulate touch delta for slide navigation
+                scrollThreshold.current += touchDelta;
+
+                // Check if accumulated touch exceeds threshold
+                if (Math.abs(scrollThreshold.current) >= touchSensitivity) {
+                    if (scrollThreshold.current > 0) {
+                        // Swiped up (positive delta)
+                        setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
+                    } else {
+                        // Swiped down (negative delta)
+                        setCurrentSlide(prev => Math.max(prev - 1, 0));
+                    }
+                    scrollThreshold.current = 0;
+                    lastSlideChangeTimeRef.current = now;
+                }
             }
 
-            // Accumulate scroll delta for model rotation - reset after each frame
-            scrollDeltaRef.current += event.deltaY;
+            // Update for continuous tracking
+            lastTouchYRef.current = currentTouchY;
         };
 
         window.addEventListener('wheel', handleWheel, { passive: false });
-        return () => window.removeEventListener('wheel', handleWheel);
+        window.addEventListener('touchstart', handleTouchStart, { passive: true });
+        window.addEventListener('touchmove', handleTouchMove, { passive: true });
+        
+        return () => {
+            window.removeEventListener('wheel', handleWheel);
+            window.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchmove', handleTouchMove);
+        };
     }, []);
 
     // Calculate which section should be visible based on current slide
