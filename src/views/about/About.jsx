@@ -165,11 +165,10 @@ export default function About() {
     })();
 
     useEffect(() => {
-        const handleWheel = (event) => {
-            event.preventDefault();
-
+        // Common handler for both wheel and touch scroll input
+        const handleScrollInput = (delta, threshold) => {
             // Accumulate scroll delta for model rotation
-            scrollDeltaRef.current += event.deltaY;
+            scrollDeltaRef.current += delta;
 
             // Check if cooldown has expired
             const now = Date.now();
@@ -177,10 +176,10 @@ export default function About() {
 
             if (!isOnCooldown) {
                 // Accumulate scroll delta for slide navigation
-                scrollThreshold.current += event.deltaY;
+                scrollThreshold.current += delta;
 
                 // Check if accumulated scroll exceeds threshold
-                if (Math.abs(scrollThreshold.current) >= scrollSensitivity) {
+                if (Math.abs(scrollThreshold.current) >= threshold) {
                     if (scrollThreshold.current > 0) {
                         setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
                     } else {
@@ -190,6 +189,11 @@ export default function About() {
                     lastSlideChangeTimeRef.current = now;
                 }
             }
+        };
+
+        const handleWheel = (event) => {
+            event.preventDefault();
+            handleScrollInput(event.deltaY, scrollSensitivity);
         };
 
         const handleTouchStart = (event) => {
@@ -198,34 +202,8 @@ export default function About() {
 
         const handleTouchMove = (event) => {
             const currentTouchY = event.touches[0].clientY;
-            const touchDelta = lastTouchYRef.current - currentTouchY; // Negative = swipe down, Positive = swipe up
-            
-            // Accumulate touch delta for model rotation
-            scrollDeltaRef.current += touchDelta;
-
-            // Check if cooldown has expired
-            const now = Date.now();
-            const isOnCooldown = now - lastSlideChangeTimeRef.current < slideChangeCooldownRef.current;
-
-            if (!isOnCooldown) {
-                // Accumulate touch delta for slide navigation
-                scrollThreshold.current += touchDelta;
-
-                // Check if accumulated touch exceeds threshold
-                if (Math.abs(scrollThreshold.current) >= touchSensitivity) {
-                    if (scrollThreshold.current > 0) {
-                        // Swiped up (positive delta)
-                        setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
-                    } else {
-                        // Swiped down (negative delta)
-                        setCurrentSlide(prev => Math.max(prev - 1, 0));
-                    }
-                    scrollThreshold.current = 0;
-                    lastSlideChangeTimeRef.current = now;
-                }
-            }
-
-            // Update for continuous tracking
+            const touchDelta = lastTouchYRef.current - currentTouchY;
+            handleScrollInput(touchDelta, touchSensitivity);
             lastTouchYRef.current = currentTouchY;
         };
 
