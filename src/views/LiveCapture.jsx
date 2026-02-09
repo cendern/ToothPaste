@@ -136,6 +136,13 @@ export default function LiveCapture() {
         mouseHandler.sendMouseScroll(reportDelta, sendEncrypted);
     }
 
+    // Handle scroll from touch pinch gesture
+    function onTouchScroll(scrollAmount) {
+        if (!captureMouse) return;
+        const reportDelta = scrollAmount * 0.01; // Scale touch scroll amount to report delta
+        mouseHandler.sendMouseScroll(reportDelta, sendEncrypted);
+    }
+
     // Touch event handlers for mobile touchpad
     function onTouchStart(e) {
         const touch = e.touches[0];
@@ -327,6 +334,7 @@ export default function LiveCapture() {
                 onTouchEnd={onTouchEnd}
                 onSendMouseClick={sendMouseReport}
                 onSendKeyboardShortcut={sendKeyboardShortcut}
+                onSendScroll={onTouchScroll}
                 leftButtonColumn={<LeftButtonColumn status={status} sendEncrypted={sendEncrypted} />}
                 rightButtonColumn={<RightButtonColumn
                     captureMouse={captureMouse}
