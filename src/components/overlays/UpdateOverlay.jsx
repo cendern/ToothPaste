@@ -78,8 +78,8 @@ export default function UpdateController({ onChangeOverlay }) {
       setProgress(0);
 
       await esploaderRef.current.writeFlash({
-        fileArray: [{ data: binaryStr, address: 0x10000 }],
-        flashSize: "16MB",
+        fileArray: [{ data: binaryStr, address: 0x00000 }],
+        flashSize: "8MB",
         eraseAll: false,
         compress: true,
         reportProgress: (_, written, total) =>

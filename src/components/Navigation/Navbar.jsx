@@ -351,8 +351,8 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                         className={`xl:hidden flex items-center space-x-2 px-3 py-2 rounded hover:bg-hover border border-2 ${borderClass} focus:outline-none`}
                         aria-label="Toggle menu"
                     >
-                        <div className="flex flex-col flex-1 min-w-0">
-                            <Typography variant="h6" color="text" className="text-sm font-header font-medium normal-case truncate">
+                        <div className="flex flex-col flex-1 min-w-0 p-1">
+                            <Typography variant="h6" color="text" className="text-lg font-header font-medium normal-case truncate">
                                 {device?.name || "Not Connected"}
                             </Typography>
                         </div>

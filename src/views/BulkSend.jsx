@@ -2,7 +2,7 @@ import React, { useState, useContext, useRef, useEffect, useCallback } from 'rea
 import { Button, Typography } from "@material-tailwind/react";
 import { Textarea } from "@material-tailwind/react";
 import { BLEContext } from '../context/BLEContext';
-import { HomeIcon, PaperAirplaneIcon, ClipboardIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, PaperAirplaneIcon, ClipboardIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { keyboardHandler } from '../services/inputHandlers/keyboardHandler';
 
 
@@ -71,6 +71,12 @@ export default function BulkSend() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleShortcut}
                 />
+                    <div className="flex mt-4 text-text">
+                    <InformationCircleIcon className="h-4 w-4 mr-2 stroke-2" />
+                    <Typography type="small">
+                    Press Ctrl+Alt+Enter to send the text, or click the button below. 
+                    </Typography>
+                </div>
                 <Button
                     onClick={sendString}
                     disabled={status !== 1}
