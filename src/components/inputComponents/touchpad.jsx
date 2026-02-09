@@ -56,7 +56,7 @@ export default function Touchpad({
                 {rightButtonColumn}
             </div>
 
-            <div className="flex items-center justify-center opacity-70 pointer-events-none select-none text-text p-4 whitespace-pre-wrap absolute left-0 right-0 top-1/2 -translate-y-1/2 w-full z-10 text-center gap-1">
+            <div className="flex items-center justify-center opacity-70 pointer-events-none select-none text-text p-4 absolute left-0 right-0 top-1/2 -translate-y-1/2 w-full z-10 text-center gap-1">
                 <CursorArrowRaysIcon className="h-10 w-10 opacity-70 text-text" />
                 <Typography
                     type="h6"

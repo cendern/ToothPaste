@@ -38,7 +38,7 @@ export function KeyboardShortcutButton({ label, keySequence, wasSwipe, onSendKey
 
     return (
         <button
-            className={`h-14 flex justify-center items-center flex-1 transition-colors cursor-pointer select-none ${
+            className={`min-h-14 flex justify-center items-center flex-1 min-w-0 transition-colors cursor-pointer select-none overflow-hidden ${
                 isPressed ? "bg-white text-shelf" : "bg-background text-text"
             }`}
             onTouchStart={handleTouchStart}
@@ -46,7 +46,7 @@ export function KeyboardShortcutButton({ label, keySequence, wasSwipe, onSendKey
             onTouchEnd={handlePress}
             onMouseDown={handlePress}
         >
-            <span className="text-sm font-medium text-center px-2 line-clamp-2">{label}</span>
+            <span className="text-sm font-medium text-center px-2 line-clamp-2 break-words">{label}</span>
         </button>
     );
 }
@@ -121,13 +121,13 @@ export function KeyboardShortcutCarousel({ shortcuts, onSendKeyboardShortcut }) 
             style={{ touchAction: 'pan-y' }}
         >
             {/* Slide container with animation */}
-            <div className="flex h-14 overflow-hidden w-full">
+            <div className="flex min-h-14 w-full">
                 <div
                     className="flex transition-transform duration-300 ease-out w-full"
                     style={{ transform: `translateX(calc(-${currentSlide} * 100%))` }}
                 >
                     {shortcuts.map((slide, slideIdx) => (
-                        <div key={slideIdx} className="flex flex-shrink-0 w-full">
+                        <div key={slideIdx} className="flex flex-shrink-0 w-full overflow-hidden">
                             {slide.map((btn, btnIdx) => (
                                 <React.Fragment key={btnIdx}>
                                     <KeyboardShortcutButton 
