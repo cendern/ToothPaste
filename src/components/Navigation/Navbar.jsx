@@ -351,10 +351,10 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <button
                         id="navbar-toggle"
                         onClick={() => setIsOpen(!isOpen)}
-                        className={`xl:hidden flex items-center space-x-2 px-3 py-2 rounded hover:bg-hover border border-2 ${borderClass} focus:outline-none`}
+                        className={`xl:hidden flex items-center space-x-2 px-3 py-2 rounded hover:bg-hover border border-2 ${borderClass} focus:outline-none max-w-[200px] overflow-hidden`}
                         aria-label="Toggle menu"
                     >
-                        <div className="flex flex-col flex-1 min-w-0 p-1">
+                        <div className="flex flex-col min-w-0 flex-1 p-1">
                             <Typography variant="h6" color="text" className="text-md font-header font-medium normal-case truncate">
                                 {device?.name || "Not Connected"}
                             </Typography>
