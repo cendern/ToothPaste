@@ -134,9 +134,9 @@ export default function About() {
         } else {
             return {
                 hero: [
-                    { row: 20, col: 44, color: appColors.secondary },
-                    { row: 20, col: 46, color: appColors.orange },
-                    { row: 20, col: 48, color: appColors.primary },
+                    { row: 11, col: 31, color: appColors.secondary },
+                    { row: 11, col: 33, color: appColors.orange },
+                    { row: 11, col: 35, color: appColors.primary },
 
                 ],
                 why: generateRepeatingStars(gridDimensions.cols),
