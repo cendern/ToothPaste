@@ -109,7 +109,7 @@ export default function About() {
     const pointerStartYRef = useRef(0);
     const isPointerDownRef = useRef(false);
     const lastSlideChangeTimeRef = useRef(0);
-    const slideChangeCooldownRef = useRef(300); // Cooldown in milliseconds
+    const slideChangeCooldownRef = useRef(500); // Cooldown in milliseconds
 
     // Define filled squares for each section and screen size
     const getSquaresForScreenSize = () => {

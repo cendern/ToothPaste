@@ -2,19 +2,19 @@ import React, { useRef } from 'react';
 import { Canvas, useLoader, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-// Per-slide lighting intensity configuration
-const LIGHTING_CONFIG = {
+// Per-slide configuration: lighting intensity and translation
+const SLIDE_CONFIG = {
     mobile: [
-        { ambient: 0.2, directional: 0.1 },  // Slide 0 - Hero
-        { ambient: 0.3, directional: 0.15 }, // Slide 1 - Why
-        { ambient: 0.3, directional: 0.15 }, // Slide 2 - Security
-        { ambient: 0.2, directional: 0.1 }   // Slide 3 - CTA
+        { ambient: 0.2, directional: 0.1, translateX: 0, translateY: 0 },      // Slide 0 - Hero
+        { ambient: 0.3, directional: 0.15, translateX: 0, translateY: 0 },     // Slide 1 - Why
+        { ambient: 0.3, directional: 0.15, translateX: 0, translateY: 0 },     // Slide 2 - Security
+        { ambient: 0.2, directional: 0.1, translateX: 0, translateY: 0 }       // Slide 3 - CTA
     ],
     desktop: [
-        { ambient: 2, directional: 1 },      // Slide 0 - Hero
-        { ambient: 2, directional: 1 },    // Slide 1 - Why
-        { ambient: 1, directional: 0.1 },    // Slide 2 - Security
-        { ambient: 1, directional: 0.1 }     // Slide 3 - CTA
+        { ambient: 2, directional: 1, translateX: -28, translateY: 0 },          // Slide 0 - Hero
+        { ambient: 2, directional: 1, translateX: -2, translateY: 0 },       // Slide 1 - Why
+        { ambient: 1, directional: 0.1, translateX: 5, translateY: -5 },       // Slide 2 - Security
+        { ambient: 1, directional: 0.1, translateX: 0, translateY: 10 }        // Slide 3 - CTA
     ]
 };
 
@@ -23,7 +23,7 @@ const Model = ({ url, scrollDeltaRef }) => {
     const gltf = useLoader(GLTFLoader, url);
     const targetRotation = useRef(0);
     const autorotationDirection = useRef(1);
-    const rotationSpeed = 0.001;
+    const rotationSpeed = 0.005;
 
     useFrame(() => {
         if (!groupRef.current) return;
@@ -62,7 +62,7 @@ const Model = ({ url, scrollDeltaRef }) => {
 };
 
 export default function ModelContainer({ currentSlide, scrollDeltaRef, isMobile }) {
-    const config = isMobile ? LIGHTING_CONFIG.mobile : LIGHTING_CONFIG.desktop;
+    const config = isMobile ? SLIDE_CONFIG.mobile : SLIDE_CONFIG.desktop;
     const slideConfig = config[currentSlide] || config[0];
 
     return (
@@ -73,6 +73,9 @@ export default function ModelContainer({ currentSlide, scrollDeltaRef, isMobile 
                 transition-transform duration-1000 ease-in-out
                 ${isMobile ? 'translate-x-0' : (currentSlide === 0 ? '-translate-x-[28%]' : 'translate-x-0')}
                 `}
+                style={{
+                    transform: `translate(${slideConfig.translateX}%, ${slideConfig.translateY}%)`
+                }}
             >
                 <Canvas className="w-full h-full">
                     <ambientLight intensity={slideConfig.ambient} />
