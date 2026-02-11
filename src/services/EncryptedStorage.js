@@ -280,12 +280,14 @@ export async function verifyStorageConsistency() {
             return StorageConsistency.EMPTY;
         }
         
-        // Consistent state - either both exist or we can recover
-        if (authScheme && masterSalt) {
+        // Consistent state - authScheme is set (passwordless doesn't need masterSalt)
+        // Password mode will have both authScheme and masterSalt
+        // Passwordless mode will have only authScheme
+        if (authScheme) {
             return StorageConsistency.VALID;
         }
         
-        // Mangled state - partial data exists
+        // Mangled state - partial data exists (has masterSalt or IndexedDB but no authScheme)
         return StorageConsistency.CORRUPTED;
     } catch (error) {
         console.error("[EncryptedStorage] Error verifying consistency:", error);
