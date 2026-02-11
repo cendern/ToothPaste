@@ -55,7 +55,7 @@ export function useClickOrLongPress(longPressTime = 2000) {
     return { start, cancel, end, longPressed };
 }
 
-function EditableDeviceName({ name, setName, isEditing, setIsEditing}) {
+function EditableDeviceName({ name, setName, isEditing, setIsEditing, isHovering}) {
     // Once user unfocuses from editing
     const handleBlur = () => {
         setIsEditing(false);
@@ -76,20 +76,30 @@ function EditableDeviceName({ name, setName, isEditing, setIsEditing}) {
                     onChange={(e) => setName(e.target.value)}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyPress}
-                    className="text-text font-sans font-medium normal-case"
+                    className="text-text font-header font-medium normal-case"
                     color="white"
                     size="md"
                     autoFocus
                 />
             ) : (
-                <Typography
-                    variant="h6"
-                    color="text"
-                    className="text-lg font-sans font-medium normal-case"
-                    style={{ cursor: "pointer" }}
-                >
-                    {name}
-                </Typography>
+                <div className="relative">
+                    <Typography
+                        type="h6"
+                        color="text"
+                        className={`text-lg font-header font-medium normal-case transition-opacity duration-1000 ${isHovering ? "opacity-0" : "opacity-100"}`}
+                        style={{ cursor: "pointer" }}
+                    >
+                        {name}
+                    </Typography>
+                    <Typography
+                        type="h6"
+                        color="text"
+                        className={`text-lg text-text font-header font-medium normal-case transition-opacity duration-1000 absolute inset-0 flex items-center ${isHovering ? "opacity-100" : "opacity-0"}`}
+                        style={{ cursor: "pointer" }}
+                    >
+                        Hold to Rename
+                    </Typography>
+                </div>
             )}
         </>
     );
@@ -102,6 +112,7 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay }) {
     const { start, end, cancel, longPressed } = useClickOrLongPress(LONG_PRESS_DURATION);
     const [progress, setProgress] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
     const [wasLongPressed, setWasLongPressed] = useState(false);
     const intervalRef = useRef(null); // track interval across renders
     const longPressTriggered = useRef(false);
@@ -192,23 +203,24 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay }) {
                     transition: 'background-image 0.016s linear'
                 }}
                 onMouseDown={() => {if (device && status === ConnectionStatus.ready) handleStart(() => setIsEditing(true));}}
-                onMouseLeave={() => {handleEnd(cancel);}}
+                onMouseLeave={() => {handleEnd(cancel); setIsHovering(false);}}
                 onMouseUp={() => handleEnd(() => connectToDevice())}
                 onTouchStart={() => {if (device && status === ConnectionStatus.ready) handleStart(() => setIsEditing(true));}}
                 onTouchCancel={() => {handleEnd(cancel);}}
                 onTouchEnd={() => handleEnd(() => connectToDevice())}
+                onMouseEnter={() => {if (status === ConnectionStatus.ready) setIsHovering(true)}}
             >
                 <div className="flex items-center justify-between w-full">
                     <div className="mr-10">
                         {/* If a device is connected get its name */}
                         <EditableDeviceName
-                            variant="h6"
                             color="text"
                             device={device}
                             isEditing={isEditing}
                             setIsEditing={setIsEditing}
                             name={name}
                             setName={setName}
+                            isHovering={isHovering}
                         ></EditableDeviceName>
                     </div>
                     {/* Change the icon for connected and disconnected states */}
@@ -255,7 +267,10 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                 {/* Left: Logo */}
                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsOpen(false)}>
                     <img src={ToothPaste} alt="ToothPaste" className="h-10 w-10" />
-                    <Typography variant="h3" color="text" className="select-none">
+                    <Typography type="h3" className="hidden md:block select-none font-header font-bold text-text">
+                        ToothPaste
+                    </Typography>
+                    <Typography type="h5" className="md:hidden select-none font-header font-bold text-text">
                         ToothPaste
                     </Typography>
                 </div>
@@ -271,7 +286,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             onClick={() => onNavigate("live")}
                         >
                             <PlayIcon className="h-5 w-5" />
-                            <Typography variant="h4">Live Capture</Typography>
+                            <Typography className="font-header">Live Capture</Typography>
                         </button>
 
                         <button
@@ -282,7 +297,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             onClick={() => onNavigate("paste")}
                         >
                             <ClipboardIcon className="h-5 w-5" />
-                            <Typography variant="h4">Paste</Typography>
+                            <Typography className="font-header">Paste</Typography>
                         </button>
                         
                         <button
@@ -293,7 +308,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             onClick={() => onNavigate("about")}
                         >
                             <QuestionMarkCircleIcon className="h-5 w-5" />
-                            <Typography variant="h4">About</Typography>
+                            <Typography className="font-header">About</Typography>
                         </button>
                     </div>
 
@@ -309,7 +324,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             onClick={() => onChangeOverlay("update")}
                         >
                             <CpuChipIcon className="h-5 w-5" />
-                            <Typography variant="h4">Update</Typography>
+                            <Typography className="font-header">Update</Typography>
                         </button>
 
                         <button
@@ -319,7 +334,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                             title="Show Quick Start Guide"
                         >
                             <PlayCircleIcon className="h-5 w-5" />
-                            <Typography variant="h4">Quick Start</Typography>
+                            <Typography className="font-header">Quick Start</Typography>
                         </button>
 
                         {status === ConnectionStatus.connected && (
@@ -328,7 +343,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                                 onClick={() => onChangeOverlay("pair")}
                             >
                                 <LinkIcon className="h-5 w-5" />
-                                <Typography variant="h4" className="">
+                                <Typography className="font-header">
                                     Pair Device
                                 </Typography>
                             </button>
@@ -350,11 +365,11 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <button
                         id="navbar-toggle"
                         onClick={() => setIsOpen(!isOpen)}
-                        className={`xl:hidden flex items-center space-x-2 px-3 py-2 rounded hover:bg-hover border border-2 ${borderClass} focus:outline-none`}
+                        className={`xl:hidden flex items-center space-x-2 px-3 py-2 rounded hover:bg-hover border border-2 ${borderClass} focus:outline-none max-w-[200px] overflow-hidden`}
                         aria-label="Toggle menu"
                     >
-                        <div className="flex flex-col flex-1 min-w-0">
-                            <Typography variant="h6" color="text" className="text-sm font-sans font-medium normal-case truncate">
+                        <div className="flex flex-col min-w-0 flex-1 p-1">
+                            <Typography variant="h6" color="text" className="text-md font-header font-medium normal-case truncate">
                                 {device?.name || "Not Connected"}
                             </Typography>
                         </div>
@@ -369,7 +384,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <div className="flex flex-col space-y-2">
                         <button
                             disabled={status === ConnectionStatus.connected || status === ConnectionStatus.unsupported}
-                            className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
+                            className={`flex font-header items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "live" ? "bg-hover" : "hover:bg-hover"
                             }`}
                             onClick={() => {
@@ -383,7 +398,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
                         <button
                             disabled={status === ConnectionStatus.connected || status === ConnectionStatus.unsupported}
-                            className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded hover:bg-hover disabled:text-hover disabled:hover:bg-transparent ${
+                            className={`flex font-header items-center space-x-1 px-3 py-2 gap-1 rounded hover:bg-hover disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "paste" ? "bg-hover" : "hover:bg-hover"
                             }`}
                             onClick={() => {
@@ -397,7 +412,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
                         <button
                             disabled={false}
-                            className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
+                            className={`flex font-header items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "about" ? "bg-hover" : "hover:bg-hover"
                             }`}
                             onClick={() => {
@@ -416,7 +431,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <div className="flex flex-col space-y-2">
                         <button
                             disabled={status === ConnectionStatus.connected}
-                            className={`flex items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
+                            className={`flex font-header items-center space-x-1 px-3 py-2 gap-1 rounded disabled:text-hover disabled:hover:bg-transparent ${
                                 activeView === "update" ? "bg-hover" : "hover:bg-hover"
                             }`}
                             onClick={() => {
@@ -430,7 +445,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
                         <button
                             disabled={false}
-                            className="flex items-center space-x-1 px-3 py-2 gap-1 rounded hover:bg-hover"
+                            className="flex font-header items-center space-x-1 px-3 py-2 gap-1 rounded hover:bg-hover"
                             onClick={() => {
                                 onChangeOverlay("quickstart");
                                 setIsOpen(false);
@@ -442,7 +457,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
 
                         {status === ConnectionStatus.connected && (
                             <button
-                                className="flex items-center space-x-1 px-3 py-2 rounded hover:bg-hover"
+                                className="flex font-header items-center space-x-1 px-3 py-2 rounded hover:bg-hover"
                                 onClick={() => {
                                     onChangeOverlay("pair");
                                     setIsOpen(false);

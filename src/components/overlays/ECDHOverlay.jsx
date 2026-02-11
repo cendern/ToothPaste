@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { ECDHContext } from '../../context/ECDHContext';
-import { Button, Typography } from "@material-tailwind/react";
+import { Button, Typography, Spinner } from "@material-tailwind/react";
 import { KeyIcon } from '@heroicons/react/24/outline';
 import { BLEContext } from '../../context/BLEContext';
 
@@ -72,7 +72,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                 ×
                 </button>
 
-                <Typography variant="h4" className="text-text font-sans normal-case font-semibold">
+                <Typography variant="h4" className="text-text font-header normal-case font-semibold">
                     <span className="text-gray-500">Pair Device - </span>
                     <span className="text-text">{device?.name ?? ""}</span>
                 </Typography>
@@ -83,7 +83,8 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                     value={keyInput}
                     onChange={(e) => setkeyInput(e.target.value)}
                     onKeyDown={handleSubmit}
-                    className='w-full h-10 opacity-1 color-text bg-shelf border border-3 border-hover rounded-md p-2 my-4 focus:outline-none focus:border-primary focus:ring-primary-hover'
+                    className='w-full h-10 opacity-1 text-text bg-shelf border border-3 border-hover rounded-md p-2 my-4 font-body
+                    focus:outline-none focus:border-primary focus:ring-primary-hover'
                 />
 
                 <Button
@@ -94,9 +95,10 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                     className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex items-center justify-center size-sm'>
 
                     <KeyIcon className={`h-7 w-7 mr-2  ${isLoading? "hidden":""}`} />
+                    <Spinner className={`h-7 w-7 mr-2  ${isLoading? "":"hidden"}`} />
 
                     {/* Paste to Device */}
-                    <Typography variant="h6" className={`text-text font-sans normal-case font-semibold ${isLoading? "hidden":""}`}>Pair</Typography>
+                    <Typography variant="h6" className={`font-header text-text normal-case font-semibold ${isLoading? "hidden":""}`}>Pair</Typography>
                 </Button>
 
 
@@ -104,7 +106,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                         How to Pair your ToothPaste Device:
                 </Typography>
 
-                <div className="bg-hover rounded-lg p-4 my-2">
+                <div className="bg-hover rounded-lg p-4 my-2 gap-2 flex flex-col justify-center items-center">
 
 
                     <Typography variant="h6" className={`text-text text-md text-center mb-2`}> 

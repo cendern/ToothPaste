@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Typography } from "@material-tailwind/react";
 import { KeyboardShortcutButton, KeyboardShortcutCarousel, ClickButtonGroup } from "../shared/buttons";
 import { TOUCHPAD_SHORTCUTS } from "./sharedComponents";
+import { ArrowUpOnSquareStackIcon, CursorArrowRaysIcon } from "@heroicons/react/24/outline";
 
 export default function Touchpad({
     captureMouse,
@@ -55,18 +56,21 @@ export default function Touchpad({
                 {rightButtonColumn}
             </div>
 
-            <Typography
-                type="h5"
-                className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-4 whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 -translate-y-1/2 w-full z-10 text-center"
-                aria-hidden="true"
-            >
-                {captureMouse ? "Drag to move cursor" : "Enable Mouse Capture To Use Touchpad"}
-            </Typography>
+            <div className="flex items-center justify-center opacity-70 pointer-events-none select-none text-text p-4 absolute left-0 right-0 top-1/2 -translate-y-1/2 w-full z-10 text-center gap-1">
+                <CursorArrowRaysIcon className="h-10 w-10 opacity-70 text-text" />
+                <Typography
+                    type="h6"
+                    className="font-light"
+                    aria-hidden="true"
+                >
+                    {captureMouse ? "Drag to move cursor" : "Enable Mouse Capture To Use Touchpad"}
+                </Typography>
+            </div>
 
             {captureMouse && (
                 <Typography
-                    type="h5"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 translate-y-3 w-full z-10 text-center"
+                    type="h6"
+                    className="flex items-center justify-center mt-2 opacity-70 pointer-events-none select-none text-text whitespace-pre-wrap font-light absolute left-0 right-0 top-1/2 translate-y-3 w-full z-10 text-center"
                     aria-hidden="true"
                 >
                     Double Tap to Click
@@ -88,13 +92,17 @@ export default function Touchpad({
                     <KeyboardShortcutCarousel shortcuts={TOUCHPAD_SHORTCUTS} onSendKeyboardShortcut={onSendKeyboardShortcut} />
                 </div>
             ) : (
-                <Typography
-                    type="small"
-                    className="flex items-center justify-center opacity-70 pointer-events-none select-none text-white p-2 whitespace-pre-wrap font-light absolute bottom-16 left-0 right-0 w-full z-20 text-center"
-                    aria-hidden="true"
-                >
-                    Enable Command Passthrough to use shortcuts
-                </Typography>
+                <div className="flex flex-col items-center justify-center text-center opacity-70 pointer-events-none select-none text-text px-2 py-1 absolute bottom-16 left-2 right-2 z-20 mb-2 gap-1"
+                    >
+                    <ArrowUpOnSquareStackIcon className="h-5 w-5 opacity-70 flex-shrink-0" />
+                    <Typography
+                        type="small"
+                        className="font-light"
+                        aria-hidden="true"
+                    >
+                        Enable Command Passthrough to use shortcuts
+                    </Typography>
+                </div>
             )}
 
             {/* Mobile Click Buttons - 2:1:2 ratio */}

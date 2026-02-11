@@ -1,5 +1,6 @@
 // tailwind.config.js
 import { mtConfig } from "@material-tailwind/react";
+import { appColors } from "./src/styles/colors.js";
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -13,18 +14,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['Ubuntu Sans Mono', 'sans-serif'],
+        header: ['Roboto Mono', 'sans-serif'],
+        body: ['Ubuntu Sans Mono', 'sans-serif'],
+        barcode: ['Libre Barcode 39 Extended', 'system-ui'],
       },
-      colors: {
-        primary: '#00A878',
-        secondary: '#DD4058',
-        accent: '#DE6240',
-        background: '#000000',
-        text: '#FFFFFF',
-        shelf: '#111111',
-        hover: '#222222',
-        orange: '#DE6240',
-      },
+      colors: appColors,
       keyframes: {
         fadeout: {
           '0%': { opacity: '1' },
