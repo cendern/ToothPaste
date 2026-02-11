@@ -9,6 +9,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [authState, setAuthState] = useState(null);
+    const [showForgotPasswordConfirm, setShowForgotPasswordConfirm] = useState(false);
 
     // Subscribe to auth state changes and get current state
     useEffect(() => {
@@ -209,7 +210,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                 )}
 
                 {/* AWAITING PASSWORD */}
-                {authState === AuthState.AWAITING_PASSWORD && (
+                {authState === AuthState.AWAITING_PASSWORD && !showForgotPasswordConfirm && (
                     <>
                         <Typography type="h4" className="text-text font-header normal-case font-semibold text-center mb-4">
                             Unlock ToothPaste
@@ -242,15 +243,53 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
 
                         <button
                             onClick={() => {
-                                setPassword('');
-                                setError(null);
-                                handleForgotPassword();
+                                setShowForgotPasswordConfirm(true);
                             }}
                             className="text-sm text-primary hover:text-primary-hover underline mt-2"
                             disabled={isLoading}
                         >
                             Forgot Password?
                         </button>
+                    </>
+                )}
+
+                {/* FORGOT PASSWORD CONFIRMATION */}
+                {authState === AuthState.AWAITING_PASSWORD && showForgotPasswordConfirm && (
+                    <>
+                        <Typography type="h5" className="text-text font-header normal-case font-semibold text-center mb-4">
+                            Reset All Data?
+                        </Typography>
+
+                        <Typography className="text-text text-lg font-body text-center mb-6">
+                            This will reset all your macros and paired devices. Are you sure you didn't write it on a sticky-note somewhere?
+                        </Typography>
+
+                        <div className="w-full flex gap-3">
+                            <Button
+                                onClick={() => setShowForgotPasswordConfirm(false)}
+                                className='flex-1 min-h-10 bg-gray-600 border-none flex flex-wrap items-center justify-center p-2'
+                            >
+                                <Typography type="h6" className="text-text font-header font-semibold">
+                                    I'll consult an oracle first...
+                                </Typography>
+                            </Button>
+
+                            <Button
+                                onClick={async () => {
+                                    setShowForgotPasswordConfirm(false);
+                                    setPassword('');
+                                    setError(null);
+                                    await handleForgotPassword();
+                                }}
+                                loading={isLoading.toString()}
+                                disabled={isLoading}
+                                className='flex-1 min-h-10 bg-secondary border-none text-text flex flex-wrap items-center justify-center p-2'
+                            >
+                                <Typography type="h6" className={`text-text font-header font-semibold ${isLoading ? "hidden" : ""}`}>
+                                    It's gone forever, Reset Everything.
+                                </Typography>
+                            </Button>
+                        </div>
                     </>
                 )}
 
