@@ -238,13 +238,26 @@ export function lock() {
 
 /**
  * Clear the master salt and validation token (for password reset/change).
- * Warning: This will required re-entering password on next unlock.
+ * Warning: This will clear all stored data and require re-entering password on next unlock.
  */
-export function clearMasterSalt() {
-    localStorage.removeItem("__EncryptedStorage_MasterSalt__");
-    localStorage.removeItem("__EncryptedStorage_ValidationToken__");
-    localStorage.removeItem("__EncryptedStorage_AuthScheme__");
-    lock();
+export async function clearMasterSalt() {
+    try {
+        // Close any open database connections first
+        lock();
+        
+        // Delete the entire database
+        await Storage.deleteDatabase();
+        
+        // Clear localStorage auth data
+        localStorage.removeItem("__EncryptedStorage_MasterSalt__");
+        localStorage.removeItem("__EncryptedStorage_ValidationToken__");
+        localStorage.removeItem("__EncryptedStorage_AuthScheme__");
+        
+        console.log("[EncryptedStorage] Master salt and database cleared");
+    } catch (error) {
+        console.error("[EncryptedStorage] Error clearing master salt:", error);
+        throw error;
+    }
 }
 
 /**

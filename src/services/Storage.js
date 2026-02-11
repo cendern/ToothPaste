@@ -99,6 +99,30 @@ export async function loadBase64(clientID, key) {
     });
 }
 
+/**
+ * Delete the entire IndexedDB database
+ * @returns {Promise<void>}
+ */
+export function deleteDatabase() {
+    return new Promise((resolve, reject) => {
+        const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+        
+        deleteRequest.onsuccess = () => {
+            console.log("[Storage] Database deleted successfully");
+            resolve();
+        };
+        
+        deleteRequest.onerror = () => {
+            console.error("[Storage] Failed to delete database:", deleteRequest.error);
+            reject(new Error("Failed to delete database: " + deleteRequest.error));
+        };
+        
+        deleteRequest.onblocked = () => {
+            console.warn("[Storage] Database deletion blocked - close all connections");
+        };
+    });
+}
+
 // Check if device keys exist for a client
 export async function keyExists(clientID) {
     try {

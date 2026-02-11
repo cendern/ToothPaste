@@ -15,7 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { useBLEContext, ConnectionStatus } from "../../context/BLEContext";
-import { isUnlocked } from "../../services/EncryptedStorage";
+import { isUnlocked, getRequiredAuthMode } from "../../services/EncryptedStorage";
 import AuthenticationOverlay from "../overlays/AuthenticationOverlay";
 import ToothPaste from "../../assets/ToothPaste.png";
 import { createRenamePacket } from "../../services/packetService/packetFunctions";
@@ -106,7 +106,7 @@ function EditableDeviceName({ name, setName, isEditing, setIsEditing, isHovering
 }
 
 // Status icon for a given device
-function ConnectionButton({ showAuthOverlay, setShowAuthOverlay }) {
+function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authMode }) {
     const LONG_PRESS_DURATION = 2000;
     const { connectToDevice, status, device, sendEncrypted } = useBLEContext();
     const { start, end, cancel, longPressed } = useClickOrLongPress(LONG_PRESS_DURATION);
@@ -182,7 +182,7 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay }) {
         if (!longPressTriggered.current) {
             // Check if authenticated before connecting
             if (!status || status === ConnectionStatus.disconnected) {
-                if (!isUnlocked()) {
+                if (authMode !== "unlocked") {
                     setShowAuthOverlay(true);
                     return;
                 }
@@ -236,7 +236,17 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
     const [open, setOpen] = React.useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+    const [authMode, setAuthMode] = useState(null);
     const { status, device, connectToDevice } = useBLEContext();
+
+    // Check auth mode on mount
+    useEffect(() => {
+        const checkAuthMode = async () => {
+            const mode = await getRequiredAuthMode();
+            setAuthMode(mode);
+        };
+        checkAuthMode();
+    }, []);
 
     const borderClass =
         {
@@ -358,6 +368,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                         <ConnectionButton 
                             showAuthOverlay={showAuthOverlay}
                             setShowAuthOverlay={setShowAuthOverlay}
+                            authMode={authMode}
                         />
                     </div>
 
@@ -472,6 +483,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <ConnectionButton 
                         showAuthOverlay={showAuthOverlay}
                         setShowAuthOverlay={setShowAuthOverlay}
+                        authMode={authMode}
                     />
                 </div>
             )}
