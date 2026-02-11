@@ -3,23 +3,23 @@ import { Canvas, useLoader, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AxesHelper } from 'three';
 
-// Per-slide configuration: lighting intensity and translation
+// Per-slide configuration: lighting intensity, translation, and autorotation
 const SLIDE_CONFIG = {
     mobile: [
-        { ambient: 0.2, directional: 0.1, translateX: 0, translateY: 0, translateZ: 0 },      // Slide 0 - Hero
-        { ambient: 0.3, directional: 0.15, translateX: 0, translateY: 0, translateZ: 0 },     // Slide 1 - Why
-        { ambient: 0.3, directional: 0.15, translateX: 0, translateY: 0, translateZ: 0 },     // Slide 2 - Security
-        { ambient: 0.2, directional: 0.1, translateX: 0, translateY: 0, translateZ: 0 }       // Slide 3 - CTA
+        { ambient: 0.2, directional: 0.5, translateX: 0, translateY: 0, translateZ: 0, autorotate: true },      // Slide 0 - Hero
+        { ambient: 0.3, directional: 0.15, translateX: 0, translateY: 0, translateZ: 0, autorotate: true },     // Slide 1 - Why
+        { ambient: 0.3, directional: 0.15, translateX: 0, translateY: 0, translateZ: 0, autorotate: true },     // Slide 2 - Security
+        { ambient: 0.2, directional: 0.1, translateX: 0, translateY: 0, translateZ: 0, autorotate: true }       // Slide 3 - CTA
     ],
     desktop: [
-        { ambient: 2, directional: 1, translateX: -6.5, translateY: 0, translateZ: -3 },          // Slide 0 - Hero
-        { ambient: 2, directional: 1, translateX: 0, translateY: 0, translateZ: -3 },       // Slide 1 - Why
-        { ambient: 1, directional: 0.1, translateX: 5, translateY: -5, translateZ: 0 },       // Slide 2 - Security
-        { ambient: 1, directional: 0.1, translateX: 0, translateY: 10, translateZ: 0 }        // Slide 3 - CTA
+        { ambient: 2, directional: 1, translateX: -6.5, translateY: 0, translateZ: -1, autorotate: true },          // Slide 0 - Hero
+        { ambient: 2, directional: 1, translateX: 0, translateY: 0, translateZ: -3, autorotate: true },       // Slide 1 - Why
+        { ambient: 1, directional: 0.1, translateX: 5, translateY: -5, translateZ: 0, autorotate: true },       // Slide 2 - Security
+        { ambient: 0.5, directional: 0.1, translateX: 0.02, translateY: 0, translateZ: 6, autorotate: false }        // Slide 3 - CTA
     ]
 };
 
-const Model = ({ url, scrollDeltaRef, translateX, translateY, translateZ }) => {
+const Model = ({ url, scrollDeltaRef, translateX, translateY, translateZ, autorotate = true }) => {
     const groupRef = useRef();
     const axesHelperRef = useRef(null);
     const gltf = useLoader(GLTFLoader, url);
@@ -53,8 +53,10 @@ const Model = ({ url, scrollDeltaRef, translateX, translateY, translateZ }) => {
         groupRef.current.position.y = currentPos.current[1] - 0.1;
         groupRef.current.position.z = currentPos.current[2] - 2;
 
-        // Interpolate rotation
-        targetRotation.current += rotationSpeed * autorotationDirection.current;
+        // Only apply autorotation if enabled for this slide
+        if (autorotate) {
+            targetRotation.current += rotationSpeed * autorotationDirection.current;
+        }
 
         if (scrollDeltaRef.current !== 0) {
             autorotationDirection.current = Math.sign(scrollDeltaRef.current);
@@ -117,6 +119,7 @@ export default function ModelContainer({ currentSlide, scrollDeltaRef, isMobile 
                         translateX={slideConfig.translateX}
                         translateY={slideConfig.translateY}
                         translateZ={slideConfig.translateZ}
+                        autorotate={slideConfig.autorotate}
                     />
                 </Canvas>
             </div>

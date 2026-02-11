@@ -5,7 +5,7 @@ import { FaGithub } from 'react-icons/fa';
 export default function CTASection({ currentSlide, getSectionOpacity }) {
     return (
         <section
-            className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-12 z-10"
+            className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-12 z-10 m-10"
             style={{
                 opacity: getSectionOpacity(3),
                 transition: 'opacity 0.3s ease-in-out',
@@ -14,7 +14,7 @@ export default function CTASection({ currentSlide, getSectionOpacity }) {
         >
             {/* Title Row */}
             <div className="mb-12 flex justify-center">
-                <Typography type="h2" className="text-text font-bold">
+                <Typography className="font-header text-7xl font-normal text-white">
                     Want to learn more?
                 </Typography>
             </div>
@@ -27,7 +27,8 @@ export default function CTASection({ currentSlide, getSectionOpacity }) {
                     
                     {/* Center - Model breaks out with negative margins + CTA text */}
                     <div className="flex flex-col col-span-3 gap-8 text-center items-center justify-center">
-                        <Typography type="h5" className="text-lg text-white">
+                        
+                        <Typography type="h4" className="font-body text-xl font-light text-white">
                             ToothPaste is currently closed source while I finalize the hardware and software design.
                             However, if you're interested in collaborating, contributing, or just want to chat about the project feel free to reach out!
                         </Typography>

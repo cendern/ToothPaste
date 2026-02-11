@@ -4,3 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent pull-to-refresh and overscroll reload */
+html, body {
+  overscroll-behavior-y: none;
+  overscroll-behavior: none;
+}
+

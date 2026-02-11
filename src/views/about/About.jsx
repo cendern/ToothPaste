@@ -105,7 +105,7 @@ export default function About() {
     const maxSlides = 4;
     const scrollThreshold = useRef(0);
     const scrollSensitivity = 500; // How many pixels of scroll to trigger slide change
-    const touchSensitivity = 50; // Pixels of swipe to trigger slide change
+    const touchSensitivity = 100; // Pixels of swipe to trigger slide change
     const pointerStartYRef = useRef(0);
     const isPointerDownRef = useRef(false);
     const lastSlideChangeTimeRef = useRef(0);
@@ -115,6 +115,15 @@ export default function About() {
     const getSquaresForScreenSize = () => {
         const { rows, cols } = gridDimensions;
         if (rows === 0 || cols === 0) return { hero: [], why: [], security: [], cta: [] };
+
+        // Generate white squares for right half of grid
+        const whiteSquaresRightHalf = [];
+        const halfCol = Math.ceil(cols / 2);
+        for (let row = 0; row < rows; row++) {
+            for (let col = halfCol; col < cols; col++) {
+                whiteSquaresRightHalf.push({ row, col, color: appColors.text });
+            }
+        }
 
         if (isMobile) {
             // Mobile proportional positions
@@ -132,7 +141,8 @@ export default function About() {
                 why: generateRepeatingStars(cols),
                 security: [
                     { row: twoThirdRow, col: startCol + 2, color: appColors.primary },
-                    { row: twoThirdRow + 1, col: startCol + 3, color: appColors.secondary }
+                    { row: twoThirdRow + 1, col: startCol + 3, color: appColors.secondary },
+
                 ],
                 cta: [
                     { row: twoThirdRow, col: twoThirdCol, color: appColors.primary },
@@ -153,11 +163,12 @@ export default function About() {
                     { row: thirdRow, col: thirdCol, color: appColors.secondary },
                     { row: thirdRow, col: thirdCol + 2, color: appColors.orange },
                     { row: thirdRow, col: thirdCol + 4, color: appColors.primary },
+
                 ],
-                why: generateRepeatingStars(cols),
+                why: [...generateRepeatingStars(cols)],
                 security: [
                     { row: twoThirdRow, col: thirdCol + 4, color: appColors.primary },
-                    { row: twoThirdRow + 1, col: thirdCol + 5, color: appColors.secondary }
+                    { row: twoThirdRow + 1, col: thirdCol + 5, color: appColors.secondary },
                 ],
                 cta: [
                     { row: twoThirdRow, col: twoThirdCol, color: appColors.primary },
@@ -182,20 +193,23 @@ export default function About() {
 
     useEffect(() => {
         // Common handler for scroll input (pointer and wheel)
-        const handleScrollInput = (delta, threshold, modelMultiplier = 1) => {
-            // Accumulate to model rotation with optional multiplier
-            scrollDeltaRef.current += delta * modelMultiplier;
+        // scrollAmount: raw input value (pixels moved)
+        // slideChangeThreshold: minimum pixels needed to trigger slide change
+        // modelRotationScale: multiplier for 3D model rotation (separate from slide changes)
+        const handleScrollInput = (scrollAmount, slideChangeThreshold, modelRotationScale = 1) => {
+            // Apply scroll amount to 3D model rotation
+            scrollDeltaRef.current += scrollAmount * modelRotationScale;
 
             // Check if cooldown has expired
             const now = Date.now();
             const isOnCooldown = now - lastSlideChangeTimeRef.current < slideChangeCooldownRef.current;
 
             if (!isOnCooldown) {
-                // Accumulate scroll delta for slide navigation
-                scrollThreshold.current += delta;
+                // Accumulate scroll for slide navigation (independent of model rotation)
+                scrollThreshold.current += scrollAmount;
 
-                // Check if accumulated scroll exceeds threshold
-                if (Math.abs(scrollThreshold.current) >= threshold) {
+                // Check if accumulated scroll exceeds threshold to change slides
+                if (Math.abs(scrollThreshold.current) >= slideChangeThreshold) {
                     if (scrollThreshold.current > 0) {
                         setCurrentSlide(prev => Math.min(prev + 1, maxSlides - 1));
                     } else {
@@ -217,8 +231,8 @@ export default function About() {
             if (isPointerDownRef.current && event.isPrimary) {
                 const currentY = event.clientY;
                 const pointerDelta = pointerStartYRef.current - currentY;
-                // Pointer events with 0.5x model rotation multiplier
-                handleScrollInput(pointerDelta, touchSensitivity, 100);
+                // Touch: reduced model rotation (0.5x), normal slide threshold
+                handleScrollInput(pointerDelta, touchSensitivity, 5);
                 pointerStartYRef.current = currentY;
             }
         };
@@ -229,7 +243,7 @@ export default function About() {
 
         const handleWheel = (event) => {
             event.preventDefault();
-            // Wheel events with 1x model rotation multiplier
+            // Wheel: normal model rotation (1x), high slide threshold
             handleScrollInput(event.deltaY, scrollSensitivity, 1);
         };
 
@@ -255,7 +269,7 @@ export default function About() {
 
     return (
         //  Background with grid pattern - also serves as scroll container
-        <div ref={containerRef} className="relative flex-1 w-full bg-transparent text-text overflow-hidden">
+        <div ref={containerRef} className="relative flex-1 w-full bg-transparent text-text overflow-hidden" style={{ touchAction: 'none' }}>
             {/* Colored squares overlay - no grid lines */}
 
             <GridBackground
