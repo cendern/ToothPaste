@@ -1,153 +1,222 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Typography, Input } from "@material-tailwind/react";
 import { ShieldCheckIcon } from '@heroicons/react/24/outline';
-import { unlockWithPassword, unlockPasswordless, isUnlocked, getRequiredAuthMode, clearMasterSalt } from '../../services/EncryptedStorage';
+import { unlockWithPassword, unlockPasswordless } from '../../services/EncryptedStorage';
+import { authStateManager, AuthState } from '../../services/AuthStateManager';
 
 const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
-    const [mode, setMode] = useState(null); // 'choose' | 'password' | 'passwordless' | null (loading)
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasChecked, setHasChecked] = useState(false);
-    const [isFirstTimePassword, setIsFirstTimePassword] = useState(true);
-    const [showForgotConfirmation, setShowForgotConfirmation] = useState(false);
+    const [authState, setAuthState] = useState(null);
 
-    // Determine required auth mode on mount
+    // Subscribe to auth state changes and get current state
     useEffect(() => {
-        const initAuthMode = async () => {
-            const requiredMode = await getRequiredAuthMode();
-            setMode(requiredMode);
-            // If mode is 'password' from initialization, it means password was already set, so NOT first time
-            setIsFirstTimePassword(requiredMode !== 'password');
-            setHasChecked(true);  // Only mark as checked after auth mode is determined
-        };
-        initAuthMode();
+        // Set initial state from manager (it may have already initialized)
+        const currentState = authStateManager.getState();
+        setAuthState(currentState);
+        console.log("[AuthenticationOverlay] Initial auth state:", currentState);
+
+        // Subscribe to future changes
+        const unsubscribe = authStateManager.subscribe((newState) => {
+            console.log("[AuthenticationOverlay] Auth state changed to:", newState);
+            setAuthState(newState);
+        });
+
+        return unsubscribe;
     }, []);
 
-    // If already unlocked, auto-succeed
-    useEffect(() => {
-        if (hasChecked && isUnlocked()) {
-            onAuthSuccess();
-        }
-    }, [hasChecked, onAuthSuccess]);
-
-    // Unlock with password
     const handlePasswordUnlock = async () => {
+        if (!password.trim()) {
+            setError('Please enter a password');
+            return;
+        }
+
         try {
-            if (!password.trim()) {
-                setError('Please enter a password');
-                return;
-            }
-            
             setError(null);
             setIsLoading(true);
-            console.log("[AuthenticationOverlay] Starting password-based unlock...");
+            console.log("[AuthenticationOverlay] Attempting password unlock...");
 
             await unlockWithPassword(password);
-            console.log("[AuthenticationOverlay] Password-based unlock successful");
-            setIsLoading(false);
+            console.log("[AuthenticationOverlay] Password unlock successful");
+            
+            // Update state
+            authStateManager.setState(AuthState.UNLOCKED);
+            setPassword('');
             onAuthSuccess();
         } catch (e) {
             console.error("[AuthenticationOverlay] Password unlock error:", e);
-            setError('Unlock failed: ' + e.message);
+            setError(e.message || 'Unlock failed');
             setIsLoading(false);
         }
     };
 
-    // Handle forgot password
-    const handleForgotPassword = async () => {
-        try {
-            setIsLoading(true);
-            
-            // Clear auth encryption and database
-            await clearMasterSalt();
-            
-            // Reset state
-            setPassword('');
-            setError(null);
-            setShowForgotConfirmation(false);
-            setMode('choose');
-            setIsLoading(false);
-        } catch (error) {
-            console.error("[AuthenticationOverlay] Error clearing data:", error);
-            setError('Failed to reset: ' + error.message);
-            setIsLoading(false);
-        }
-    };
-
-    // Unlock passwordless (insecure mode)
     const handlePasswordlessUnlock = async () => {
         try {
             setError(null);
             setIsLoading(true);
-            console.log("[AuthenticationOverlay] Starting passwordless unlock...");
+            console.log("[AuthenticationOverlay] Attempting passwordless unlock...");
 
             await unlockPasswordless();
             console.log("[AuthenticationOverlay] Passwordless unlock successful");
-            setIsLoading(false);
+            
+            // Update state
+            authStateManager.setState(AuthState.UNLOCKED);
             onAuthSuccess();
         } catch (e) {
             console.error("[AuthenticationOverlay] Passwordless unlock error:", e);
-            setError('Unlock failed: ' + e.message);
+            setError(e.message || 'Unlock failed');
             setIsLoading(false);
         }
     };
 
-    if (!hasChecked) {
+    const handleSetPasswordFirstTime = async () => {
+        if (!password.trim()) {
+            setError('Please enter a password');
+            return;
+        }
+
+        try {
+            setError(null);
+            setIsLoading(true);
+            console.log("[AuthenticationOverlay] Setting password for first time...");
+
+            await unlockWithPassword(password);
+            console.log("[AuthenticationOverlay] First-time password setup successful");
+            
+            // Update state
+            authStateManager.setState(AuthState.UNLOCKED);
+            setPassword('');
+            onAuthSuccess();
+        } catch (e) {
+            console.error("[AuthenticationOverlay] First-time setup error:", e);
+            setError(e.message || 'Setup failed');
+            setIsLoading(false);
+        }
+    };
+
+    const handleRecoverFromCorruption = async () => {
+        try {
+            setError(null);
+            setIsLoading(true);
+            console.log("[AuthenticationOverlay] Recovering from corruption...");
+
+            await authStateManager.attemptRecoveryFromCorruption();
+            setPassword('');
+            setIsLoading(false);
+        } catch (e) {
+            console.error("[AuthenticationOverlay] Recovery error:", e);
+            setError('Recovery failed: ' + e.message);
+            setIsLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        try {
+            setError(null);
+            setIsLoading(true);
+            console.log("[AuthenticationOverlay] Resetting all data...");
+
+            await authStateManager.attemptRecoveryFromCorruption();
+            setPassword('');
+            setIsLoading(false);
+        } catch (e) {
+            console.error("[AuthenticationOverlay] Reset error:", e);
+            setError('Reset failed: ' + e.message);
+            setIsLoading(false);
+        }
+    };
+
+    // Don't render until state is determined
+    if (authState === null || authState === AuthState.LOADING) {
+        return null;
+    }
+
+    // Don't render if already unlocked
+    if (authState === AuthState.UNLOCKED) {
         return null;
     }
 
     return (
         <div className="fixed inset-0 bg-hover/60 flex flex-col justify-center items-center z-[9999]" onClick={onClose}>
             <div className="bg-shelf p-5 rounded-lg w-11/12 max-w-lg flex flex-col justify-center items-center shadow-lg relative" onClick={(e) => e.stopPropagation()}>
-                {/* Close Button*/}
-                <button
-                    onClick={onClose}
-                    className="absolute top-2.5 right-2.5 bg-transparent border-0 text-2xl cursor-pointer text-text"
-                >
-                    ×
-                </button>
+                {/* Close Button - only show if not corrupted */}
+                {authState !== AuthState.CORRUPTED && (
+                    <button
+                        onClick={onClose}
+                        className="absolute top-2.5 right-2.5 bg-transparent border-0 text-2xl cursor-pointer text-text"
+                    >
+                        ×
+                    </button>
+                )}
 
-                {showForgotConfirmation ? (
-                    <>
-                        <Typography type="h5" className="text-text font-header normal-case font-semibold text-center mb-4">
-                            Forgot Password?
-                        </Typography>
-                        <Typography type="h6" className="text-text text-sm font-normal text-center mb-6">
-                            This will forget all paired devices and macros, are you sure you don't have it written down on a sticky note somewhere?
-                        </Typography>
-                        <div className="flex gap-3 w-full">
-                            <Button
-                                onClick={() => setShowForgotConfirmation(false)}
-                                className='flex-1 min-h-10 bg-hover text-text hover:bg-hover/80 flex flex-wrap items-center justify-center border-none p-2'
-                            >
-                                <Typography className="text-text font-header normal-case font-semibold ">
-                                    Never mind, I'll find it.
-                                </Typography>
-                            </Button>
-                            <Button
-                                onClick={handleForgotPassword}
-                                loading={isLoading.toString()}
-                                disabled={isLoading}
-                                className='flex-1 min-h-10 bg-red-500 text-text hover:bg-red-600 border-none flex flex-wrap items-center justify-center p-2'
-                            >
-                                <Typography className="text-text font-header normal-case font-semibold">
-                                    Its gone forever, reset.
-                                </Typography>
-                            </Button>
-                        </div>
-                    </>
-                ) : mode === 'password' ? (
+                {/* FIRST TIME SETUP */}
+                {authState === AuthState.FIRST_TIME && (
                     <>
                         <Typography type="h4" className="text-text font-header normal-case font-semibold text-center mb-4">
-                            Enter Password
+                            Welcome to ToothPaste
+                        </Typography>
+
+                        <Typography type="h6" className="text-text text-sm text-center mb-6">
+                            Choose how to secure your device.
+                        </Typography>
+
+                        <Typography type="h6" className="text-text text-xs text-center mb-3">
+                            Set a password to encrypt your stored data:
+                        </Typography>
+
+                        <Input
+                            type="password"
+                            label="Create Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSetPasswordFirstTime()}
+                            disabled={isLoading}
+                            className="mb-4 text-text"
+                        />
+
+                        <Button
+                            onClick={handleSetPasswordFirstTime}
+                            loading={isLoading.toString()}
+                            disabled={isLoading || !password.trim()}
+                            className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-hover active:bg-primary-active flex flex-wrap items-center justify-center p-2'
+                        >
+                            <Typography type="h6" className={`text-text font-sans normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
+                                Set Password and Continue
+                            </Typography>
+                        </Button>
+
+                        <Typography type="h6" className="text-text text-xs text-center mb-3 border-t border-hover pt-3 mt-3">
+                            Or continue without a password:
+                        </Typography>
+
+                        <Button 
+                            onClick={handlePasswordlessUnlock}
+                            loading={isLoading.toString()}
+                            disabled={isLoading}
+                            className='w-full min-h-10 flex flex-wrap items-center justify-center bg-orange border-none p-2'
+                        >
+                            <Typography type="h6" className={`text-text normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
+                                Use Passwordless Mode
+                            </Typography>
+                        </Button>
+
+                        <Typography type="h6" className="text-gray-500 text-xs font-normal text-center mt-4">
+                            Passwordless mode is faster, but doesn't encrypt data on this device. 
+                            Your data is still End-to-End encrypted when communicating with ToothPaste.
+                        </Typography>
+                    </>
+                )}
+
+                {/* AWAITING PASSWORD */}
+                {authState === AuthState.AWAITING_PASSWORD && (
+                    <>
+                        <Typography type="h4" className="text-text font-header normal-case font-semibold text-center mb-4">
+                            Unlock ToothPaste
                         </Typography>
 
                         <Typography type="h6" className="text-text text-sm font-normal text-center mb-4">
-                            {isFirstTimePassword 
-                                ? "Use this password to unlock your device and access your data. Make sure to remember it!"
-                                : "Your data is encrypted with a password. Enter it to unlock your device."
-                            }
+                            Your data is encrypted with a password. Enter it to continue.
                         </Typography>
 
                         <Input
@@ -164,58 +233,90 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                             onClick={handlePasswordUnlock}
                             loading={isLoading.toString()}
                             disabled={isLoading || !password.trim()}
-                            className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active flex flex-wrap items-center justify-center p-2'
-                        >
-                            <Typography type="h6" className={`text-text font-sans normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
-                                {isFirstTimePassword ? "Set Password and Unlock" : "Unlock"}
-                            </Typography>
-                        </Button>
-
-                        {!isFirstTimePassword && (
-                            <button
-                                onClick={() => setShowForgotConfirmation(true)}
-                                className="text-sm text-primary hover:text-primary-hover underline mt-2"
-                                disabled={isLoading}
-                            >
-                                Forgot Password?
-                            </button>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        <Typography type="h4" className="text-text font-header normal-case font-semibold text-center mb-4">
-                            Let's get started...
-                        </Typography>
-
-                        <Typography type="h6" className="text-text text-sm text-center mb-6">
-                            Choose how to unlock your device. 
-                        </Typography>
-
-                        <Button
-                            onClick={() => setMode('password')}
                             className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-hover active:bg-primary-active flex flex-wrap items-center justify-center p-2'
                         >
-                            <Typography type="h6" className="text-text font-sans normal-case font-semibold">
-                                Unlock with Password
+                            <Typography type="h6" className={`text-text font-sans normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
+                                Unlock
                             </Typography>
                         </Button>
 
-                        <Button onClick={handlePasswordlessUnlock} className='w-full min-h-10 mb-3 flex flex-wrap items-center justify-center bg-orange border-none p-2'>
-                            <Typography type="h6" className="text-text normal-case font-semibold ">
-                                Use Passwordless
-                            </Typography>
-                        </Button>
-
-                        <Typography type="h6" className="text-gray-500 text-xs font-normal text-center mt-4">
-                            Passwordless mode is faster, but doesn't encrypt the data stored on this device. 
-                            Your data is still End-to-End encrypted.
-                        </Typography>
+                        <button
+                            onClick={() => {
+                                setPassword('');
+                                setError(null);
+                                handleForgotPassword();
+                            }}
+                            className="text-sm text-primary hover:text-primary-hover underline mt-2"
+                            disabled={isLoading}
+                        >
+                            Forgot Password?
+                        </button>
                     </>
                 )}
 
+                {/* AWAITING PASSWORDLESS */}
+                {authState === AuthState.AWAITING_PASSWORDLESS && (
+                    <>
+                        <Typography type="h4" className="text-text font-header normal-case font-semibold text-center mb-4">
+                            Unlock ToothPaste
+                        </Typography>
+
+                        <Typography type="h6" className="text-text text-sm font-normal text-center mb-6">
+                            Using passwordless mode to access your device.
+                        </Typography>
+
+                        <Button
+                            onClick={handlePasswordlessUnlock}
+                            loading={isLoading.toString()}
+                            disabled={isLoading}
+                            className='w-full min-h-10 flex flex-wrap items-center justify-center bg-primary text-text hover:bg-primary-hover border-none p-2'
+                        >
+                            <Typography type="h6" className={`text-text normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
+                                Unlock
+                            </Typography>
+                        </Button>
+                    </>
+                )}
+
+                {/* CORRUPTED STATE */}
+                {authState === AuthState.CORRUPTED && (
+                    <>
+                        <div className="flex justify-center mb-4">
+                            <ShieldCheckIcon className="h-12 w-12 text-orange" />
+                        </div>
+
+                        <Typography type="h4" className="text-orange font-header normal-case font-semibold text-center mb-4">
+                            Browser Data Corrupted
+                        </Typography>
+
+                        <Typography type="h6" className="text-text text-sm font-normal text-center mb-6">
+                            Your device data appears to be corrupted. This is likely due to browser storage being partially cleared. 
+                            You'll need to set up ToothPaste again.
+                        </Typography>
+
+                        <Typography type="h6" className="text-gray-400 text-xs text-center mb-6 italic">
+                            <span className="text-orange">Note:</span> This will forget all paired devices and saved data.
+                        </Typography>
+
+                        <Button
+                            onClick={handleRecoverFromCorruption}
+                            loading={isLoading.toString()}
+                            disabled={isLoading}
+                            className='w-full min-h-10 bg-primary text-text hover:bg-primary-hover active:bg-primary-active flex flex-wrap items-center justify-center p-2'
+                        >
+                            <Typography type="h6" className={`text-text normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
+                                Reset and Start Fresh
+                            </Typography>
+                        </Button>
+                    </>
+                )}
+
+                {/* ERROR MESSAGE */}
                 {error && (
                     <div className="mt-4 p-3 bg-red-500/20 border border-red-500 rounded-md text-red-500 w-full text-center">
-                        {error}
+                        <Typography type="h6" className="text-sm">
+                            {error}
+                        </Typography>
                     </div>
                 )}
             </div>

@@ -15,8 +15,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { useBLEContext, ConnectionStatus } from "../../context/BLEContext";
-import { isUnlocked, getRequiredAuthMode } from "../../services/EncryptedStorage";
 import AuthenticationOverlay from "../overlays/AuthenticationOverlay";
+import { authStateManager, AuthState } from "../../services/AuthStateManager";
 import ToothPaste from "../../assets/ToothPaste.png";
 import { createRenamePacket } from "../../services/packetService/packetFunctions";
 
@@ -106,7 +106,7 @@ function EditableDeviceName({ name, setName, isEditing, setIsEditing, isHovering
 }
 
 // Status icon for a given device
-function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authMode }) {
+function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authState }) {
     const LONG_PRESS_DURATION = 2000;
     const { connectToDevice, status, device, sendEncrypted } = useBLEContext();
     const { start, end, cancel, longPressed } = useClickOrLongPress(LONG_PRESS_DURATION);
@@ -180,12 +180,11 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authMode }) {
         setProgress(0);
 
         if (!longPressTriggered.current) {
-            // Check if authenticated before connecting
-            if (!status || status === ConnectionStatus.disconnected) {
-                if (authMode !== "unlocked") {
-                    setShowAuthOverlay(true);
-                    return;
-                }
+            // Check auth state before connecting - only proceed if explicitly UNLOCKED
+            // Show auth overlay for any other state (LOADING, FIRST_TIME, AWAITING_*, CORRUPTED, or null)
+            if (authState !== AuthState.UNLOCKED) {
+                setShowAuthOverlay(true);
+                return;
             }
             clickFn?.(); // only run click if long press didn't trigger
         }
@@ -236,16 +235,25 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
     const [open, setOpen] = React.useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [showAuthOverlay, setShowAuthOverlay] = useState(false);
-    const [authMode, setAuthMode] = useState(null);
+    const [authState, setAuthState] = useState(null);
     const { status, device, connectToDevice } = useBLEContext();
 
-    // Check auth mode on mount
+    // Subscribe to auth state
     useEffect(() => {
-        const checkAuthMode = async () => {
-            const mode = await getRequiredAuthMode();
-            setAuthMode(mode);
-        };
-        checkAuthMode();
+        const unsubscribe = authStateManager.subscribe((newState) => {
+            console.log("[Navbar] Auth state changed to:", newState);
+            setAuthState(newState);
+            
+            // Auto-hide auth overlay on successful unlock
+            if (newState === AuthState.UNLOCKED) {
+                setShowAuthOverlay(false);
+            }
+        });
+
+        // Initialize auth state on mount
+        authStateManager.initialize();
+
+        return unsubscribe;
     }, []);
 
     const borderClass =
@@ -255,8 +263,6 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
             [ConnectionStatus.connected]: "border-orange",
             [ConnectionStatus.unsupported]: "border-orange",
         }[status] || "border-orange"; // fallback if undefined
-
-    console.log("Status is: ", status);
 
     useEffect(() => {
         if(activeOverlay == "pair")
@@ -368,7 +374,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                         <ConnectionButton 
                             showAuthOverlay={showAuthOverlay}
                             setShowAuthOverlay={setShowAuthOverlay}
-                            authMode={authMode}
+                            authState={authState}
                         />
                     </div>
 
@@ -483,7 +489,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
                     <ConnectionButton 
                         showAuthOverlay={showAuthOverlay}
                         setShowAuthOverlay={setShowAuthOverlay}
-                        authMode={authMode}
+                        authState={authState}
                     />
                 </div>
             )}
