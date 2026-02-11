@@ -7,4 +7,7 @@ export const appColors = {
     ink: '#111111',
     ash: '#222222',
     orange: '#DE6240',
+    dust: '#888888',
+    blueish: '#6fa6ff',
+    graphite: '#444444',
 };

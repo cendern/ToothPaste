@@ -73,7 +73,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                 </button>
 
                 <Typography variant="h4" className="text-text font-header normal-case font-semibold">
-                    <span className="text-gray-500">Pair Device - </span>
+                    <span className="text-dust">Pair Device - </span>
                     <span className="text-text">{device?.name ?? ""}</span>
                 </Typography>
                             

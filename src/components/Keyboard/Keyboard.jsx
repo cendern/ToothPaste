@@ -148,7 +148,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
                 setBackgroundColor("bg-orange");
                 break;
             default:
-                setBackgroundColor("bg-gray");
+                setBackgroundColor("bg-dust");
         }
     }, [deviceStatus]);
 
@@ -159,7 +159,7 @@ const Keyboard = ({ listenerRef, deviceStatus }) => {
             <Button
                 variant="outline"
                 onClick={handleToggle}
-                className={`hidden lg:block p-3 border border-gray-500 text-text hover:bg-white hover:text-ink 
+                className={`hidden lg:block p-3 border border-dust text-text hover:bg-white hover:text-ink 
                     ${showKeyboard ? "bg-white text-ink" : "bg-ink "}`}
             >
                 Keyboard

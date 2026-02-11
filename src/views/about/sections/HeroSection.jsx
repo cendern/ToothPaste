@@ -28,7 +28,7 @@ export default function HeroSection({ currentSlide, getSectionOpacity }) {
                         <div className="mb-40">
                             <Typography className="font-header text-8xl font-bold text-primary ">ToothPaste</Typography>
                             <Typography style={{ fontFamily: '"Libre Barcode 39 Extended", system-ui' }} className="text-2xl leading-relaxed">ToothPaste</Typography>
-                            <Typography className="font-body text-4xl font-light italic text-gray-500 leading-relaxed ">Plug In. Pair. Paste.</Typography>
+                            <Typography className="font-body text-4xl font-light italic text-dust leading-relaxed ">Plug In. Pair. Paste.</Typography>
                         </div>
                         <div className="flex flex-col gap-4 ">
                             <Typography type="h5" className="font-body text-white leading-relaxed mb-0">
@@ -43,7 +43,7 @@ export default function HeroSection({ currentSlide, getSectionOpacity }) {
                                 typingSpeed={10}
                                 pauseTime={1000}
                                 repeat={true}
-                                className="font-body font-light text-3xl text-gray-500 block my-0"
+                                className="font-body font-light text-3xl text-dust block my-0"
                             />
                             <Typography type="h5" className="font-body text-white leading-relaxed">
                                 and you're in a rush.......                                
@@ -65,7 +65,7 @@ export default function HeroSection({ currentSlide, getSectionOpacity }) {
                         <div className="mb-40">
                             <Typography className="font-header text-6xl font-bold text-primary ">ToothPaste</Typography>
                             <Typography style={{ fontFamily: '"Libre Barcode 39 Extended", system-ui' }} className="text-2xl leading-relaxed">ToothPaste</Typography>
-                            <Typography className="font-body text-2xl font-light italic text-gray-500 leading-relaxed ">Plug In. Pair. Paste</Typography>
+                            <Typography className="font-body text-2xl font-light italic text-dust leading-relaxed ">Plug In. Pair. Paste</Typography>
                         </div>
                         <div className="flex flex-col gap-4 mr-12">
                             <Typography type="h5" className="font-body text-white leading-relaxed mb-0">
@@ -80,7 +80,7 @@ export default function HeroSection({ currentSlide, getSectionOpacity }) {
                                 typingSpeed={10}
                                 pauseTime={1000}
                                 repeat={true}
-                                className="font-body font-light text-2xl text-gray-500 block my-0"
+                                className="font-body font-light text-2xl text-dust block my-0"
                             />
                             <Typography type="h5" className="font-body text-white leading-relaxed">
                                 and you're in a rush.......                                

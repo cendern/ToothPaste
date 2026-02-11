@@ -17,11 +17,11 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                 <div className="grid grid-cols-3 gap-40 h-full items-center">
                     {/* Left Third */}
                     <div className="flex flex-col col-span-1 gap-2 text-left">
-                        <Typography type="h5" className="font-body text-lg font-light text-gray-700 italic ">
+                        <Typography type="h5" className="font-body text-lg font-light text-graphite italic ">
                         "If only i could copy this really long password to this really shady computer, we could achieve world peace. 
                         <br/>Alas! I'm going to type it manually......"
                         </Typography>
-                        <Typography className="italic text-lg font-body text-gray-700">- Someone Definitely</Typography>
+                        <Typography className="italic text-lg font-body text-graphite">- Someone Definitely</Typography>
                     </div>
                     
                 </div>

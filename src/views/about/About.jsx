@@ -293,7 +293,7 @@ export default function About() {
 
             {/* Barcode ToothPaste */}
             <div className='rotate-90 absolute bottom-0 right-0 -translate-y-full translate-x-[43%] pointer-events-none'>
-                            <Typography style={{ fontFamily: '"Libre Barcode 39 Extended", system-ui' }} className="text-8xl leading-relaxed text-gray-500">ToothPaste</Typography>
+                            <Typography style={{ fontFamily: '"Libre Barcode 39 Extended", system-ui'}} className="text-8xl leading-relaxed text-dust">ToothPaste</Typography>
             </div>
         </div>
     );
