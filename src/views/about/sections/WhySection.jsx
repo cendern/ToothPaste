@@ -30,7 +30,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
             </div>
 
             {/* Content Grid - 1 text row + 1 large container for remaining rows */}
-            <div className="flex-1 relative w-full flex flex-col gap-1 md:gap-0 z-25">
+            <div className="flex-1 relative w-full flex flex-col gap-1 md:gap-0 z-50 xl:z-25">
 
                     {/* Row 1 - Text Content */}
                     <div className="flex flex-col justify-center text-center p-4 z-25 flex-shrink">
@@ -43,7 +43,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     <div 
                         className="flex-1 flex flex-col gap-0 w-full bg-background/60 px-3 
                         md:px-8 py-4 md:py-8 
-                        border-t-2 border-white text-center z-25 overflow-hidden"
+                        border-t-2 border-white text-center z-55 xl:z-25 overflow-hidden"
                         style={{ boxShadow: '0 0 50px rgba(255, 255, 255, 0.3)' }}
                     >   
                         {/* Top 1/3 - "So I made ToothPaste" */}
@@ -64,7 +64,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}
                                 />
                                 <div className="flex flex-col items-center justify-center gap-4 px-4">
-                                    <Typography className="font-body md:text-sm lg:text-base font-light text-text leading-relaxed">
+                                    <Typography className="font-body text-xl font-light text-text leading-relaxed">
                                     As a maker and tinkerer, I often find myself needing to quickly paste passwords, commands, 
                                     or text snippets into devices that aren't connected to the internet.
                                     </Typography>
@@ -77,7 +77,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.orange})` }}/>
                                 
                                 <div className="flex flex-col items-center justify-center gap-4 px-4">
-                                    <Typography className="font-body md:text-sm lg:text-base font-light text-text leading-relaxed">
+                                    <Typography className="font-body text-xl font-light text-text leading-relaxed">
                                     And sometimes I just don't want to login to my password manager on some a sketchy makerspace computer.
                                     </Typography>
                                     
@@ -97,10 +97,10 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                                 <HeartIcon className="h-12 w-12 xl:h-16 xl:w-16 text-primary" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
                                 <div className="flex flex-col items-center justify-center gap-2 px-4">
-                                    <Typography className="font-body xl:text-2xl lg:text-base font-light text-text">
+                                    <Typography className="font-body text-xl xl:text-2xl font-light text-text">
                                     And I just needed a reason to solder some stuff and write some code 
                                     </Typography>
-                                    <Typography className="font-body text-xs md:text-sm lg:text-base font-light text-text">
+                                    <Typography className="font-body text-xs md:text-sm font-light text-text">
                                     And then I went a bit overboard. 
                                     </Typography>
                                 </div>
