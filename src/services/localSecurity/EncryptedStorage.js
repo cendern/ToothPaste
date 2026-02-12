@@ -7,7 +7,7 @@
  * 2. Passwordless: Uses a hardcoded insecure key (development only)
  */
 
-import * as Storage from './Storage.js';
+import * as Storage from '../Storage.js';
 import argon2 from 'argon2-wasm-esm';
 
 // Session-based encryption key and salt (salt is used for key re-derivation, not secret)
@@ -195,7 +195,7 @@ export async function unlockWithPassword(password) {
         sessionEncryptionKey = aesKey;
         sessionSalt = salt;
         isUnlockedFlag = true;
-        localStorage.setItem("__EncryptedStorage_AuthScheme__", "password");
+        localStorage.setItem("__EncryptedStorage_AuthScheme__", AuthScheme.PASSWORD);
         return { success: true };
     } catch (error) {
         console.error("[EncryptedStorage] Password unlock failed:", error.message);
@@ -211,7 +211,7 @@ export async function unlockPasswordless() {
     try {
         sessionEncryptionKey = await deriveInsecureKey();
         isUnlockedFlag = true;
-        localStorage.setItem("__EncryptedStorage_AuthScheme__", "passwordless");
+        localStorage.setItem("__EncryptedStorage_AuthScheme__", AuthScheme.PASSWORDLESS);
         return true;
     } catch (error) {
         console.error("[EncryptedStorage] Passwordless unlock failed:", error);
@@ -237,14 +237,94 @@ export function lock() {
 }
 
 /**
- * Clear the master salt and validation token (for password reset/change).
- * Warning: This will required re-entering password on next unlock.
+ * Storage consistency states
  */
-export function clearMasterSalt() {
-    localStorage.removeItem("__EncryptedStorage_MasterSalt__");
-    localStorage.removeItem("__EncryptedStorage_ValidationToken__");
-    localStorage.removeItem("__EncryptedStorage_AuthScheme__");
-    lock();
+export const StorageConsistency = {
+    VALID: 'valid',              // Both localStorage and IndexedDB consistent
+    CORRUPTED: 'corrupted',      // Partial data exists (mismatch)
+    EMPTY: 'empty',              // No storage data (virgin state)
+};
+
+/**
+ * Stored authentication schemes (persisted in localStorage)
+ */
+export const AuthScheme = {
+    PASSWORD: 'password',          // Password-protected
+    PASSWORDLESS: 'passwordless',  // Passwordless mode
+};
+
+/**
+ * Verify localStorage and IndexedDB consistency
+ * @returns {Promise<StorageConsistency>}
+ */
+export async function verifyStorageConsistency() {
+    try {
+        const authScheme = localStorage.getItem("__EncryptedStorage_AuthScheme__");
+        const masterSalt = localStorage.getItem("__EncryptedStorage_MasterSalt__");
+        
+        // Check if IndexedDB has any data
+        const db = await Storage.openDB();
+        const tx = db.transaction(Storage.STORE_NAME || "deviceKeys", "readonly");
+        const store = tx.objectStore(Storage.STORE_NAME || "deviceKeys");
+        const countRequest = store.count();
+        
+        const hasIndexedDBData = await new Promise((resolve) => {
+            countRequest.onsuccess = () => resolve(countRequest.result > 0);
+            countRequest.onerror = () => resolve(false);
+        });
+        
+        db.close();
+        
+        // Both empty - virgin state
+        if (!authScheme && !masterSalt && !hasIndexedDBData) {
+            return StorageConsistency.EMPTY;
+        }
+        
+        // Consistent state - authScheme is set (passwordless doesn't need masterSalt)
+        // Password mode will have both authScheme and masterSalt
+        // Passwordless mode will have only authScheme
+        if (authScheme) {
+            return StorageConsistency.VALID;
+        }
+        
+        // Mangled state - partial data exists (has masterSalt or IndexedDB but no authScheme)
+        return StorageConsistency.CORRUPTED;
+    } catch (error) {
+        console.error("[EncryptedStorage] Error verifying consistency:", error);
+        return StorageConsistency.CORRUPTED;
+    }
+}
+
+/**
+ * Completely reset storage to virgin state
+ * Use this when storage is corrupted
+ */
+export async function resetStorageCompletely() {
+    try {
+        // Close any open database connections
+        lock();
+        
+        // Delete the entire database
+        await Storage.deleteDatabase();
+        
+        // Clear all localStorage auth data
+        localStorage.removeItem("__EncryptedStorage_MasterSalt__");
+        localStorage.removeItem("__EncryptedStorage_ValidationToken__");
+        localStorage.removeItem("__EncryptedStorage_AuthScheme__");
+        
+        console.log("[EncryptedStorage] Storage completely reset");
+    } catch (error) {
+        console.error("[EncryptedStorage] Error resetting storage:", error);
+        throw error;
+    }
+}
+
+/**
+ * Clear the master salt and validation token (for intentional password reset/change).
+ * Warning: This will clear all stored data and require re-entering password on next unlock.
+ */
+export async function clearMasterSalt() {
+    return resetStorageCompletely();
 }
 
 /**
@@ -342,39 +422,49 @@ export function isUnlocked() {
 }
 
 /**
+ * Required authentication modes
+ */
+export const RequiredAuthMode = {
+    UNLOCKED: 'unlocked',              // Already unlocked in session
+    PASSWORD: 'password',               // Requires password entry
+    PASSWORDLESS: 'passwordless',      // Requires passwordless unlock
+    CHOOSE: 'choose',                  // User must choose (first time)
+};
+
+/**
  * Auto-unlock based on stored auth scheme.
  * Returns:
- *   "unlocked" - if already unlocked
- *   "passwordless" - if passwordless mode is set and successfully unlocked
- *   "password" - if password mode is set (requires manual password entry)
- *   "choose" - if no auth scheme is set (show both options)
+ *   RequiredAuthMode.UNLOCKED - if already unlocked
+ *   RequiredAuthMode.PASSWORDLESS - if passwordless mode is set and successfully unlocked
+ *   RequiredAuthMode.PASSWORD - if password mode is set (requires manual password entry)
+ *   RequiredAuthMode.CHOOSE - if no auth scheme is set (show both options)
  */
 export async function getRequiredAuthMode() {
     // Already unlocked
     if (isUnlockedFlag) {
-        return "unlocked";
+        return RequiredAuthMode.UNLOCKED;
     }
     
     const authScheme = getAuthScheme();
     
     // Auto-unlock passwordless
-    if (authScheme === "passwordless") {
+    if (authScheme === AuthScheme.PASSWORDLESS) {
         try {
             await unlockPasswordless();
-            return "unlocked";
+            return RequiredAuthMode.UNLOCKED;
         } catch (error) {
             console.error("[EncryptedStorage] Passwordless auto-unlock failed:", error);
-            return "passwordless";
+            return RequiredAuthMode.PASSWORDLESS;
         }
     }
     
     // Password mode requires manual input
-    if (authScheme === "password") {
-        return "password";
+    if (authScheme === AuthScheme.PASSWORD) {
+        return RequiredAuthMode.PASSWORD;
     }
     
     // No scheme set - show choose screen
-    return "choose";
+    return RequiredAuthMode.CHOOSE;
 }
 
 /**
