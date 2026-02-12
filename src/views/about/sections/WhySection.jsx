@@ -43,7 +43,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     
                     {/* Container - Rows 2-4 spanning full width */}
                     <div 
-                        className="row-span-3 grid grid-rows-5 gap-0 w-full bg-background/60 py-10 
+                        className="row-span-3 grid grid-rows-5 gap-0 w-full bg-background/60 p-16
                         border-t-2 border-white text-center"
                         style={{ boxShadow: '0 0 50px rgba(255, 255, 255, 0.3)' }}
                     >   
@@ -55,7 +55,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                         </div>
 
                         {/* Bottom 2/3 - 3 columns */}
-                        <div className="row-span-4 grid grid-cols-3 gap-12 w-full p-12">
+                        <div className="row-span-4 grid grid-cols-3 gap-12 w-full p-24">
                             {/* Column 1 */}
                             <div className="border-2 rounded-lg border-secondary bg-ink shadow-lg shadow-secondary h-full p-6 flex flex-col items-center">
                                 <CogIcon 
