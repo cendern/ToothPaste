@@ -180,20 +180,25 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authState }) {
         setProgress(0);
 
         if (!longPressTriggered.current) {
-            // Don't proceed if auth state is still initializing
-            if (authState === null) {
-                return;
-            }
-            
-            // Show auth overlay only if authentication is required (not UNLOCKED)
-            if (authState !== AuthState.UNLOCKED) {
-                setShowAuthOverlay(true);
-                return;
-            }
-            
-            // If already UNLOCKED, proceed with connection
             clickFn?.();
         }
+    };
+
+    // Wrapper to check auth before connecting
+    const handleConnectClick = () => {
+        // Don't proceed if auth state is still initializing
+        if (authState === null) {
+            return;
+        }
+        
+        // Show auth overlay if authentication is required (not UNLOCKED)
+        if (authState !== AuthState.UNLOCKED) {
+            setShowAuthOverlay(true);
+            return;
+        }
+        
+        // If already UNLOCKED, proceed with connection
+        connectToDevice();
     };
 
     return (
@@ -209,10 +214,10 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authState }) {
                 }}
                 onMouseDown={() => {if (device && status === ConnectionStatus.ready) handleStart(() => setIsEditing(true));}}
                 onMouseLeave={() => {handleEnd(cancel); setIsHovering(false);}}
-                onMouseUp={() => handleEnd(() => connectToDevice())}
+                onMouseUp={() => handleEnd(handleConnectClick)}
                 onTouchStart={() => {if (device && status === ConnectionStatus.ready) handleStart(() => setIsEditing(true));}}
                 onTouchCancel={() => {handleEnd(cancel);}}
-                onTouchEnd={() => handleEnd(() => connectToDevice())}
+                onTouchEnd={() => handleEnd(handleConnectClick)}
                 onMouseEnter={() => {if (status === ConnectionStatus.ready) setIsHovering(true)}}
             >
                 <div className="flex items-center justify-between w-full">
@@ -283,7 +288,7 @@ export default function Navbar({ onChangeOverlay, onNavigate, activeView, active
     }, [activeOverlay, status, onChangeOverlay]);
     return (
         <>
-        <div id="navbar" className="w-full bg-shelf text-white">
+        <div id="navbar" className="w-full bg-ink text-white">
             <div className="relative flex justify-between h-24 items-center px-4">
                 {/* Left: Logo */}
                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setIsOpen(false)}>

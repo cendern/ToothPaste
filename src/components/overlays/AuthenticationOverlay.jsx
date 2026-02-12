@@ -139,8 +139,8 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
     }
 
     return (
-        <div className="fixed inset-0 bg-hover/60 flex flex-col justify-center items-center z-[9999]" onClick={onClose}>
-            <div className="bg-shelf p-5 rounded-lg w-11/12 max-w-lg flex flex-col justify-center items-center shadow-lg relative" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-ash/60 flex flex-col justify-center items-center z-[9999]" onClick={onClose}>
+            <div className="bg-ink p-5 rounded-lg w-11/12 max-w-lg flex flex-col justify-center items-center shadow-lg relative" onClick={(e) => e.stopPropagation()}>
                 {/* Close Button - only show if not corrupted */}
                 {authState !== AuthState.CORRUPTED && (
                     <button
@@ -161,7 +161,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                         <Typography type="h6" className="text-text text-sm text-center mb-6">
                             Choose how to secure your device.
                         </Typography>
-
+                        
                         <Typography type="h6" className="text-text text-xs text-center mb-3">
                             Set a password to encrypt your stored data:
                         </Typography>
@@ -180,14 +180,14 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                             onClick={handleSetPasswordFirstTime}
                             loading={isLoading.toString()}
                             disabled={isLoading || !password.trim()}
-                            className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-hover active:bg-primary-active flex flex-wrap items-center justify-center p-2'
+                            className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-ash active:bg-primary-active flex flex-wrap items-center justify-center p-2'
                         >
                             <Typography type="h6" className={`text-text font-sans normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
                                 Set Password and Continue
                             </Typography>
                         </Button>
 
-                        <Typography type="h6" className="text-text text-xs text-center mb-3 border-t border-hover pt-3 mt-3">
+                        <Typography type="h6" className="text-text text-xs text-center mb-3 border-t border-ash pt-3 mt-3">
                             Or continue without a password:
                         </Typography>
 
@@ -234,7 +234,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                             onClick={handlePasswordUnlock}
                             loading={isLoading.toString()}
                             disabled={isLoading || !password.trim()}
-                            className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-hover active:bg-primary-active flex flex-wrap items-center justify-center p-2'
+                            className='w-full min-h-10 mb-3 bg-primary text-text hover:bg-primary-ash active:bg-primary-active flex flex-wrap items-center justify-center p-2'
                         >
                             <Typography type="h6" className={`text-text font-sans normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
                                 Unlock
@@ -245,7 +245,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                             onClick={() => {
                                 setShowForgotPasswordConfirm(true);
                             }}
-                            className="text-sm text-primary hover:text-primary-hover underline mt-2"
+                            className="text-sm text-primary hover:text-primary-ash underline mt-2"
                             disabled={isLoading}
                         >
                             Forgot Password?
@@ -308,7 +308,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                             onClick={handlePasswordlessUnlock}
                             loading={isLoading.toString()}
                             disabled={isLoading}
-                            className='w-full min-h-10 flex flex-wrap items-center justify-center bg-primary text-text hover:bg-primary-hover border-none p-2'
+                            className='w-full min-h-10 flex flex-wrap items-center justify-center bg-primary text-text hover:bg-primary-ash border-none p-2'
                         >
                             <Typography type="h6" className={`text-text normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
                                 Unlock
@@ -341,7 +341,7 @@ const AuthenticationOverlay = ({ onAuthSuccess, onClose }) => {
                             onClick={handleRecoverFromCorruption}
                             loading={isLoading.toString()}
                             disabled={isLoading}
-                            className='w-full min-h-10 bg-primary text-text hover:bg-primary-hover active:bg-primary-active flex flex-wrap items-center justify-center p-2'
+                            className='w-full min-h-10 bg-primary text-text hover:bg-primary-ash active:bg-primary-active flex flex-wrap items-center justify-center p-2'
                         >
                             <Typography type="h6" className={`text-text normal-case font-semibold ${isLoading ? "hidden" : ""}`}>
                                 Reset and Start Fresh

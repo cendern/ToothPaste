@@ -109,8 +109,8 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                     onClick={handleClick}
                     onKeyDown={handleKeyDown}
                     onKeyUp={handleKeyUp}
-                    className='w-full h-10 opacity-1 text-text bg-shelf border border-3 border-hover rounded-md p-2 my-4 font-body
-                    focus:outline-none focus:border-primary focus:ring-primary-hover'
+                    className='w-full h-10 opacity-1 text-text bg-ink border border-3 border-ash rounded-md p-2 my-4 font-body
+                    focus:outline-none focus:border-primary focus:ring-primary-ash'
                 />
 
                 {capsLockEnabled && (
@@ -127,7 +127,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                     onClick={computeSecret}
                     loading={isLoading.toString()}
                     disabled={keyInput.trim().length < 44 || !pktCharacteristic || isLoading || capsLockEnabled}
-                    className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-hover focus:bg-primary-focus active:bg-primary-active
+                    className='w-full h-10 my-4 bg-primary text-text hover:bg-primary-ash focus:bg-primary-focus active:bg-primary-active
                      border-none flex items-center justify-center size-sm'>
 
                     <KeyIcon className={`h-7 w-7 mr-2  ${isLoading? "hidden":""}`} />
