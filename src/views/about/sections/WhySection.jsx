@@ -49,7 +49,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     >   
                         {/* Top 1/3 - "So I made ToothPaste" */}
                         <div className="row-span-1 flex items-center justify-center z-60">
-                            <Typography className="font-header text-7xl font-semibold text-text leading-relaxed">
+                            <Typography className="font-header text-7xl font-semibold text-dust leading-relaxed">
                                 <span className='font-light'>So I made</span> ToothPaste.
                             </Typography>
                         </div>
