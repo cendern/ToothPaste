@@ -32,7 +32,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
 
             {/* Content Grid - 1 text row + 1 large container for remaining rows */}
             <div className="flex-1 relative w-full">
-                <div className="grid grid-cols-1 grid-rows-4 gap-8 h-full">
+                <div className="grid grid-cols-1 grid-rows-4 gap-2 h-full z-80">
 
                     {/* Row 1 - Text Content */}
                     <div className="row-span-1 flex flex-col justify-center text-center px-8">
@@ -43,63 +43,65 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     
                     {/* Container - Rows 2-4 spanning full width */}
                     <div 
-                        className="row-span-3 flex flex-col w-full gap-10 bg-background/60 p-5 
-                        border-t-2 border-white items-center justify-center text-center"
+                        className="row-span-3 grid grid-rows-5 gap-0 w-full bg-background/60 py-10 
+                        border-t-2 border-white text-center"
                         style={{ boxShadow: '0 0 50px rgba(255, 255, 255, 0.3)' }}
-                    >
-                        <div className="grid grid-cols-3 gap-12 w-full h-2/3 p-4 mt-auto mb-10">
+                    >   
+                        {/* Top 1/3 - "So I made ToothPaste" */}
+                        <div className="row-span-1 flex items-center justify-center z-60">
+                            <Typography className="font-header text-7xl font-semibold text-text leading-relaxed">
+                                <span className='font-light'>So I made</span> ToothPaste.
+                            </Typography>
+                        </div>
+
+                        {/* Bottom 2/3 - 3 columns */}
+                        <div className="row-span-4 grid grid-cols-3 gap-12 w-full p-12">
                             {/* Column 1 */}
-                            <div className="border-2 rounded-lg border-secondary bg-ink shadow-lg shadow-secondary h-full p-2">
-                                <div className="flex flex-col h-full gap-5 m-5">
-                                    <CogIcon 
-                                        className="h-1/3 w-1/3 text-secondary self-center flex-shrink-0" 
-                                        style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}
-                                    />
-                                    <div className="flex-1 flex flex-col items-center justify-start px-6 py-2 overflow-y-auto">
-                                        <Typography className="font-body text-2xl font-light text-text leading-relaxed">
-                                        As a maker and tinkerer, I often find myself needing to quickly paste passwords, commands, 
-                                        or text snippets into devices that aren't connected to the internet.
-                                        </Typography>
-                                    </div>
+                            <div className="border-2 rounded-lg border-secondary bg-ink shadow-lg shadow-secondary h-full p-6 flex flex-col items-center">
+                                <CogIcon 
+                                    className="h-1/3 w-1/3 text-secondary flex-shrink-0 mb-3" 
+                                    style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}
+                                />
+                                <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto">
+                                    <Typography className="font-body text-2xl font-light text-text leading-relaxed">
+                                    As a maker and tinkerer, I often find myself needing to quickly paste passwords, commands, 
+                                    or text snippets into devices that aren't connected to the internet.
+                                    </Typography>
                                 </div>
                             </div>
                             
                             {/* Column 2 */}
-                            <div className="border-2 rounded-lg border-orange bg-ink shadow-lg shadow-orange h-full p-2">
-                                <div className="flex flex-col h-full gap-5 m-5">
-                                    <EyeSlashIcon className="h-1/3 w-1/3 text-orange self-center flex-shrink-0"
+                            <div className="border-2 rounded-lg border-orange bg-ink shadow-lg shadow-orange h-full p-6 flex flex-col items-center">
+                                <EyeSlashIcon className="h-1/3 w-1/3 text-orange flex-shrink-0 mb-3"
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.orange})` }}/>
+                                
+                                <div className="flex-1 flex flex-col items-center justify-center gap-8 overflow-y-auto">
+                                    <Typography className="font-body text-2xl font-light text-text leading-relaxed">
+                                    And sometimes I just don't want to login to my password manager on some a sketchy makerspace computer.
+                                    </Typography>
                                     
-                                    <div className="flex-1 flex flex-col items-center justify-start px-6 py-2 gap-6 overflow-y-auto">
-                                        <Typography className="font-body text-2xl font-light text-text leading-relaxed">
-                                        And sometimes I just don't want to login to my password manager on some a sketchy makerspace computer.
+                                    <div className="text-center">
+                                        <Typography className="font-body text-2xl font-bold text-text">
+                                        Or... I'm just lazy
                                         </Typography>
-                                        
-                                        <div>
-                                            <Typography className="font-body text-2xl font-bold text-text">
-                                            Or... I'm just lazy
-                                            </Typography>
-                                            <Typography className="font-body text-md font-extralight text-text italic">
-                                            this might be the real reason
-                                            </Typography>
-                                        </div>
+                                        <Typography className="font-body text-sm font-extralight text-text italic">
+                                        this might be the real reason
+                                        </Typography>
                                     </div>
                                 </div>
                             </div>
                             
                             {/* Column 3 */}
-                            <div className="border-2 rounded-lg border-primary bg-ink shadow-lg shadow-primary h-full p-2">
-                                <div className="flex flex-col h-full gap-5 m-5">
-                                    <HeartIcon className="h-1/3 w-1/3 text-primary self-center flex-shrink-0" 
-                                        style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
-                                    <div className="flex-1 flex flex-col items-center justify-start px-6 py-2 overflow-y-auto gap-10">
-                                        <Typography className="font-body text-2xl font-light text-text">
-                                        And I just needed a reason to solder some stuff and write some code 
-                                        </Typography>
-                                        <Typography className="font-body text-2xl font-light text-text">
-                                        So i went a bit overboard. 
-                                        </Typography>
-                                    </div>
+                            <div className="border-2 rounded-lg border-primary bg-ink shadow-lg shadow-primary h-full p-6 flex flex-col items-center">
+                                <HeartIcon className="h-1/3 w-1/3 text-primary flex-shrink-0 mb-3" 
+                                    style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
+                                <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto gap-8">
+                                    <Typography className="font-body text-2xl font-light text-text">
+                                    And I just needed a reason to solder some stuff and write some code 
+                                    </Typography>
+                                    <Typography className="font-body text-2xl font-light text-text">
+                                    And then I went a bit overboard. 
+                                    </Typography>
                                 </div>
                             </div>
                         </div>
