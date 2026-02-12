@@ -40,7 +40,7 @@ export default {
     function ({ addComponents }) {
       addComponents({
         '.whybox': {
-          '@apply flex-1 border-2 rounded-lg bg-ink shadow-lg h-full p-2 md:p-3 flex flex-col items-center min-h-0': {}
+          '@apply flex-1 border-2 rounded-lg bg-ink shadow-lg h-full p-2 md:p-3 flex flex-col items-center justify-center gap-2 md:gap-3': {}
         }
       })
     },
