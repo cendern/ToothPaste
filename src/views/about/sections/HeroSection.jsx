@@ -11,7 +11,7 @@ export default function HeroSection({ currentSlide, getSectionOpacity }) {
             px-6 
             xl:px-12 
             py-5 
-            z-10 "
+            z-50 "
             style={{
                 opacity: getSectionOpacity(0),
                 transition: 'opacity 0.3s ease-in-out',

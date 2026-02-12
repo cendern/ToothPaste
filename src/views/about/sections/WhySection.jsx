@@ -16,7 +16,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
             }}
         >
             {/* Title Row */}
-            <div className="absolute top-10 left-0 z-10 px-4 pt-4 max-w-m">
+            <div className="absolute top-10 left-0 z-10 px-4 pt-4 max-w-sm">
                 <div className="flex items-center">
                     {/* Left Third */}
                     <div className="flex flex-col gap-1 text-left">
@@ -30,23 +30,24 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
             </div>
 
             {/* Content Grid - 1 text row + 1 large container for remaining rows */}
-            <div className="flex-1 relative w-full flex flex-col gap-1 md:gap-2 z-25 min-h-0">
+            <div className="flex-1 relative w-full flex flex-col gap-1 md:gap-0 z-25 min-h-0">
 
                     {/* Row 1 - Text Content */}
-                    <div className="flex flex-col justify-center text-center p-4 z-30 flex-shrink">
-                        <Typography className="font-header text-sm md:text-2xl text-white">
+                    <div className="flex flex-col justify-center text-center p-4 z-25 flex-shrink">
+                        <Typography className="font-header font-lighttext-sm md:text-4xl text-white">
                         Secure passwords are annoying to type and easy to mess up.
                         </Typography>
                     </div>
                     
                     {/* Container - flex-1 fills remaining space */}
                     <div 
-                        className="flex-1 flex flex-col gap-0 w-full bg-background/60 px-3 md:px-8 py-4 md:py-8
-                        border-t-2 border-white text-center z-40 min-h-0 overflow-hidden"
+                        className="flex-1 flex flex-col gap-0 w-full bg-background/60 px-3 
+                        md:px-8 py-4 md:py-8 
+                        border-t-2 border-white text-center z-25 min-h-0 overflow-hidden"
                         style={{ boxShadow: '0 0 50px rgba(255, 255, 255, 0.3)' }}
                     >   
                         {/* Top 1/3 - "So I made ToothPaste" */}
-                        <div className="hidden xl:block flex items-center justify-center z-40 py-2 flex-shrink">
+                        <div className="hidden xl:block flex items-center justify-center z-25 py-2 flex-shrink">
                             <Typography className="font-header text-3xl md:text-5xl lg:text-6xl font-semibold text-dust leading-tight">
                                 <span className='font-light'>So I made</span> ToothPaste.
                             </Typography>
@@ -55,14 +56,15 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                         {/* 3 Why squares */}
                         <div className="flex-1 flex flex-col w-full gap-8 py-8 px-8
                         xl:flex-row xl:gap-6 xl:py-12 xl:px-8 ">
+
                             {/* Square 1 */}
                             <div className="whybox border-secondary shadow-secondary">
                                 <CogIcon 
                                     className="h-12 w-12 xl:h-16 xl:w-16 text-secondary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}
                                 />
-                                <div className="flex flex-col items-center justify-center px-4">
-                                    <Typography className="font-body text-xs md:text-sm lg:text-base font-light text-text leading-relaxed">
+                                <div className="flex flex-col items-center justify-center gap-4 px-4">
+                                    <Typography className="font-body md:text-sm lg:text-base font-light text-text leading-relaxed">
                                     As a maker and tinkerer, I often find myself needing to quickly paste passwords, commands, 
                                     or text snippets into devices that aren't connected to the internet.
                                     </Typography>
@@ -74,8 +76,8 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                                 <EyeSlashIcon className="h-12 w-12 md:h-16 md:w-16 text-orange"
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.orange})` }}/>
                                 
-                                <div className="flex flex-col items-center justify-center gap-2 md:gap-4 px-4">
-                                    <Typography className="font-body text-xs md:text-sm lg:text-base font-light text-text leading-relaxed">
+                                <div className="flex flex-col items-center justify-center gap-4 px-4">
+                                    <Typography className="font-body md:text-sm lg:text-base font-light text-text leading-relaxed">
                                     And sometimes I just don't want to login to my password manager on some a sketchy makerspace computer.
                                     </Typography>
                                     
@@ -94,8 +96,8 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                             <div className="whybox border-primary shadow-primary">
                                 <HeartIcon className="h-12 w-12 xl:h-16 xl:w-16 text-primary" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
-                                <div className="flex flex-col items-center justify-center gap-2 md:gap-4 px-4">
-                                    <Typography className="font-body text-xs md:text-sm lg:text-base font-light text-text">
+                                <div className="flex flex-col items-center justify-center gap-2 px-4">
+                                    <Typography className="font-body xl:text-2xl lg:text-base font-light text-text">
                                     And I just needed a reason to solder some stuff and write some code 
                                     </Typography>
                                     <Typography className="font-body text-xs md:text-sm lg:text-base font-light text-text">
@@ -105,13 +107,12 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                             </div>
                         </div>
                     
-                                {/* Centered Scroll Prompt at Bottom */}
-            <div className="flex items-center justify-center gap-1 md:gap-2 text-white flex-shrink-0 mt-1 md:mt-2 text-xs md:text-sm">
-                <ArrowDownIcon className="h-3 w-3 md:h-4 md:w-4 animate-bounce" />
-                <Typography type="small">What makes it secure?</Typography>
-            </div>
+                        {/* Centered Scroll Prompt at Bottom */}
+                        <div className="flex items-center justify-center gap-1 md:gap-2 text-white flex-shrink-0 mt-1 md:mt-2 text-xs md:text-sm">
+                            <ArrowDownIcon className="h-3 w-3 md:h-4 md:w-4 animate-bounce" />
+                            <Typography type="small">What makes it secure?</Typography>
+                        </div>
                     </div>
-                    
                 </div>
 
 
