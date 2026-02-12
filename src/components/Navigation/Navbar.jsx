@@ -238,7 +238,6 @@ function ConnectionButton({ showAuthOverlay, setShowAuthOverlay, authState }) {
 }
 
 export default function Navbar({ onChangeOverlay, onNavigate, activeView, activeOverlay }) {
-    const [open, setOpen] = React.useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [showAuthOverlay, setShowAuthOverlay] = useState(false);
     const [authState, setAuthState] = useState(null);
