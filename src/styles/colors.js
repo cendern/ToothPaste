@@ -2,10 +2,12 @@
 export const appColors = {
     primary: '#00A878',
     secondary: '#DD4058',
-    accent: '#DE6240',
-    background: '#000000',
     text: '#FFFFFF',
-    shelf: '#111111',
-    hover: '#222222',
+    background: '#000000',
+    ink: '#111111',
+    ash: '#222222',
     orange: '#DE6240',
+    dust: '#888888',
+    blueish: '#6fa6ff',
+    graphite: '#444444',
 };

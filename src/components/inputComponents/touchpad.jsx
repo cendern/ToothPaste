@@ -12,9 +12,15 @@ export default function Touchpad({
     onTouchEnd,
     onSendMouseClick,
     onSendKeyboardShortcut,
+    onSendScroll,
     leftButtonColumn,
     rightButtonColumn,
 }) {
+    // Multi-touch tracking for scroll
+    const lastTwoFingerDistanceRef = useRef(null);
+    const touchSurfaceRef = useRef(null);
+    const SCROLL_SENSITIVITY = 5; // pixels per scroll unit
+
     // Mouse button configuration and handlers
     const MOUSE_BUTTONS = [
         { id: 'left', label: 'Left', flex: 2, rounded: 'rounded-bl-xl' },
@@ -46,8 +52,65 @@ export default function Touchpad({
         onSendMouseClick(leftClick, rightClick);
     };
 
+    const getFingerDistance = (touches) => {
+        if (touches.length < 2) return null;
+        const dx = touches[1].clientX - touches[0].clientX;
+        const dy = touches[1].clientY - touches[0].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    const handleTouchStart = (e) => {
+        lastTwoFingerDistanceRef.current = null;
+        onTouchStart(e);
+    };
+
+    const handleTouchMove = (e) => {
+        // Handle 2-finger scroll
+        if (e.touches.length === 2 && onSendScroll && captureMouse) {
+            e.preventDefault();
+            const currentDistance = getFingerDistance(e.touches);
+            
+            if (lastTwoFingerDistanceRef.current !== null) {
+                const delta = lastTwoFingerDistanceRef.current - currentDistance;
+                const scrollAmount = Math.round(delta / SCROLL_SENSITIVITY);
+                
+                if (scrollAmount !== 0) {
+                    onSendScroll(scrollAmount);
+                }
+            }
+            
+            lastTwoFingerDistanceRef.current = currentDistance;
+        } else {
+            // Single touch - normal cursor movement
+            e.preventDefault();
+            lastTwoFingerDistanceRef.current = null;
+            onTouchMove(e);
+        }
+    };
+
+    const handleTouchEnd = (e) => {
+        lastTwoFingerDistanceRef.current = null;
+        onTouchEnd(e);
+    };
+
+    // Attach non-passive event listeners
+    useEffect(() => {
+        const element = touchSurfaceRef.current;
+        if (!element) return;
+
+        element.addEventListener("touchstart", handleTouchStart, { passive: false });
+        element.addEventListener("touchmove", handleTouchMove, { passive: false });
+        element.addEventListener("touchend", handleTouchEnd, { passive: false });
+
+        return () => {
+            element.removeEventListener("touchstart", handleTouchStart);
+            element.removeEventListener("touchmove", handleTouchMove);
+            element.removeEventListener("touchend", handleTouchEnd);
+        };
+    }, [captureMouse, onTouchStart, onTouchMove, onTouchEnd, onSendScroll]);
+
     return (
-        <div className="xl:hidden flex flex-col flex-1 my-4 rounded-xl transition-all border border-hover bg-shelf relative group overflow-hidden">
+        <div className="xl:hidden flex flex-col flex-1 my-4 rounded-xl transition-all border border-ash bg-ink relative group overflow-hidden">
             <div className="absolute top-2 left-2 z-10">
                 {leftButtonColumn}
             </div>
@@ -79,11 +142,8 @@ export default function Touchpad({
 
             {/* Mobile touch surface */}
             <div
+                ref={touchSurfaceRef}
                 className={`absolute inset-0 rounded-t-xl z-5 touch-none top-0 bottom-16 ${captureMouse ? "bg-background" : ""}`}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
-                onTouchCancel={onTouchEnd}
             />
 
             {/* Keyboard Shortcuts Carousel */}

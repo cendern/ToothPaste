@@ -84,8 +84,8 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
     }, [device, onChangeOverlay]); 
 
     return (
-        <div className="fixed inset-0 bg-hover/60 flex flex-col justify-center items-center z-[9999]" onClick={() => onChangeOverlay(null)}>
-            <div className="bg-shelf p-5 rounded-lg w-11/12 max-w-lg flex flex-col justify-center items-center shadow-lg relative" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-ash/60 flex flex-col justify-center items-center z-[9999]" onClick={() => onChangeOverlay(null)}>
+            <div className="bg-ink p-5 rounded-lg w-11/12 max-w-lg flex flex-col justify-center items-center shadow-lg relative" onClick={(e) => e.stopPropagation()}>
                 {/* Close Button*/}
                 <button
                     onClick={() => onChangeOverlay(null)}
@@ -95,7 +95,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                 </button>
 
                 <Typography variant="h4" className="text-text font-header normal-case font-semibold">
-                    <span className="text-gray-500">Pair Device - </span>
+                    <span className="text-dust">Pair Device - </span>
                     <span className="text-text">{device?.name ?? ""}</span>
                 </Typography>
                             
@@ -142,7 +142,7 @@ const ECDHOverlay = ({ onChangeOverlay }) => {
                         How to Pair your ToothPaste Device:
                 </Typography>
 
-                <div className="bg-hover rounded-lg p-4 my-2 gap-2 flex flex-col justify-center items-center">
+                <div className="bg-ash rounded-lg p-4 my-2 gap-2 flex flex-col justify-center items-center">
 
 
                     <Typography variant="h6" className={`text-text text-md text-center mb-2`}> 

@@ -19,7 +19,9 @@ export default {
         body: ['Ubuntu Sans Mono', 'sans-serif'],
         barcode: ['Libre Barcode 39 Extended', 'system-ui'],
       },
-      colors: appColors,
+      colors: {
+        ...appColors,
+      },
       keyframes: {
         fadeout: {
           '0%': { opacity: '1' },

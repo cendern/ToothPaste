@@ -17,11 +17,11 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                 <div className="grid grid-cols-3 gap-40 h-full items-center">
                     {/* Left Third */}
                     <div className="flex flex-col col-span-1 gap-2 text-left">
-                        <Typography type="h5" className="font-body text-lg font-light text-gray-700 italic ">
+                        <Typography type="h5" className="font-body text-lg font-light text-graphite italic ">
                         "If only i could copy this really long password to this really shady computer, we could achieve world peace. 
                         <br/>Alas! I'm going to type it manually......"
                         </Typography>
-                        <Typography className="italic text-lg font-body text-gray-700">- Someone Definitely</Typography>
+                        <Typography className="italic text-lg font-body text-graphite">- Someone Definitely</Typography>
                     </div>
                     
                 </div>
@@ -32,7 +32,7 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                 <div className="grid grid-cols-5 grid-rows-5 gap-8 h-full">
                     {/* Row 1 - Height 2 */}
                     <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
-                        <Typography type="h1" className="font-header text-3xl font-light text-white">
+                        <Typography type="h1" className="font-body text-3xl font-light text-white">
                         Secure passwords are annoying to type and easy to mess up.
                         </Typography>
 
@@ -40,7 +40,8 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     <div className="row-span-2"></div>
                     <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
                         {/* <Typography className="font-body text-3xl font-light text-white">
-                        So that you can paste that 50 character password, or that long address without worrying about typos or keyloggers.
+                        ToothPaste acts a keyboard that types for you. <br/>
+                        Just copy on one device, and paste on another - no cloud, no middleman, no hassle.
                         </Typography> */}
                     </div>
                     
@@ -52,14 +53,14 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                     </div>
                     <div className="row-span-1"></div>
                     <div className="col-span-2 row-span-1 flex flex-col gap-40 text-left">
-                        {/* <Typography className="font-body text-3xl font-light text-white">
-                        [Right Content Row 2]
-                        </Typography> */}
+                        <Typography className="font-header text-3xl font-light text-white">
+                        ToothPaste acts a keyboard that types for you.
+                        </Typography>
                     </div>
                     
                     {/* Row 3 - Height 2 */}
                     <div className="col-span-2 row-span-2 flex flex-col gap-40 text-left">
-                        <Typography type="h3" className="font-header text-lg font-light text-text italic ">
+                        <Typography type="h3" className="font-body text-lg font-light text-text italic ">
                         And installing clipboard sharing apps isn't always an option.
                         </Typography>
                     </div>
