@@ -6,31 +6,32 @@ import { appColors } from '../../../styles/colors';
 export default function SecuritySection({ currentSlide, getSectionOpacity }) {
     return (
         <section
-            className="absolute inset-0 flex flex-col px-6 md:px-12 py-12 z-10"
+            className="absolute inset-0 flex flex-col px-6 md:px-12 py-12 z-2"
             style={{
                 opacity: getSectionOpacity(2),
                 transition: 'opacity 0.3s ease-in-out',
-                pointerEvents: getSectionOpacity(2) > 0.5 ? 'auto' : 'none'
+                pointerEvents: getSectionOpacity(2) > 0.5 ? 'auto' : 'none',
+                '--box-gap': '2rem'
             }}
         >
             {/* Title Row */}
             <div className="flex items-start justify-center gap-4 mb-12 flex-shrink-0">
-                <LockClosedIcon className="h-12 w-12 text-primary flex-shrink-0" />
-                <Typography type="h2" className="text-text font-bold">
-                    The nitty gritty details
+                {/* <LockClosedIcon className="h-12 w-12 text-primary flex-shrink-0" /> */}
+                <Typography type="h2" className="font-header text-text font-bold">
+                    So how does it work?
                 </Typography>
             </div>
 
             {/* 50/50 Split Container */}
-            <div className="flex-1 relative flex items-stretch justify-center gap-8">
+            <div className="flex-1 relative flex items-stretch justify-center gap-8 bg-background">
                 {/* Left Side */}
                 <div className="flex-1 flex flex-col">
                     <Typography type="h4" className="text-lg md:text-2xl font-semibold text-secondary mb-4 text-center">
                         The Problem
                     </Typography>
 
-                    <div className="flex flex-wrap gap-3 content-start flex-1 h-full">
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                    <div className="flex flex-wrap content-start flex-1 h-full z-55" style={{ gap: 'var(--box-gap)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-secondary shadow-secondary flex-1">
                                 <EyeIcon className="h-12 w-12 md:h-16 md:w-16 text-secondary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}/>
@@ -41,7 +42,7 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-secondary shadow-secondary flex-1">
                                 <EyeIcon className="h-12 w-12 md:h-16 md:w-16 text-secondary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}/>
@@ -52,7 +53,7 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-secondary shadow-secondary flex-1">
                                 <EyeIcon className="h-12 w-12 md:h-16 md:w-16 text-secondary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}/>
@@ -63,7 +64,7 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-secondary shadow-secondary flex-1">
                                 <EyeIcon className="h-12 w-12 md:h-16 md:w-16 text-secondary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.secondary})` }}/>
@@ -82,8 +83,8 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                     <Typography type="h4" className="text-lg md:text-2xl font-semibold text-primary mb-4 text-center">
                         The Solution
                     </Typography>
-                    <div className="flex flex-wrap gap-3 content-start flex-1 h-full">
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                    <div className="flex flex-wrap content-start justify-end flex-1 h-full" style={{ gap: 'var(--box-gap)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-primary shadow-primary flex-1">
                                 <EyeSlashIcon className="h-12 w-12 md:h-16 md:w-16 text-primary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
@@ -94,7 +95,7 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-primary shadow-primary flex-1">
                                 <EyeSlashIcon className="h-12 w-12 md:h-16 md:w-16 text-primary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
@@ -105,7 +106,7 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-primary shadow-primary flex-1">
                                 <EyeSlashIcon className="h-12 w-12 md:h-16 md:w-16 text-primary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
@@ -116,7 +117,7 @@ export default function SecuritySection({ currentSlide, getSectionOpacity }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - 6px)', height: 'calc(50% - 6px)' }}>
+                        <div className="flex-shrink-0 flex" style={{ width: 'calc(50% - var(--box-gap))', height: 'calc(50% - var(--box-gap))' }}>
                             <div className="whybox border-primary shadow-primary flex-1">
                                 <EyeSlashIcon className="h-12 w-12 md:h-16 md:w-16 text-primary flex-shrink-0" 
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
