@@ -98,9 +98,9 @@ export default function WhySection({ currentSlide, getSectionOpacity }) {
                                     style={{ filter: `drop-shadow(0 0px 3px ${appColors.primary})` }}/>
                                 <div className="flex flex-col items-center justify-center gap-2 px-4">
                                     <Typography className="font-body text-md xl:text-2xl font-light text-text">
-                                    And I just needed a reason to solder some stuff and write some code 
+                                    And I just needed a reason to solder stuff and write some code. 
                                     </Typography>
-                                    <Typography className="font-body text-xs md:text-sm font-light text-text">
+                                    <Typography className="font-body text-s md:text-lg font-light text-text">
                                     And then I went a bit overboard. 
                                     </Typography>
                                 </div>
