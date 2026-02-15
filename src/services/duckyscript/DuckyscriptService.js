@@ -106,7 +106,7 @@ export async function saveScript(name, content, scriptId = null) {
 }
 
 /**
- * Delete a script
+ * Delete a script (removes both data and index)
  * @param {string} scriptId - Script identifier
  * @returns {Promise<void>}
  */
@@ -115,6 +115,9 @@ export async function deleteScript(scriptId) {
         if (!EncryptedStorage.isUnlocked()) {
             throw new Error('Storage not unlocked');
         }
+        
+        // Delete the actual script data
+        await EncryptedStorage.deleteBase64(DUCKYSCRIPT_CLIENT_ID, scriptId);
         
         // Remove from index
         const index = await listScripts();
@@ -230,7 +233,7 @@ export async function exportScriptFile(scriptId) {
 }
 
 /**
- * Clear all scripts (dangerous operation)
+ * Clear all scripts (dangerous operation - deletes all script data and index)
  * @returns {Promise<void>}
  */
 export async function clearAllScripts() {
@@ -240,14 +243,15 @@ export async function clearAllScripts() {
         }
         
         const scripts = await listScripts();
+        
+        // Delete each script's data individually
         for (const script of scripts) {
-            const fullScript = await loadScript(script.id);
-            if (fullScript) {
-                // We can't delete from encrypted storage easily, so we just clear the index
-            }
+            await EncryptedStorage.deleteBase64(DUCKYSCRIPT_CLIENT_ID, script.id);
         }
         
-        await EncryptedStorage.saveBase64(DUCKYSCRIPT_CLIENT_ID, SCRIPTS_INDEX_KEY, []);
+        // Delete the index itself
+        await EncryptedStorage.deleteBase64(DUCKYSCRIPT_CLIENT_ID, SCRIPTS_INDEX_KEY);
+        
         console.log('[DuckyscriptService] All scripts cleared');
     } catch (error) {
         console.error('[DuckyscriptService] Error clearing scripts:', error);

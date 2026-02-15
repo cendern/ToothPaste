@@ -106,7 +106,7 @@ export default function BulkSend() {
     return (
         <div className="flex flex-col flex-1 w-full p-6 bg-transparent text-text z-10">
             <div id="bulk-send-container" className="flex flex-col flex-1 mt-5">
-                <Tabs defaultValue="text">
+                <Tabs defaultValue="text" className="flex flex-col flex-1">
                     <Tabs.List className="w-full bg-ink rounded-lg p-1">
                         <Tabs.Trigger className="w-full text-text data-[state=active]:text-text" value="text">
                             <div className="flex items-center gap-2">
@@ -125,11 +125,10 @@ export default function BulkSend() {
 
                     <Tabs.Panel value="text" className="flex flex-col flex-1 gap-4">
                         <Textarea
-                            className={`flex flex-1 resize-none bg-ink border-2 focus:border-ash outline-none text-text font-body
+                            className={`flex-1 resize-none bg-ink border-2 focus:border-ash outline-none text-text font-body
                                 ${status===1?'hover:border-primary border-primary':'hover:border-secondary border-secondary'} `}
                             ref={editorRef}
                             value={input}
-                            size="lg"
                             placeholder="Type or paste text here..."
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleShortcut}
@@ -163,17 +162,19 @@ export default function BulkSend() {
                                 </div>
                             </div>
                         )}
-                        <div className={isUnlocked ? '' : 'pointer-events-none opacity-50'}>
+                        <div className={`flex flex-col flex-1 gap-4 ${isUnlocked ? '' : 'pointer-events-none opacity-50'}`}>
                             <div className="flex text-orange">
                                 <InformationCircleIcon className="h-4 w-4 mr-2 stroke-2" />
                                 <Typography type="small">
                                     The DuckyScript module is a work-in-progress. Features might not be fully functional.
                                 </Typography>
                             </div>
-                            <DuckyscriptEditor onScriptSelected={setSelectedScript} />
+                            <div className="flex-1">
+                                <DuckyscriptEditor onScriptSelected={setSelectedScript} />
+                            </div>
                             
                             {selectedScript && (
-                                <div className="flex flex-col gap-3 mt-4">
+                                <div className="flex flex-col gap-3">
                                     <div className="bg-ash rounded p-3">
                                         <Typography type="small" className="text-dust font-semibold mb-2">
                                             Selected Script: {selectedScript.name}
