@@ -123,6 +123,36 @@ export function deleteDatabase() {
     });
 }
 
+// Delete a specific key from a client's data
+export async function deleteBase64(clientID, key) {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+
+    // Get existing data
+    const existing = await new Promise((resolve, reject) => {
+        const request = store.get(clientID);
+        request.onsuccess = () =>
+            resolve(request.result ?? { clientID, data: {} });
+        request.onerror = () => reject(request.error);
+    });
+
+    // Delete the key from data
+    delete existing.data[key];
+
+    // Put the updated object back
+    await new Promise((resolve, reject) => {
+        const request = store.put(existing);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    });
+
+    return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
 // Check if device keys exist for a client
 export async function keyExists(clientID) {
     try {

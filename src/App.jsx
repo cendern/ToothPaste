@@ -10,6 +10,7 @@ import UpdateController from "./components/overlays/UpdateOverlay";
 import QuickStartOverlay from "./components/overlays/QuickStartOverlay";
 import GridBackground from './components/shared/GridBackground';
 import { ECDHContext, ECDHProvider } from "./context/ECDHContext";
+import { DuckyscriptProvider } from "./context/DuckyscriptContext";
 import About from "./views/about/About";
 
 
@@ -52,44 +53,46 @@ function App() {
     };
 
     return (
-    <ECDHProvider>
-      <BLEProvider setShowOverlay={setShowOverlay} showOverlay={showOverlay}>
-        <div className="flex flex-col h-dvh overflow-hidden bg-background relative">
-          {/* Navbar - top layer */}
-          <Navbar
-            showNavbar={showNavbar}
-            setshowNavbar={setshowNavbar}
-            onNavigate={setActiveView}
-            onChangeOverlay={setActiveOverlay}
-            activeOverlay={activeOverlay}
-            activeView={activeView}
-            className="relative z-50"
-          />
-
-          {/* Main content area - middle layer */}
-          <main className="flex flex-col flex-1 overflow-auto min-h-0 relative z-0 bg-transparent">
-
-            {renderView()}
-                        <GridBackground
-              filledSquares={[]}
-              squareSize={25}
-              borderColor="rgba(255, 255, 255, 0.1)"
-              borderWidth={1}
-              className="z-0"
-            />
-          </main>
-
-          {/* Overlay */}
-          {ActiveOverlay && (
-            <ActiveOverlay 
-              {...overlayProps} 
+    <DuckyscriptProvider>
+      <ECDHProvider>
+        <BLEProvider setShowOverlay={setShowOverlay} showOverlay={showOverlay}>
+          <div className="flex flex-col h-dvh overflow-hidden bg-background relative">
+            {/* Navbar - top layer */}
+            <Navbar
+              showNavbar={showNavbar}
+              setshowNavbar={setshowNavbar}
+              onNavigate={setActiveView}
               onChangeOverlay={setActiveOverlay}
+              activeOverlay={activeOverlay}
               activeView={activeView}
+              className="relative z-50"
             />
-          )}
-        </div>
-      </BLEProvider>
-    </ECDHProvider>
+
+            {/* Main content area - middle layer */}
+            <main className="flex flex-col flex-1 overflow-auto min-h-0 relative z-0 bg-transparent">
+
+              {renderView()}
+                          <GridBackground
+                filledSquares={[]}
+                squareSize={25}
+                borderColor="rgba(255, 255, 255, 0.1)"
+                borderWidth={1}
+                className="z-0"
+              />
+            </main>
+
+            {/* Overlay */}
+            {ActiveOverlay && (
+              <ActiveOverlay 
+                {...overlayProps} 
+                onChangeOverlay={setActiveOverlay}
+                activeView={activeView}
+              />
+            )}
+          </div>
+        </BLEProvider>
+      </ECDHProvider>
+    </DuckyscriptProvider>
     );
 }
 

@@ -533,6 +533,15 @@ export async function loadBase64(clientID, key) {
 }
 
 /**
+ * Delete a specific key from a client's encrypted data in IndexedDB
+ * @param {string} clientID - Client identifier
+ * @param {string} key - Storage key to delete
+ */
+export async function deleteBase64(clientID, key) {
+    return Storage.deleteBase64(clientID, key);
+}
+
+/**
  * Check if device keys exist
  */
 export async function keyExists(clientID) {
