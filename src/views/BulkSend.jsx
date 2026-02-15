@@ -162,21 +162,21 @@ export default function BulkSend() {
                                 </div>
                             </div>
                         )}
-                        <div className={`flex flex-col flex-1 gap-4 ${isUnlocked ? '' : 'pointer-events-none opacity-50'}`}>
+                        <div className={`flex flex-col flex-1 gap-4 min-h-0 ${isUnlocked ? '' : 'pointer-events-none opacity-50'}`}>
                             <div className="flex text-orange">
                                 <InformationCircleIcon className="h-4 w-4 mr-2 stroke-2" />
                                 <Typography type="small">
                                     The DuckyScript module is a work-in-progress. Features might not be fully functional.
                                 </Typography>
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-h-0 overflow-auto">
                                 <DuckyscriptEditor onScriptSelected={setSelectedScript} />
                             </div>
                             
                             {selectedScript && (
-                                <div className="flex flex-col gap-3">
-                                    <div className="bg-ash rounded p-3">
-                                        <Typography type="small" className="text-dust font-semibold mb-2">
+                                <div className="bg-ash rounded p-3 flex flex-col gap-3">
+                                    <div>
+                                        <Typography type="small" className="text-dust font-semibold mr-4">
                                             Selected Script: {selectedScript.name}
                                         </Typography>
                                         <Typography type="small" className="text-text">

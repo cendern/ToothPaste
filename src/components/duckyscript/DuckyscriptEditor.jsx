@@ -6,14 +6,15 @@
 
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Button, Typography, Spinner } from '@material-tailwind/react';
-import { 
-    DocumentPlusIcon, 
+import {
+    DocumentPlusIcon,
     DocumentArrowUpIcon,
     DocumentArrowDownIcon,
     TrashIcon,
     XMarkIcon,
     CheckIcon,
     ExclamationTriangleIcon,
+    ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 import { DuckyscriptContext } from '../../context/DuckyscriptContext';
 
@@ -63,7 +64,7 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
         importScript(file).catch(err => {
             console.error('Import failed:', err);
         });
-        
+
         // Reset input
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -118,7 +119,7 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
     const hasErrors = parseResult?.errors?.length > 0;
 
     return (
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex flex-col gap-4 w-full h-full flex-1">
             {/* Editor Header */}
             <div className="flex items-center justify-between gap-2">
                 <Typography type="h6" className="text-text font-header">
@@ -128,28 +129,40 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
                     {isEditing && (
                         <>
                             <Button
-                                size="sm"
-                                onClick={handleExport}
-                                disabled={isLoading || !currentScript || !isUnlocked}
-                                className="bg-primary text-text hover:bg-primary-ash p-2 disabled:bg-ash"
+                                size="md"
+                                onClick={handleSave}
+                                disabled={isLoading || !editingContent.trim() || !scriptName.trim() || !isUnlocked}
+                                className="bg-primary text-text hover:bg-primary-ash px-3 py-1 disabled:bg-ash border-none flex items-center gap-2"
                             >
-                                <DocumentArrowDownIcon className="h-5 w-5" />
+                                <CheckIcon className="h-5 w-5" />
+                                <Typography type="small" className="font-semibold">
+                                    {currentScript?.id ? 'Update' : 'Save'}
+                                </Typography>
                             </Button>
+
                             <Button
                                 size="sm"
                                 onClick={() => setShowDeleteConfirm(true)}
                                 disabled={isLoading || !currentScript || !isUnlocked}
-                                className="bg-secondary text-text hover:bg-orange p-2 disabled:bg-ash"
+                                className="bg-secondary border-secondary text-text p-2 disabled:bg-ash "
                             >
                                 <TrashIcon className="h-5 w-5" />
                             </Button>
                             <Button
                                 size="sm"
+                                onClick={handleExport}
+                                disabled={isLoading || !currentScript || !isUnlocked}
+                                className="bg-ink border-dust text-text hover:bg-dust p-2 disabled:bg-ash "
+                            >
+                                <DocumentArrowDownIcon className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                size="sm"
                                 onClick={closeScript}
                                 disabled={isLoading || !isUnlocked}
-                                className="bg-ash text-text hover:bg-secondary p-2 disabled:bg-secondary/50"
+                                className="bg-ash text-text hover:bg-dust p-2 disabled:bg-secondary/50 border-dust"
                             >
-                                <XMarkIcon className="h-5 w-5" />
+                                <ArrowLeftIcon className="h-5 w-5" />
                             </Button>
                         </>
                     )}
@@ -158,7 +171,7 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
 
             {/* Script Editor or List */}
             {isEditing ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 flex-1 min-h-0">
                     {/* Name Input */}
                     <input
                         type="text"
@@ -168,61 +181,54 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
                         className="w-full h-10 bg-ink border-2 border-ash focus:border-primary outline-none text-text px-3 rounded"
                     />
 
-                    {/* Code Editor */}
-                    <textarea
-                        value={editingContent}
-                        onChange={(e) => updateContent(e.target.value)}
-                        placeholder="Enter duckyscript code..."
-                        className="w-full h-40 bg-ink border-2 border-ash focus:border-primary outline-none text-text p-3 rounded font-mono text-sm resize-none"
-                    />
+                    {/* Code Editor Container */}
+                    <div className="flex flex-col flex-1 min-h-0 border-2 border-ash rounded bg-ink">
+                        {/* Code Editor */}
+                        <textarea
+                            value={editingContent}
+                            onChange={(e) => updateContent(e.target.value)}
+                            placeholder="Enter duckyscript code..."
+                            className="w-full flex-1 bg-ink outline-none text-text p-3 rounded-t font-mono text-sm resize-none focus:border-primary"
+                        />
 
-                    {/* Parse Result Display */}
-                    <div className="bg-ash rounded p-3 flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                            {hasErrors ? (
-                                <>
-                                    <ExclamationTriangleIcon className="h-5 w-5 text-orange" />
-                                    <Typography type="small" className="text-orange font-semibold">
-                                        {parseResult.errors.length} error{parseResult.errors.length !== 1 ? 's' : ''}
-                                    </Typography>
-                                </>
-                            ) : (
-                                <>
-                                    <CheckIcon className="h-5 w-5 text-primary" />
-                                    <Typography type="small" className="text-primary font-semibold">
-                                        Valid syntax
-                                    </Typography>
-                                </>
-                            )}
-                        </div>
+                        {/* Parse Result Display - Status Bar */}
+                        <div className="bg-ash border-t border-ash rounded-b p-2 px-4 flex items-center gap-2 text-xs">
 
-                        {parseResult?.errors?.length > 0 && (
-                            <div className="text-xs text-text max-h-20 overflow-auto">
-                                {parseResult.errors.map((err, idx) => (
-                                    <div key={idx} className="text-orange">
-                                        Line {err.line}: {err.message}
-                                    </div>
-                                ))}
+
+                            {/* Middle - Stats (grows to fill space) */}
+                            <div className="flex gap-3 text-dust flex-1">
+                                <span>Lines: {editingContent.split('\n').length}</span>
+                                <span>Commands: {parseResult?.ast?.length || 0}</span>
+                                <span>Est. Time: {Math.round(estimatedTime)}ms</span>
                             </div>
-                        )}
 
-                        <Typography type="small" className="text-dust">
-                            Lines: {editingContent.split('\n').length} | Commands: {parseResult?.ast?.length || 0} | Est. Time: {Math.round(estimatedTime)}ms
-                        </Typography>
+                            {/* Right side - Error message (pinned to right) */}
+                            {parseResult?.errors?.length > 0 && (
+                                <Typography type="small" className="text-dust flex-shrink-0">
+                                    {parseResult.errors[0].message}
+                                </Typography>
+                            )}
+
+                            {/* Left side - Status */}
+                            <div className="flex items-center gap-2">
+                                {hasErrors ? (
+                                    <>
+                                        <ExclamationTriangleIcon className="h-4 w-4 text-orange flex-shrink-0" />
+                                        <Typography type="small" className="text-orange font-semibold">
+                                            {parseResult.errors.length} error{parseResult.errors.length !== 1 ? 's' : ''}
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                                        <Typography type="small" className="text-primary font-semibold">
+                                            Valid
+                                        </Typography>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
-
-                    {/* Save Button */}
-                    <Button
-                        onClick={handleSave}
-                        disabled={isLoading || !editingContent.trim() || !scriptName.trim() || !isUnlocked}
-                        loading={isLoading.toString()}
-                        className="w-full bg-primary text-text hover:bg-primary-ash active:bg-primary-active py-2 disabled:bg-ash disabled:border-secondary"
-                    >
-                        <CheckIcon className={`h-5 w-5 mr-2 ${isLoading ? 'hidden' : ''}`} />
-                        <Typography type="small" className={`font-semibold ${isLoading ? 'hidden' : ''}`}>
-                            {currentScript?.id ? 'Update Script' : 'Save Script'}
-                        </Typography>
-                    </Button>
 
                     {/* Delete Confirmation */}
                     {showDeleteConfirm && currentScript && (
@@ -251,24 +257,24 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-auto">
                     {/* Action Buttons */}
                     <div className="flex gap-2">
                         <Button
                             onClick={handleNewScript}
                             disabled={isLoading || !isUnlocked}
-                            className="flex-1 bg-primary text-text hover:bg-primary-ash py-2 disabled:bg-ash disabled:border-secondary"
+                            className="flex-1 bg-primary border-none text-text hover:bg-primary-ash py-2 disabled:bg-ash"
                         >
-                            <DocumentPlusIcon className="h-5 w-5 mr-2" />
+                            <DocumentPlusIcon className="h-5 w-5 mr-2 border-none" />
                             <Typography type="small" className="font-semibold">New Script</Typography>
                         </Button>
                         <Button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isLoading || !isUnlocked}
-                            className="flex-1 bg-secondary text-text hover:bg-orange py-2 disabled:bg-ash disabled:border-secondary"
+                            className="flex-1 bg-orange border-none text-text hover:bg-orange py-2 disabled:bg-ash"
                         >
-                            <DocumentArrowUpIcon className="h-5 w-5 mr-2" />
-                            <Typography type="small" className="font-semibold">Import</Typography>
+                            <DocumentArrowUpIcon className="h-5 w-5 mr-2 " />
+                            <Typography type="small" className="font-semibold">Import From .txt File</Typography>
                         </Button>
                         <input
                             ref={fileInputRef}
@@ -281,7 +287,7 @@ const DuckyscriptEditor = ({ onScriptSelected }) => {
 
                     {/* Scripts List */}
                     {scripts.length > 0 ? (
-                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                        <div className="flex flex-col gap-2 flex-1 min-h-0 overflow-y-auto">
                             {scripts.map(script => (
                                 <button
                                     key={script.id}
