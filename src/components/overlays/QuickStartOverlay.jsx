@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Typography } from "@material-tailwind/react";
 import ToothPaste from "../../assets/ToothPaste.png";
+import { useBreakpoint } from "../../services/useBreakpoint";
 import {
     LockClosedIcon,
     WifiIcon,
@@ -41,7 +42,16 @@ const WELCOME_STEP = {
             </div>
         </>
     ),
-    targetSelector: null,
+    targetSelectorSmall: null,
+    targetSelectorLarge: null,
+    enabledOnMobile: true,
+    enabledOnDesktop: true,
+    // Small screen (< md)
+    gridColumnSmall: 1,
+    gridRowSmall: 6,
+    columnSpanSmall: 10,
+    rowSpanSmall: 3,
+    // Large screen (>= md)
     gridColumn: 4,
     gridRow: 5,
     columnSpan: 4,
@@ -55,7 +65,16 @@ const WELCOME_STEP = {
 const NAV_MENU_STEP = {
     title: 'Navigation Menu',
     description: 'Toggle the menu to switch between Live Capture, Bulk Send, and other features.',
-    targetSelector: '#navbar',
+    targetSelectorSmall: '#navbar',
+    targetSelectorLarge: '#navbar',
+    enabledOnMobile: true,
+    enabledOnDesktop: true,
+    // Small screen (< md)
+    gridColumnSmall: 1,
+    gridRowSmall: 2,
+    columnSpanSmall: 10,
+    rowSpanSmall: 1,
+    // Large screen (>= md)
     gridColumn: 4,
     gridRow: 2,
     columnSpan: 3,
@@ -83,7 +102,16 @@ const CONNECTION_STATUS_STEP = {
 
         </>
     ),
-    targetSelector: '#connection-button',
+    targetSelectorSmall: '#navbar-toggle',
+    targetSelectorLarge: '#connection-button',
+    enabledOnMobile: true,
+    enabledOnDesktop: true,
+    // Small screen (< md)
+    gridColumnSmall: 1,
+    gridRowSmall: 2,
+    columnSpanSmall: 10,
+    rowSpanSmall: 1,
+    // Large screen (>= md)
     gridColumn: 8,
     gridRow: 2,
     columnSpan: 3,
@@ -97,7 +125,16 @@ const stepsMap = {
         {
             title: 'Live Capture',
             description: 'Capture keyboard and mouse input in real-time. Type in the input area to capture commands.',
-            targetSelector: '#live-capture-input',
+            targetSelectorSmall: '#live-capture-input',
+            targetSelectorLarge: '#live-capture-input',
+            enabledOnMobile: true,
+            enabledOnDesktop: true,
+            // Small screen (< md)
+            gridColumnSmall: 1,
+            gridRowSmall: 6,
+            columnSpanSmall: 10,
+            rowSpanSmall: 1,
+            // Large screen (>= md)
             gridColumn: 4,
             gridRow: 1,
             columnSpan: 3,
@@ -110,7 +147,16 @@ const stepsMap = {
         {
             title: 'Keyboard Preview',
             description: 'If you need some more stimulation while you type.',
-            targetSelector: '#keyboard-container',
+            targetSelectorSmall: '#keyboard-container',
+            targetSelectorLarge: '#keyboard-container',
+            enabledOnMobile: false,
+            enabledOnDesktop: true,
+            // Small screen (< md)
+            gridColumnSmall: 1,
+            gridRowSmall: 7,
+            columnSpanSmall: 10,
+            rowSpanSmall: 1,
+            // Large screen (>= md)
             gridColumn: 1,
             gridRow: 3,
             columnSpan: 2,
@@ -128,7 +174,15 @@ const stepsMap = {
         {
             title: 'Bulk Send',
             description: 'Send clipboard data directly from your clipboard to your paired device. Paste or type content here to send it securely.',
-            targetSelector: '#bulk-send-container',
+            targetSelectorSmall: '#bulk-send-container',
+            targetSelectorLarge: '#bulk-send-container',
+            enabledOnMobile: true,
+            enabledOnDesktop: true,
+            gridColumnSmall: 1,
+            gridRowSmall: 6,
+            columnSpanSmall: 10,
+            rowSpanSmall: 1,
+            // Large screen (>= md)
             gridColumn: 5,
             gridRow: 9,
             columnSpan: 2,
@@ -170,12 +224,42 @@ function Spotlight({ target, padding = 10 }) {
 export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live' }) {
     const [currentStep, setCurrentStep] = useState(0);
     const [targetElement, setTargetElement] = useState(null);
+    const { breakpoints, width } = useBreakpoint();
 
-    const steps = stepsMap[activeView] || stepsMap.live;
+    const allSteps = stepsMap[activeView] || stepsMap.live;
+    const isLargeScreen = width > breakpoints.xl;
+
+    // Filter steps based on mobile/desktop enablement
+    const steps = useMemo(() => {
+        return allSteps.filter(step => 
+            (isLargeScreen && step.enabledOnDesktop !== false) || 
+            (!isLargeScreen && step.enabledOnMobile !== false)
+        );
+    }, [allSteps, isLargeScreen]);
+
+    // Reset currentStep if it exceeds filtered steps length
+    useEffect(() => {
+        if (currentStep >= steps.length) {
+            setCurrentStep(Math.max(0, steps.length - 1));
+        }
+    }, [steps, currentStep]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            const selector = steps[currentStep].targetSelector;
+            const step = steps[currentStep];
+            if (!step) {
+                setTargetElement(null);
+                return;
+            }
+
+            // Choose selector based on breakpoint
+            let selector;
+            if (isLargeScreen) {
+                selector = step.targetSelectorLarge;
+            } else {
+                selector = step.targetSelectorSmall;
+            }
+
             if (selector) {
                 const element = document.querySelector(selector);
                 setTargetElement(element);
@@ -185,12 +269,23 @@ export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live'
         }, 100);
 
         return () => clearTimeout(timer);
-    }, [currentStep, activeView, steps]);
+    }, [currentStep, steps, isLargeScreen]);
 
     const getGridPosition = (step) => {
+        // Choose small or large screen values based on breakpoint
+        const gridColumn = isLargeScreen 
+            ? step.gridColumn || step.gridColumnSmall || 4
+            : step.gridColumnSmall || step.gridColumn || 1;
+        const columnSpan = isLargeScreen 
+            ? step.columnSpan || step.columnSpanSmall || 4
+            : step.columnSpanSmall || step.columnSpan || 10;
+        const gridRow = isLargeScreen 
+            ? step.gridRow || step.gridRowSmall || 5
+            : step.gridRowSmall || step.gridRow || 4;
+
         return {
-            gridColumn: `${step.gridColumn} / span ${step.columnSpan}`,
-            gridRow: `${step.gridRow}`,
+            gridColumn: `${gridColumn} / span ${columnSpan}`,
+            gridRow: `${gridRow}`,
         };
     };
 
@@ -238,7 +333,7 @@ export default function QuickStartOverlay({ onChangeOverlay, activeView = 'live'
     const step = steps[currentStep];
     const isLastStep = currentStep === steps.length - 1;
 
-    const gridStyles = useMemo(() => getGridPosition(step), [currentStep, step]);
+    const gridStyles = useMemo(() => getGridPosition(step), [currentStep, step, isLargeScreen]);
 
     return (
         <div className="fixed inset-0 z-[9999]">
