@@ -25,8 +25,10 @@
 
 
 <p style="text-align: center; font-size: 1.2em;">
-  <strong>ToothPaste</strong> allows a user to transmit keystrokes to any USB-compatible device over an encrypted channel without the need for specialized drivers or extensive set-up using WEB-BLE and an ESP-32S3 based receiver.
+  <strong>ToothPaste</strong> allows a user to transmit keystrokes to any USB-compatible device over an encrypted channel without the need for specialized drivers or extensive set-up using WEB-BLE and an ESP32-S3 based receiver.
 </p>
+
+![ToothPaste Website About Page Thumbnail](/web/public/AboutPreview.png)
 
 <br/>
 
