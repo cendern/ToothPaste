@@ -60,9 +60,8 @@ message ResponsePacket{
     }
 
     ResponseType responseType = 1;
-
-    bytes challengeData = 2; // 32 bytes (if responseType == CHALLENGE)
-
+    bytes challengeData = 2; // 150 bytes max
+    string firmwareVersion = 3; // 50 bytes max
 }
 
 // Arbitrary String Data (processed based on packet type byte)

@@ -17,4 +17,5 @@ toothpaste.MousePacket.frames        max_count:20
 toothpaste.ConsumerControlPacket.code        max_count:10
 
 # Response Packet (Same as DataPacket since its on another characteristic)
-toothpaste.ResponsePacket.challengeData max_size:200
+toothpaste.ResponsePacket.challengeData max_size:150
+toothpaste.ResponsePacket.firmwareVersion max_size:50
