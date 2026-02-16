@@ -25,15 +25,14 @@
 
 
 <p style="text-align: center; font-size: 1.2em;">
-  <strong>ToothPaste</strong> allows a user to transmit keystrokes to any USB-compatible device over an encrypted channel without the need for specialized drivers or extensive set-up using WEB-BLE and an ESP32-S3 based receiver.
+  <strong>ToothPaste</strong> allows a user to transmit encrypted keyboard and mouse commands to any USB-compatible device wirelessly, without the need for specialized drivers or extensive set-up using WEB-BLE and an ESP32-S3 based receiver.
 </p>
 
 ![ToothPaste Website About Page Thumbnail](/web/public/AboutPreview.png)
-
 <br/>
 
 
-## The Problem ❓
+# The Problem ❓
 The core idea was to eliminate the need for complicated and lengthy login flows for one-off cases where a keyboard would normally be required or is the **only device that is supported** (BIOS, air-gapped systems, shady back-alley computers where you don't want to install your password manager etc.). 
 
 This means existing solutions like [KDE Connect](https://github.com/KDE/kdeconnect-kde) are non-starters since, at the very least, they require both devices to run a compatible operating system and allow installing third-party software.
@@ -42,41 +41,96 @@ The obvious answer then, is to use an interface system that is universally suppo
 
 The [USB Rubber Ducky by Hak5](https://hak5.org/products/usb-rubber-ducky?variant=39874478932081) used this exact idea to spark a security arms-race to exploit devices, but that doesn't have to be the only reason to use it (but you absolutely still can \**wink*\*).
 
-## The Solution Pt. 1 ⭐
-Sounds simple enough - all we need is a device that has some kind of wireless capability and the ability to show up as a USB device like the Rubber Ducky. A few options come to mind - 
+### ToothPaste on a Desktop Browser, controlling a VM
+![ToothPasteDemo](/web/public/ToothPasteDemo.gif)
 
-- Arduino Pro Micro + Bluetooth Module 🔴 (clunky but proven)
-- Nordic nrf52840 🟡 (really good but needs a lot of setup and lacks library support for advanced features)
-- Espressif ESP32-S3 🟢 (the winner for multiple reasons)
+### ToothPaste on a Mobile Browser, controlling the same VM
+![ToothPasteDemoMobile](/web/public/ToothPasteDemoMobile.gif)
 
-BLE communicates over something called the GATT protocol which you can find out more about [here](https://www.bluetooth.com/wp-content/uploads/Files/Specification/HTML/Core-54/out/en/host/generic-attribute-profile--gatt-.html).
+# Quick Start 📦
 
-Once any of the above set ups is complete we move toward actually transmitting data from some source device (a transmitter) to the bluetooth device (the receiver). We could come up with a really custom setup and there is definitely a benefit to that but as a proof-of-concept we just want to transmit text, so how do we do this?
+The quickest way to get started is to go to [The ToothPaste Webapp](www.toothpasteapp.com) and click **Update**. This opens a WEB Serial selector and lets you select a connected ESP32-S3 device to flash the firmware. 
 
-## The Solution Pt. 2 ⭐⭐
-Bluetooth (specifically BLE) is an odd 'standard' where over time there have been many accepted ways of implementing it but there is no unified solution. Outside of creating a native application that taps into the OS Bluetooth hardware there's only one (AFAIK) semi cross-platform solution - **Web BLE**.
+#### Alternatively, download the latest .bin firmware file from the releases section and flash it using [esptool](https://github.com/espressif/esptool) / [espwebtool](https://esptool.spacehuhn.com/) or a similar flasher utility.
+
+![Update Prompt](/web/public/UpdatePrompt.png)
+
+```The 'button' is GPIO0 (often labeled BOOT on ESP32 dev boards)```
+
+# Full setup 🛠️
+
+If for some reason the easy mode doesn't end up working (often because i messed up the deployment) you can build the entire project from source. 
+
+Follow the [ESP-IDF (5.5.1^)](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html) install guide and build the contents of the **firmware/** folder. 
+
+If you plan on making changes to or creating your own ProtoBuf packets, you will also need:
+- [The Protoc Compiler](https://protobuf.dev/installation/) 
+- [NanoPB](https://github.com/nanopb/nanopb) 
+- [ProtoBuf JS](https://github.com/protobufjs/protobuf.js)
+
+# How it works Pt.1 ⭐
+
+I wanted ToothPaste to be quick to use without much prior setup. While having a native app would make the experience of quickly switching between local and remote commands easy, that's a future-me problem. The quickest way to do this for me, while still letting it be semi cross-platform was [**Web BLE**](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API).
 
 ### What is Web BLE?
-If you're familiar with projects like [WLED](https://kno.wled.ge/) or [VIA](https://usevia.app/) you've already interacted with the Web Device API, this is almost exclusively a chromium-only feature which is why **ToothPaste** itself doesn't work on non-chromium browsers like Firefox. 
+If you're familiar with projects like [WLED](https://kno.wled.ge/) or [VIA](https://usevia.app/) you've already interacted with the [Web API](https://developer.mozilla.org/en-US/docs/Web/API), this is almost exclusively a chromium-only feature which is why **ToothPaste** itself doesn't work on non-chromium browsers like Firefox. 
 
 Essentially Web BLE allows us to use a system's Bluetooth hardware inside a browser, eliminating the need for custom OS-specific APIs and custom apps to use them. 
 
-### Using Web BLE 
-So using Web BLE we can capture inputs on some kind of webpage and transmit it to the BLE device over the GATT protocol we set up above. The nrf52840 is what I had on hand at the time and that branch is a decent proof-of-concept for this ecosystem and more than functional if you just need something quick and dirty. 
 
-**But I wanted to go futher**. 
+# How it works Pt. 2 - Hardware ⭐⭐
 
-[insert proof of concept device photo]
+The other part of the ToothPaste solution is the hardware itself. Since the ESP32-S3 has both USB and BLE (along with a bunch of other things we don't care about) in one package, the hardware just ends up being the bare-minimum nedded to run the MCU. For most, any development board will suffice. 
 
-## The Special Sauce (Security) 🔑
+### For the more discerning, I present...
+
+![ToothPaste Completed](/firmware/images/ToothPaste_Finished.jpg)
+
+
+### I'm still sorting out the hardware part of this repo but this shot took way too long so here you go:
+
+![ToothPaste Build](/firmware/images/ToothPaste_BOM.jpg)
+
+
+# Security 🔑
 
 Bluetooth by itself isn't a secure protocol, newer implementations have changed this and if we didn't want the extremely flexible cross-platform transmitter we could've delved into using the many security protocols that BLE supports. 
 
-However, as of now Web BLE only support the "just works" authentication method, which means its practically an open line. Considering that a ToothPaste shows up as a keyboard, it is entirely possible to use it like a wireless [Rubber Ducky](https://hak5.org/products/usb-rubber-ducky?variant=39874478932081) and that itself presents a security flaw. 
+However, as of now Web BLE only support the "just works" authentication method, which means its practically an open line. Considering that a ToothPaste shows up as a keyboard, and that my primary use-case for it is to paste passwords to devices, [**Man-In-The-Middle** attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack) are a very real problem. 
 
 **So we need to ensure that only authenticated devices are allowed to send data that is then typed out.**
 
-Without delving into the complete reasoning for **not** choosing any of the other standards for cryptography (sersiously there's way too much information out there for the pros and cons of each) I decided to go with a **TLS (kinda)** encryption workflow combining **ECDH** and an partially Out of Band (OOB: *fancy way of saying the keys arent shared over BLE*) key exchange to derive an **AES-128** key.
+Without delving into the complete reasoning for **not** choosing any of the other standards for cryptography (sersiously there's way too much information out there for the pros and cons of each) I decided to go with a two-step encryption workflow combining [**ECDH Public Key Cryptography**](https://www.cloudflare.com/learning/ssl/how-does-public-key-encryption-work/) and a partially Out of Band (OOB: *fancy way of saying the keys arent shared over BLE*) key exchange to derive a symmetric **AES-128** key that is used to encrypt the ToothPaste packets (_or ToothPackets if you're cool_).
 
 
 ### What this results in is a secure system of communication where the transmitter(s) and device must first complete a pairing flow before sending potentially sensitive data.
+
+![ToothPaste Pairing](/web/public/Pairing.png)
+
+# More Security 🔒
+
+### ☀️ ToothPaste is entirely local. There is no server, no agent, no SaaS cloud-native troll "guarding" your data.
+
+This means if someone can dump the indexdb data stored in your browser they can access your AES Key and impersonate the device from which the commands are sent. 
+
+_although if someone has gotten this far, the ToothPaste might be the least of your concerns 💀_
+
+### 🤷 But Because I can 
+
+ToothPaste allows encrypting this local data, along with saved Macros and Duckyscript scripts, using a Password + [Argon2](https://argon2-cffi.readthedocs.io/en/stable/argon2.html) derived encryption key.
+This is identical to how password managers with browser extensions do it.
+
+![ToothPasteArgon](/web/public/ToothPasteArgon.png)
+
+# There's a lot more...
+
+### As with any passion-project, sometimes I get sidetracked with cool features and forget to fix / test everything. 
+
+#### Creating replayable ducky scripts in the ToothPaste WebApp.
+![ToothPasteScripting](/web/public/ToothPasteScripting.png)
+
+
+
+There are features on the WebApp that I'll slowly document here and there is cursed vibe-coded tailwind styling begging to be turned into recyclable classes. ToothPaste is still a work in progress but it is finally at a point where I use it daily, so I thought its as good a time as any to open-source it. 
+
+If you find discrepancies or would like to contribute in any way, feel free to create issues but since I'm just a little guy, I might take a while to get to reviewing them. 
