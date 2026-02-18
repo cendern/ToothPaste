@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { ESPLoader, Transport } from "esptool-js";
-import { Progress, Typography, Button, } from "@material-tailwind/react";
+import { Progress, Typography, Button, Menu } from "@material-tailwind/react";
 import { LinkIcon, ArrowUpCircleIcon } from "@heroicons/react/24/outline";
 
 // Status enum
@@ -21,11 +21,27 @@ export default function UpdateController({ onChangeOverlay }) {
   const [status, setStatus] = useState(UpdateStatus.IDLE);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [selectedBoard, setSelectedBoard] = useState(null);
 
   const esploaderRef = useRef(null);
   const transportRef = useRef(null);
 
-  const FIRMWARE_URL = "/ClipBoardFirmware.bin"; // change to your URL
+
+  const boardUrls = {
+    "4M Flash (Supermini)": "https://github.com/Brisk4t/ToothPaste/releases/download/firmware/ToothPasteFirmware_4M.bin",
+    "8M Flash Devkit": "https://github.com/Brisk4t/ToothPaste/releases/download/firmware/ToothPasteFirmware_8M_Dev.bin",
+    "8M Flash ToothPaste PCBv1": "https://github.com/Brisk4t/ToothPaste/releases/download/firmware/ToothPasteFirmware_8M_PCBv1.bin",
+  };
+
+  const handleBoardSelect = (board) => {
+    setSelectedBoard(board);
+
+    const url = boardUrls[board];
+    console.log("URL:", url);
+
+    // optional: open link
+    // window.open(url, "_blank");
+  };
 
   // Connect to ESP32
   const connect = async () => {
@@ -63,7 +79,7 @@ export default function UpdateController({ onChangeOverlay }) {
       const progressBars = [];
 
       setStatus(UpdateStatus.DOWNLOADING);
-      const result = await fetch(FIRMWARE_URL);
+      const result = await fetch(boardUrls[selectedBoard]);
       if (!result.ok) throw new Error("Failed to download firmware");
 
       const arrayBuffer = await result.arrayBuffer();
@@ -124,6 +140,20 @@ export default function UpdateController({ onChangeOverlay }) {
           <Progress.Bar />
         </Progress>
 
+        <Menu className="bg-ink">
+          <Menu.Trigger as={Button} className="bg-dust border-none">
+            {selectedBoard || "Select Board"}
+          </Menu.Trigger>
+
+          <Menu.Content className="z-[10000] text-white bg-ink border-dust">
+            {Object.keys(boardUrls).map((board) => (
+              <Menu.Item className="text-text" key={board} onClick={() => handleBoardSelect(board)}>
+                {board}
+              </Menu.Item>
+            ))}
+          </Menu.Content>
+        </Menu>
+
         <Button
           // ref={keyRef}
           onClick={connect}
@@ -135,9 +165,10 @@ export default function UpdateController({ onChangeOverlay }) {
 
           <LinkIcon className={`h-7 w-7 mr-2  ${connected ? "hidden" : ""}`} />
 
-          {/* Paste to Device */}
+          {/* Connect to Serial device */}
           <Typography type='h5' className={`font-header text-text normal-case font-semibold ${connected ? "hidden" : ""}`}>Connect</Typography>
         </Button>
+
 
         <Button
           // ref={keyRef}
